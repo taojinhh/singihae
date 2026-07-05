@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>방형구법으로 식물 군집 조사하기</title>
+<style>
+  :root{
+    --bom:#f4a6c0;   /* 봄맞이꽃 */
+    --yang:#f6b73c;  /* 양지꽃 */
+    --noru:#6aa0f0;  /* 노루귀 */
+    --gak:#7c3aed;   /* 각시붓꽃 */
+    --green:#2f9e44;
+    --ink:#1f2933;
+    --muted:#697586;
+    --line:#dfe3e8;
+    --bg:#f4f7f5;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,"Apple SD Gothic Neo",sans-serif;
+    line-height:1.6;
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:20px 16px 60px;}
+  header.top{
+    background:linear-gradient(135deg,#d3f2dc,#e6f7ec 55%,#dcefe0);
+    color:#1b5e2a; border:1px solid #bfe6cb; border-radius:18px; padding:26px 28px; margin-bottom:22px;
+    box-shadow:0 8px 24px rgba(47,158,68,.12);
+  }
+  header.top h1{margin:0 0 6px; font-size:26px; color:#12401f;}
+  header.top p{margin:0; opacity:1; font-size:15px; color:#2b6b3c;}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:22px 24px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,.03);
+  }
+  .card h2{margin:0 0 14px; font-size:20px; display:flex; align-items:center; gap:9px;}
+  .card h2 .num{
+    background:var(--green); color:#fff; width:28px; height:28px; border-radius:50%;
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px; flex:0 0 auto;
+  }
+  .lead{color:var(--muted); font-size:14.5px; margin:-4px 0 16px;}
+
+  /* 개념/공식 */
+  .formula-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;}
+  .formula{
+    background:#f8faf9; border:1px solid var(--line); border-radius:12px; padding:14px 16px;
+  }
+  .formula b{display:block; margin-bottom:4px; color:var(--green);}
+  .formula .eq{font-size:14px; color:#374151;}
+  .note{background:#fff8e6; border:1px solid #ffe08a; border-radius:12px; padding:12px 16px; font-size:14px; margin-top:12px;}
+  .imp{background:#eef6ff; border:1px solid #b9dcff; border-radius:12px; padding:14px 16px; margin-top:12px; font-size:15px;}
+  .imp b{color:#1c6fd6;}
+
+  /* 종 범례 */
+  .legend{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-top:6px;}
+  .sp-card{display:flex; align-items:center; gap:12px; background:#f8faf9; border:1px solid var(--line); border-radius:12px; padding:10px 12px;}
+  .sp-card svg{flex:0 0 auto;}
+  .sp-card .info b{display:block; font-size:15px;}
+  .sp-card .info span{font-size:13px; color:var(--muted);}
+
+  /* 유형 선택 */
+  .type-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px;}
+  .type-btn{
+    text-align:left; cursor:pointer; background:#fff; border:2px solid var(--line);
+    border-radius:14px; padding:14px 16px; transition:.15s; font-family:inherit;
+  }
+  .type-btn:hover{border-color:#8ce0a0; transform:translateY(-2px);}
+  .type-btn.active{border-color:var(--green); background:#eefaf0; box-shadow:0 4px 12px rgba(47,158,68,.15);}
+  .type-btn b{font-size:15.5px; display:block; margin-bottom:4px;}
+  .type-btn span{font-size:13px; color:var(--muted);}
+
+  /* 방형구 카드 */
+  #survey{display:none;}
+  .quad-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+  .quad{border:1px solid var(--line); border-radius:14px; padding:12px; background:#fff;}
+  .quad .qtitle{font-weight:700; margin-bottom:8px; font-size:15px; color:var(--green);}
+  .quad svg.qfield{width:100%; height:auto; display:block; border-radius:10px; background:#f0f7f1;}
+  .inputs{margin-top:10px; display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .in-row{display:flex; align-items:center; gap:6px; font-size:13px;}
+  .in-row .dot{width:14px; height:14px; border-radius:50%; flex:0 0 auto;}
+  .in-row input{
+    width:52px; padding:4px 6px; border:1px solid var(--line); border-radius:8px;
+    font-size:14px; text-align:center; font-family:inherit;
+  }
+  .in-row input.correct{border-color:var(--green); background:#eaf7ec;}
+  .in-row input.wrong{border-color:#e03131; background:#fdeaea;}
+  .in-row .ans{font-size:12px; color:#e03131; min-width:26px;}
+
+  .btnbar{display:flex; flex-wrap:wrap; gap:10px; margin-top:18px;}
+  button.act{
+    cursor:pointer; border:none; border-radius:12px; padding:11px 20px; font-size:15px;
+    font-weight:700; font-family:inherit; transition:.15s;
+  }
+  .btn-green{background:var(--green); color:#fff;}
+  .btn-green:hover{background:#268a3a;}
+  .btn-ghost{background:#fff; color:var(--green); border:2px solid var(--green);}
+  .btn-ghost:hover{background:#eefaf0;}
+  .btn-blue{background:#1c6fd6; color:#fff;}
+  .btn-blue:hover{background:#1560ba;}
+
+  /* 결과 */
+  #results{display:none;}
+  .tbl-scroll{overflow-x:auto; border-radius:12px; border:1px solid var(--line);}
+  table.res{border-collapse:collapse; width:100%; min-width:820px; font-size:13.5px;}
+  table.res th,table.res td{border:1px solid #e6eaee; padding:8px 6px; text-align:center;}
+  table.res thead th{background:#f0f7f1; color:#2b5a35; font-weight:700;}
+  table.res tbody th{background:#fafcfb; text-align:left; padding-left:10px; white-space:nowrap;}
+  table.res .grp{background:#eef6ff; color:#1c6fd6;}
+  table.res .grp2{background:#fff4ec; color:#c05621;}
+  table.res tr.winner td,table.res tr.winner th{background:#fff7e0 !important; font-weight:700;}
+  .dominant{
+    margin-top:16px; background:linear-gradient(135deg,#fff7e0,#ffeec0);
+    border:2px solid #f5c542; border-radius:14px; padding:16px 20px; font-size:17px;
+  }
+  .dominant b{font-size:22px; color:#b8860b;}
+  .sum-note{font-size:13px; color:var(--muted); margin-top:10px;}
+
+  /* 활동지 */
+  .ws{border:1px dashed #b7c2cc;}
+  .ws table{border-collapse:collapse; width:100%; margin:10px 0; font-size:13.5px;}
+  .ws table th,.ws table td{border:1px solid #b7c2cc; padding:9px 6px; text-align:center; height:34px;}
+  .ws table thead th{background:#eef2f4;}
+  .ws h3{margin:18px 0 6px; font-size:16px;}
+  .ws .qline{margin:10px 0; padding-bottom:26px; border-bottom:1px dotted #c8d0d6;}
+  .ws .fields{display:flex; gap:24px; flex-wrap:wrap; font-size:14px; margin-bottom:10px;}
+  .ws .fields span{border-bottom:1px solid #333; min-width:120px; display:inline-block;}
+
+  footer{text-align:center; color:var(--muted); font-size:13px; margin-top:24px;}
+  .copyright{margin-top:8px; font-weight:bold; color:#828e9e;}
+
+  @media print{
+    body{background:#fff;}
+    .screen-only{display:none !important;}
+    .wrap{max-width:100%; padding:0;}
+    .card{box-shadow:none; border:none; page-break-inside:avoid;}
+    .ws{border:none;}
+  }
+  @media (max-width:520px){
+    header.top h1{font-size:21px;}
+    .card{padding:18px 16px;}
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<div class="wrap">
+
+  <header class="top">
+    <h1>🌸 방형구법으로 식물 군집 조사하기</h1>
+    <p>방형구 속 식물을 직접 세어 밀도·피도·빈도와 상대값을 구하고, 우점종을 찾아봅시다.</p>
+  </header>
+
+  <section class="card screen-only">
+    <h2><span class="num">1</span>먼저 개념부터 알아볼까요?</h2>
+    <p class="lead">방형구(方形具)는 일정한 넓이의 정사각형 틀입니다. 이 틀을 여러 개 설치해 그 안의 식물을 조사하면
+      넓은 군집 전체의 특징을 짐작할 수 있어요. 이 프로그램의 방형구는 <b>10cm × 10cm = 100cm²</b>, 모두 <b>5개</b>를 사용합니다.</p>
+    <div class="formula-grid">
+      <div class="formula"><b>밀도 (Density)</b><span class="eq">= 해당 종의 총 개체 수 ÷ 전체 방형구 총 면적</span></div>
+      <div class="formula"><b>피도 (Coverage)</b><span class="eq">= 해당 종의 총 점유 면적 ÷ 전체 방형구 총 면적</span></div>
+      <div class="formula"><b>빈도 (Frequency)</b><span class="eq">= 해당 종이 나타난 방형구 수 ÷ 전체 방형구 수</span></div>
+    </div>
+    <div class="note">📌 <b>상대값</b>은 각 값이 전체에서 차지하는 비율(%)입니다.<br>
+      · 상대밀도(%) = (그 종의 밀도 ÷ 모든 종의 밀도 합) × 100<br>
+      · 상대피도(%) = (그 종의 피도 ÷ 모든 종의 피도 합) × 100<br>
+      · 상대빈도(%) = (그 종의 빈도 ÷ 모든 종의 빈도 합) × 100</div>
+    <div class="imp">⭐ <b>중요치 = 상대밀도 + 상대빈도 + 상대피도</b> &nbsp;→&nbsp; 중요치가 가장 큰 종이 그 군집의 <b>우점종</b>입니다.</div>
+
+    <h2 style="margin-top:22px;"><span class="num">🌼</span>조사할 식물과 개체당 점유 면적</h2>
+    <div class="legend" id="legend"></div>
+  </section>
+
+  <section class="card screen-only">
+    <h2><span class="num">2</span>조사할 초원 유형을 골라보세요</h2>
+    <p class="lead">유형마다 꽃의 분포가 다릅니다. 하나를 선택하면 방형구 5개가 나타나요.</p>
+    <div class="type-grid" id="typeGrid"></div>
+  </section>
+
+  <section class="card screen-only" id="survey">
+    <h2><span class="num">3</span>방형구 속 꽃을 세어 개수를 입력하세요</h2>
+    <p class="lead" id="surveyDesc"></p>
+    <div class="quad-grid" id="quadGrid"></div>
+    <div class="btnbar">
+      <button class="act btn-green" onclick="calc()">🧮 결과 계산하기</button>
+      <button class="act btn-ghost" onclick="revealAnswers()">✔️ 정답 개수 확인</button>
+      <button class="act btn-ghost" onclick="autoFill()">✨ 정답으로 자동 채우기</button>
+    </div>
+  </section>
+
+  <section class="card screen-only" id="results">
+    <h2><span class="num">4</span>조사 결과와 우점종</h2>
+    <div class="tbl-scroll">
+      <table class="res" id="resTable"></table>
+    </div>
+    <div class="dominant" id="dominant"></div>
+    <p class="sum-note">※ 전체 방형구 총 면적 = 100cm² × 5 = 500cm²(=0.05m²). 밀도는 개/m², 피도는 지면을 덮는 비율(%)로 나타냈습니다.
+      상대값은 면적 단위가 약분되므로 개체수·점유면적·출현 방형구 수의 비율과 같습니다.</p>
+  </section>
+
+  <section class="card screen-only">
+    <h2><span class="num">5</span>학생 활동지</h2>
+    <p class="lead">아래 활동지는 학생들이 직접 손으로 계산하며 개념을 익히도록 만든 인쇄용입니다.</p>
+    <div class="btnbar">
+      <button class="act btn-blue" onclick="printWorksheet()">🖨️ 활동지 인쇄하기</button>
+    </div>
+  </section>
+
+  <section class="card ws" id="worksheet">
+    <h2 style="justify-content:center;">방형구법 탐구 활동지</h2>
+    <div class="fields">
+      <div>학년 반 번호: <span></span></div>
+      <div>이름: <span></span></div>
+      <div>선택한 유형: <span></span></div>
+    </div>
+
+    <h3>1. 조사 방법 정리</h3>
+    <p style="font-size:14px;">방형구는 10cm × 10cm 크기이며, 모두 5개를 사용한다. 개체당 점유 면적은
+      <b>봄맞이꽃 1cm², 양지꽃 3cm², 노루귀 8cm², 각시붓꽃 15cm²</b> 로 간주한다.</p>
+
+    <h3>2. 방형구별 개체 수 세기 — 각 방형구에서 종별 개체 수를 세어 적어 보자.</h3>
+    <table>
+      <thead>
+        <tr><th>식물종</th><th>방형구1</th><th>방형구2</th><th>방형구3</th><th>방형구4</th><th>방형구5</th><th>총 개체수</th></tr>
+      </thead>
+      <tbody>
+        <tr><th style="text-align:left;padding-left:8px;">봄맞이꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">양지꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">노루귀</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">각시붓꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h3>3. 밀도·피도·빈도 계산하기</h3>
+    <table>
+      <thead>
+        <tr><th>식물종</th><th>총 개체수</th><th>총 점유면적<br>(cm²)</th><th>출현 방형구 수</th><th>밀도</th><th>피도</th><th>빈도</th></tr>
+      </thead>
+      <tbody>
+        <tr><th style="text-align:left;padding-left:8px;">봄맞이꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">양지꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">노루귀</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">각시붓꽃</th><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h3>4. 상대값과 중요치 계산하기</h3>
+    <table>
+      <thead>
+        <tr><th>식물종</th><th>상대밀도(%)</th><th>상대피도(%)</th><th>상대빈도(%)</th><th>중요치</th></tr>
+      </thead>
+      <tbody>
+        <tr><th style="text-align:left;padding-left:8px;">봄맞이꽃</th><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">양지꽃</th><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">노루귀</th><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">각시붓꽃</th><td></td><td></td><td></td><td></td></tr>
+        <tr><th style="text-align:left;padding-left:8px;">합계</th><td></td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+
+    <h3>5. 결과 및 토의</h3>
+    <div class="qline">➊ 이 식물 군집의 우점종은 무엇인가? 그렇게 판단한 근거를 중요치를 이용해 설명해 보자.</div>
+    <div class="qline">➋ 개체 수가 가장 많은 종과 우점종이 서로 다를 수 있는 이유는 무엇일까?<br>(힌트: 피도와 개체당 점유 면적의 관계를 떠올려 보자.)</div>
+    <div class="qline">➌ 실제 자연에서 이 방법으로 조사할 때 오차가 생길 수 있는 까닭을 두 가지 이상 써 보자.</div>
+  </section>
+
+  <footer>
+    <div>효양고 생명과학 · 방형구법 탐구 프로그램 &nbsp;|&nbsp; 인터넷 없이도 열리는 단일 파일</div>
+    <div class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</div>
+  </footer>
+</div>
+
+<script>
+/* ---------- 기본 데이터 ---------- */
+const NQ = 5;                    // 방형구 개수
+const QUAD_AREA = 100;           // 방형구 1개 면적(cm²)
+const TOTAL_AREA_CM2 = NQ*QUAD_AREA;   // 500 cm²
+const TOTAL_AREA_M2 = TOTAL_AREA_CM2/10000; // 0.05 m²
+
+const SPECIES = [
+  {key:'bom',  name:'봄맞이꽃', area:1,  color:'var(--bom)',  hex:'#f4a6c0'},
+  {key:'yang', name:'양지꽃',   area:3,  color:'var(--yang)', hex:'#f6b73c'},
+  {key:'noru', name:'노루귀',   area:8,  color:'var(--noru)', hex:'#6aa0f0'},
+  {key:'gak',  name:'각시붓꽃', area:15, color:'var(--gak)',  hex:'#7c3aed'},
+];
+const SP = {}; SPECIES.forEach(s=>SP[s.key]=s);
+
+/* 유형별 방형구 데이터: 종키 -> [방형구1..5 개체수] */
+const TYPES = {
+  1:{name:'유형 1 · 봄맞이꽃 초원', desc:'작은 봄맞이꽃이 아주 많이 핀 초원입니다. 개체 수는 많지만 꽃 하나의 면적은 작아요.',
+     data:{bom:[7,9,6,8,10], yang:[2,1,3,2,2], noru:[1,1,0,1,1], gak:[1,0,1,1,0]}},
+  2:{name:'유형 2 · 각시붓꽃 군락', desc:'개체당 면적이 가장 큰 각시붓꽃이 넓게 자리 잡은 군락입니다.',
+     data:{bom:[3,2,4,2,3], yang:[1,2,1,2,1], noru:[1,1,0,1,0], gak:[2,3,2,2,3]}},
+  3:{name:'유형 3 · 양지꽃 들판', desc:'노란 양지꽃이 곳곳에 많이 핀 들판입니다.',
+     data:{bom:[2,1,2,1,2], yang:[4,5,3,4,5], noru:[1,1,1,0,1], gak:[1,0,0,1,0]}},
+  4:{name:'유형 4 · 노루귀 숲가', desc:'점유 면적이 큰 노루귀가 우세한 숲 가장자리입니다.',
+     data:{bom:[1,2,1,1,2], yang:[1,1,2,1,1], noru:[3,4,3,4,3], gak:[1,0,1,0,0]}},
+  5:{name:'유형 5 · 경쟁 초원', desc:'여러 종이 비슷하게 경쟁하는 초원입니다. 우점종을 두고 토론하기 좋아요.',
+     data:{bom:[3,2,3,2,3], yang:[3,3,2,3,3], noru:[2,1,2,1,2], gak:[1,1,1,1,1]}},
+};
+
+let currentType = null;
+
+/* ---------- 꽃 그리기 ---------- */
+function flowerSVG(spKey, cx, cy, r){
+  const conf = {
+    bom:  {n:5, pet:'#ffffff', stroke:'#f4a6c0', ctr:'#ffd23f'},
+    yang: {n:5, pet:'#ffe14d', stroke:'#f6b73c', ctr:'#e8892b'},
+    noru: {n:8, pet:'#c9def9', stroke:'#6aa0f0', ctr:'#ffffff'},
+    gak:  {n:6, pet:'#a78bfa', stroke:'#6d28d9', ctr:'#4c1d95'},
+  }[spKey];
+  let s = '<g>';
+  s += `<circle cx="${cx}" cy="${cy+r*0.05}" r="${r}" fill="rgba(0,0,0,0.05)"/>`;
+  for(let i=0;i<conf.n;i++){
+    const a = i*360/conf.n;
+    s += `<ellipse cx="${cx}" cy="${cy-r*0.55}" rx="${(r*0.42).toFixed(1)}" ry="${(r*0.72).toFixed(1)}" `
+       + `fill="${conf.pet}" stroke="${conf.stroke}" stroke-width="1" transform="rotate(${a} ${cx} ${cy})"/>`;
+  }
+  s += `<circle cx="${cx}" cy="${cy}" r="${(r*0.34).toFixed(1)}" fill="${conf.ctr}"/></g>`;
+  return s;
+}
+
+/* 재현 가능한 난수 */
+function mulberry32(a){
+  return function(){
+    a|=0; a=(a+0x6D2B79F5)|0;
+    let t=Math.imul(a^(a>>>15), 1|a);
+    t=(t+Math.imul(t^(t>>>7), 61|t))^t;
+    return ((t^(t>>>14))>>>0)/4294967296;
+  };
+}
+
+/* 방형구 하나 SVG 생성 */
+function quadSVG(counts, seed){
+  const rnd = mulberry32(seed);
+  const S = 300, margin = 26;
+  // 배경 + 격자
+  let g = `<rect x="4" y="4" width="${S-8}" height="${S-8}" rx="8" fill="#f0f7f1"/>`;
+  for(let i=1;i<10;i++){
+    const p = 4 + i*(S-8)/10;
+    g += `<line x1="${p}" y1="4" x2="${p}" y2="${S-4}" stroke="#d3e6d8" stroke-width="1"/>`;
+    g += `<line x1="4" y1="${p}" x2="${S-4}" y2="${p}" stroke="#d3e6d8" stroke-width="1"/>`;
+  }
+  g += `<rect x="4" y="4" width="${S-8}" height="${S-8}" rx="8" fill="none" stroke="#2f9e44" stroke-width="3"/>`;
+
+  // 큰 꽃부터 배치(겹침 최소화)
+  const order = ['gak','noru','yang','bom'];
+  const placed = [];
+  order.forEach(k=>{
+    const n = counts[k]||0;
+    const r = 5 + 2.3*Math.sqrt(SP[k].area);
+    for(let i=0;i<n;i++){
+      let x,y,tries=0;
+      do{
+        x = margin + rnd()*(S-2*margin);
+        y = margin + rnd()*(S-2*margin);
+        tries++;
+      }while(tries<40 && placed.some(p=> Math.hypot(p.x-x,p.y-y) < 25 ));
+      placed.push({x,y,k,r});
+    }
+  });
+  // y순으로 그려 자연스럽게
+  placed.sort((a,b)=>a.y-b.y).forEach(p=>{ g += flowerSVG(p.k,p.x,p.y,p.r); });
+  return `<svg class="qfield" viewBox="0 0 ${S} ${S}" xmlns="http://www.w3.org/2000/svg">${g}</svg>`;
+}
+
+/* ---------- 화면 구성 ---------- */
+function buildLegend(){
+  document.getElementById('legend').innerHTML = SPECIES.map(s=>{
+    const icon = `<svg width="46" height="46" viewBox="0 0 46 46">${flowerSVG(s.key,23,23,13)}</svg>`;
+    return `<div class="sp-card">${icon}<div class="info"><b>${s.name}</b>
+      <span>개체당 점유 면적 ${s.area}cm²</span></div></div>`;
+  }).join('');
+}
+
+function buildTypeGrid(){
+  document.getElementById('typeGrid').innerHTML = Object.keys(TYPES).map(id=>{
+    const t = TYPES[id];
+    return `<button class="type-btn" id="type${id}" onclick="selectType(${id})">
+      <b>${t.name}</b><span>${t.desc}</span></button>`;
+  }).join('');
+}
+
+function selectType(id){
+  currentType = id;
+  document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('type'+id).classList.add('active');
+
+  const t = TYPES[id];
+  document.getElementById('surveyDesc').textContent = t.desc + ' 각 방형구의 꽃을 종별로 세어 아래 칸에 적어 보세요.';
+
+  let html = '';
+  for(let q=0;q<NQ;q++){
+    const counts = {};
+    SPECIES.forEach(s=> counts[s.key] = t.data[s.key][q]);
+    const svg = quadSVG(counts, id*100 + q*7 + 3);
+    const inputs = SPECIES.map(s=>`
+      <div class="in-row">
+        <span class="dot" style="background:${s.hex}"></span>${s.name}
+        <input type="number" min="0" data-q="${q}" data-sp="${s.key}" value="">
+        <span class="ans" data-ans="${q}-${s.key}"></span>
+      </div>`).join('');
+    html += `<div class="quad">
+      <div class="qtitle">방형구 ${q+1}</div>
+      ${svg}
+      <div class="inputs">${inputs}</div>
+    </div>`;
+  }
+  document.getElementById('quadGrid').innerHTML = html;
+  document.getElementById('survey').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('survey').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* 정답 개수 표시 */
+function revealAnswers(){
+  if(!currentType){ alert('먼저 유형을 선택하세요.'); return; }
+  const t = TYPES[currentType];
+  document.querySelectorAll('#quadGrid input').forEach(inp=>{
+    const q = +inp.dataset.q, sp = inp.dataset.sp;
+    const real = t.data[sp][q];
+    const span = document.querySelector(`[data-ans="${q}-${sp}"]`);
+    if(inp.value===''){ span.textContent = '('+real+')'; span.style.color='#697586'; }
+    else{
+      const ok = (+inp.value === real);
+      inp.classList.toggle('correct', ok);
+      inp.classList.toggle('wrong', !ok);
+      span.textContent = ok ? '✔' : '('+real+')';
+      span.style.color = ok ? 'var(--green)' : '#e03131';
+    }
+  });
+}
+
+function autoFill(){
+  if(!currentType){ alert('먼저 유형을 선택하세요.'); return; }
+  const t = TYPES[currentType];
+  document.querySelectorAll('#quadGrid input').forEach(inp=>{
+    inp.value = t.data[inp.dataset.sp][+inp.dataset.q];
+    inp.classList.remove('wrong'); inp.classList.remove('correct');
+  });
+  document.querySelectorAll('.ans').forEach(s=>s.textContent='');
+}
+
+/* ---------- 계산 ---------- */
+function calc(){
+  if(!currentType){ alert('먼저 유형을 선택하세요.'); return; }
+  // 입력값 수집
+  const ind = {}, occ = {}, freqQ = {};
+  SPECIES.forEach(s=>{ ind[s.key]=0; occ[s.key]=0; freqQ[s.key]=0; });
+  for(let q=0;q<NQ;q++){
+    SPECIES.forEach(s=>{
+      const inp = document.querySelector(`input[data-q="${q}"][data-sp="${s.key}"]`);
+      const v = parseInt(inp.value,10) || 0;
+      ind[s.key]+=v;
+      occ[s.key]+=v*s.area;
+      if(v>0) freqQ[s.key]+=1;
+    });
+  }
+  const sumInd = SPECIES.reduce((a,s)=>a+ind[s.key],0);
+  const sumOcc = SPECIES.reduce((a,s)=>a+occ[s.key],0);
+  const sumFreqQ = SPECIES.reduce((a,s)=>a+freqQ[s.key],0);
+
+  if(sumInd===0){ alert('아직 입력된 개체 수가 없습니다. 꽃을 세어 개수를 입력하거나 "정답으로 자동 채우기"를 눌러 보세요.'); return; }
+
+  const rows = SPECIES.map(s=>{
+    const density = ind[s.key]/TOTAL_AREA_M2;            // 개/m²
+    const cover = occ[s.key]/TOTAL_AREA_CM2*100;         // 지면 피복 %
+    const freq = freqQ[s.key]/NQ;                        // 0~1
+    const rDen = sumInd? ind[s.key]/sumInd*100 : 0;      // 상대밀도
+    const rCov = sumOcc? occ[s.key]/sumOcc*100 : 0;      // 상대피도
+    const rFrq = sumFreqQ? freqQ[s.key]/sumFreqQ*100 : 0;// 상대빈도
+    const imp = rDen+rCov+rFrq;
+    return {s, ind:ind[s.key], occ:occ[s.key], freqQ:freqQ[s.key],
+            density, cover, freq, rDen, rCov, rFrq, imp};
+  });
+
+  // 우점종
+  let win = rows[0];
+  rows.forEach(r=>{ if(r.imp>win.imp) win=r; });
+
+  // 표 렌더
+  const f=(n,d=1)=>Number(n.toFixed(d)).toLocaleString();
+  let html = `<thead><tr>
+    <th>식물종</th><th>총 개체수</th><th>개체당<br>면적(cm²)</th><th>총 점유<br>면적(cm²)</th><th>출현<br>방형구 수</th>
+    <th>밀도<br>(개/m²)</th><th>피도<br>(%)</th><th>빈도</th>
+    <th class="grp">상대밀도<br>(%)</th><th class="grp">상대피도<br>(%)</th><th class="grp">상대빈도<br>(%)</th>
+    <th class="grp2">중요치</th></tr></thead><tbody>`;
+  rows.forEach(r=>{
+    html += `<tr class="${r===win?'winner':''}">
+      <th><span class="dot" style="display:inline-block;width:11px;height:11px;border-radius:50%;background:${r.s.hex};margin-right:5px;"></span>${r.s.name}${r===win?' 👑':''}</th>
+      <td>${r.ind}</td><td>${r.s.area}</td><td>${r.occ}</td><td>${r.freqQ} / ${NQ}</td>
+      <td>${f(r.density,0)}</td><td>${f(r.cover,1)}</td><td>${r.freqQ}/${NQ} (${f(r.freq,2)})</td>
+      <td class="grp">${f(r.rDen,1)}</td><td class="grp">${f(r.rCov,1)}</td><td class="grp">${f(r.rFrq,1)}</td>
+      <td class="grp2"><b>${f(r.imp,1)}</b></td></tr>`;
+  });
+  html += `<tr><th>합계</th><td>${sumInd}</td><td>-</td><td>${sumOcc}</td><td>-</td>
+    <td>-</td><td>-</td><td>-</td><td class="grp">100</td><td class="grp">100</td><td class="grp">100</td>
+    <td class="grp2">300</td></tr></tbody>`;
+  document.getElementById('resTable').innerHTML = html;
+
+  document.getElementById('dominant').innerHTML =
+    `🏆 이 식물 군집의 우점종은 <b>${win.s.name}</b> 입니다. `
+    + `<br><span style="font-size:14.5px;">중요치 ${f(win.imp,1)} (상대밀도 ${f(win.rDen,1)} + 상대피도 ${f(win.rCov,1)} + 상대빈도 ${f(win.rFrq,1)})</span>`;
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+/* ---------- 활동지 인쇄 ---------- */
+function printWorksheet(){
+  window.print();
+}
+
+/* 초기화 */
+buildLegend();
+buildTypeGrid();
+</script>
+</body>
+</html>

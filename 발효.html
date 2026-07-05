@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>발효 시뮬레이션</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Black+Han+Sans&display=swap');
+  :root {
+    --bg: #f4f1e8; --ink: #2b2520; --enzyme-bg: #d9cf9c;
+    --nadh: #e9a0c3; --nad: #f3d9e6; --atp: #f5a623; --co2: #6dc7e0; --arrow: #cfc6dd;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Gowun Dodum', sans-serif;
+    background: radial-gradient(circle at 20% 10%, #faf7ee 0%, transparent 50%),
+                radial-gradient(circle at 80% 90%, #ece6d2 0%, transparent 50%), var(--bg);
+    color: var(--ink); min-height: 100vh; padding: 24px 16px 60px;
+  }
+  header { text-align: center; margin-bottom: 18px; }
+  header h1 { font-family: 'Black Han Sans', sans-serif; font-size: clamp(26px, 4vw, 42px); letter-spacing: 1px; }
+  header p { margin-top: 6px; font-size: 15px; color: #6b6256; }
+  .controls { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 0 auto 16px; max-width: 900px; }
+  button {
+    font-family: 'Gowun Dodum', sans-serif; font-size: 16px; padding: 12px 22px;
+    border: 2px solid var(--ink); border-radius: 40px; background: #fff; color: var(--ink);
+    cursor: pointer; font-weight: bold; transition: transform .15s, box-shadow .15s, opacity .2s;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  button:hover:not(:disabled) { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+  button:active:not(:disabled) { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  button:disabled { opacity: .35; cursor: not-allowed; box-shadow: 2px 2px 0 #999; border-color:#999; color:#999; }
+  button.alcohol { background: #fdeede; }
+  button.lactate { background: #e4f0e4; }
+  button.reset { background: #efe9da; }
+  .stage-wrap {
+    max-width: 1040px; margin: 0 auto; background: #fffdf7; border: 2px solid var(--ink);
+    border-radius: 18px; box-shadow: 6px 6px 0 rgba(43,37,32,.15); padding: 10px;
+  }
+  svg { width: 100%; height: auto; display: block; }
+  .status { max-width: 1040px; margin: 14px auto 0; text-align: center; font-size: 17px; min-height: 26px; color: #27632a; font-weight: bold; }
+  .atom { fill: url(#atomGrad); stroke: #1d4d73; stroke-width: 1.5; }
+  .bond { stroke: #1d4d73; stroke-width: 5; stroke-linecap: round; }
+  .clickable { cursor: pointer; }
+  .clickable:hover .atom { filter: brightness(1.15); }
+  .hint { font-size: 13px; fill: #8a8170; font-family: 'Gowun Dodum', sans-serif; }
+  .label { font-family: 'Gowun Dodum', sans-serif; font-size: 16px; fill: var(--ink); text-anchor: middle; font-weight: bold; }
+  .sub { font-size: 11px; }
+  .pulse { animation: pulse 1.4s infinite ease-in-out; }
+  @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
+  .fade-in { animation: fadeIn .6s ease forwards; }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  .glycolysis-box { fill: var(--enzyme-bg); stroke: #b3a878; stroke-width: 1.5; }
+  .legend { max-width:1040px; margin: 18px auto 0; display:flex; flex-wrap:wrap; gap:18px; justify-content:center; font-size:13px; color:#6b6256; }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .dot { width:14px; height:14px; border-radius:50%; display:inline-block; }
+  footer { text-align: center; margin-top: 32px; font-size: 13px; color: #8a8170; font-weight: bold; }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<header>
+  <h1>알코올 발효 &amp; 젖산 발효 시뮬레이션</h1>
+  <p>포도당을 클릭해 해당 과정을 진행한 뒤, 발효 방식을 선택해 보세요.</p>
+</header>
+<div class="controls">
+  <button id="btnAlcohol" class="alcohol" disabled>🍺 알코올 발효</button>
+  <button id="btnLactate" class="lactate" disabled>💪 젖산 발효</button>
+  <button id="btnReset" class="reset">↻ 처음으로</button>
+</div>
+<div class="stage-wrap">
+  <svg id="stage" viewBox="0 0 1040 640" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="atomGrad" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#7eb8e8"/><stop offset="60%" stop-color="#2e6da4"/><stop offset="100%" stop-color="#1d4d73"/>
+      </radialGradient>
+      <radialGradient id="atpGrad" cx="40%" cy="35%" r="70%">
+        <stop offset="0%" stop-color="#ffe08a"/><stop offset="100%" stop-color="#f5a623"/>
+      </radialGradient>
+      <marker id="arrowHead" markerWidth="12" markerHeight="12" refX="6" refY="6" orient="auto"><path d="M1,1 L11,6 L1,11 Z" fill="var(--arrow)"/></marker>
+      <marker id="curveHead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M1,1 L9,5 L1,9 Z" fill="#555"/></marker>
+      <marker id="curveHeadGreen" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M1,1 L9,5 L1,9 Z" fill="#27632a"/></marker>
+    </defs>
+    <g id="glycolysisGroup" opacity="0.35">
+      <path d="M250,210 L770,210" stroke="var(--arrow)" stroke-width="32" stroke-linecap="round" marker-end="url(#arrowHead)"/>
+      <rect class="glycolysis-box" x="440" y="184" width="140" height="52" rx="6"/>
+      <text class="label" x="510" y="217">해당 과정</text>
+      <path d="M465,184 C465,138 550,138 555,170" fill="none" stroke="#555" stroke-width="2.5" marker-end="url(#curveHead)"/>
+      <text class="label sub" x="440" y="138" text-anchor="end">2ADP + 2Pᵢ</text>
+      <g id="atpStar" opacity="0">
+        <polygon points="600,118 611,146 641,146 617,164 627,193 600,175 573,193 583,164 559,146 589,146" fill="url(#atpGrad)" stroke="#d98c0a" stroke-width="1.5"/>
+        <text class="label" x="600" y="158" font-size="14">2 ATP</text>
+      </g>
+      <path d="M465,236 C465,286 550,286 558,256" fill="none" stroke="#555" stroke-width="2.5" marker-end="url(#curveHead)"/>
+      <text class="label sub" x="440" y="278" text-anchor="end">2NAD⁺</text>
+      <g id="nadhBubble" opacity="0">
+        <ellipse cx="600" cy="276" rx="42" ry="22" fill="var(--nadh)" stroke="#c76f9c" stroke-width="1.5"/>
+        <text class="label" x="600" y="282" font-size="15">2 NADH</text>
+      </g>
+    </g>
+    <g id="regenGroup" opacity="0">
+      <path id="regenArrow" d="M600,300 C600,420 470,470 430,500" fill="none" stroke="#27632a" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#curveHeadGreen)"/>
+      <g id="nadBubble">
+        <ellipse cx="470" cy="430" rx="40" ry="22" fill="var(--nad)" stroke="#b07a96" stroke-width="1.5"/>
+        <text class="label" x="470" y="436" font-size="15">2 NAD⁺</text>
+      </g>
+      <text id="regenText" class="label sub" x="470" y="470" fill="#27632a" font-size="13">NADH → NAD⁺ 재생</text>
+    </g>
+    <g id="glucoseLayer"></g>
+    <g id="pyruvateLayer"></g>
+    <g id="productLayer"></g>
+    <g id="co2Layer"></g>
+    <text id="clickHint" class="hint pulse" x="160" y="280" text-anchor="middle">▲ 포도당을 클릭하세요</text>
+  </svg>
+</div>
+<div class="status" id="status">포도당(C₆H₁₂O₆)을 클릭하면 해당 과정이 시작됩니다.</div>
+<div class="legend">
+  <span><span class="dot" style="background:#2e6da4"></span>탄소 골격(분자)</span>
+  <span><span class="dot" style="background:var(--atp)"></span>ATP</span>
+  <span><span class="dot" style="background:var(--nadh)"></span>NADH</span>
+  <span><span class="dot" style="background:var(--nad)"></span>NAD⁺(재생)</span>
+  <span><span class="dot" style="background:var(--co2)"></span>CO₂</span>
+</div>
+<footer>
+  All Rights Reserved (무단 전재 및 재배포 금지)
+</footer>
+<script>
+const SVGNS = "http://www.w3.org/2000/svg";
+const glucoseLayer=document.getElementById('glucoseLayer');
+const pyruvateLayer=document.getElementById('pyruvateLayer');
+const productLayer=document.getElementById('productLayer');
+const co2Layer=document.getElementById('co2Layer');
+const glyGroup=document.getElementById('glycolysisGroup');
+const regenGroup=document.getElementById('regenGroup');
+const atpStar=document.getElementById('atpStar');
+const nadhBubble=document.getElementById('nadhBubble');
+const statusEl=document.getElementById('status');
+const clickHint=document.getElementById('clickHint');
+const btnAlcohol=document.getElementById('btnAlcohol');
+const btnLactate=document.getElementById('btnLactate');
+const btnReset=document.getElementById('btnReset');
+let state='start';
+function makeMolecule(x,y,n,opts={}){
+  const g=document.createElementNS(SVGNS,'g');
+  const r=opts.r||16; const gap=opts.gap||(r*2+4); const totalW=(n-1)*gap;
+  for(let i=0;i<n-1;i++){
+    const line=document.createElementNS(SVGNS,'line');
+    line.setAttribute('class','bond');
+    line.setAttribute('x1',x-totalW/2+i*gap); line.setAttribute('y1',y);
+    line.setAttribute('x2',x-totalW/2+(i+1)*gap); line.setAttribute('y2',y);
+    g.appendChild(line);
+  }
+  for(let i=0;i<n;i++){
+    const c=document.createElementNS(SVGNS,'circle');
+    c.setAttribute('class','atom');
+    c.setAttribute('cx',x-totalW/2+i*gap); c.setAttribute('cy',y); c.setAttribute('r',r);
+    g.appendChild(c);
+  }
+  return g;
+}
+function makeLabel(x,y,text,size){
+  const t=document.createElementNS(SVGNS,'text');
+  t.setAttribute('class','label'); t.setAttribute('x',x); t.setAttribute('y',y);
+  if(size) t.setAttribute('font-size',size); t.textContent=text; return t;
+}
+function clearLayers(){[glucoseLayer,pyruvateLayer,productLayer,co2Layer].forEach(l=>l.innerHTML='');}
+function drawGlucose(){
+  clearLayers();
+  const g=document.createElementNS(SVGNS,'g');
+  g.setAttribute('class','clickable'); g.setAttribute('id','glucoseMol');
+  g.appendChild(makeMolecule(160,210,6));
+  g.appendChild(makeLabel(160,258,'포도당(C₆H₁₂O₆)'));
+  g.addEventListener('click',startGlycolysis);
+  glucoseLayer.appendChild(g);
+}
+function startGlycolysis(){
+  if(state!=='start')return;
+  state='glycolysis'; clickHint.style.display='none';
+  const gm=document.getElementById('glucoseMol');
+  gm.style.transition='opacity .5s, transform .6s';
+  gm.style.transformOrigin='160px 210px';
+  gm.style.transform='scale(0.6)'; gm.style.opacity='0';
+  glyGroup.style.transition='opacity .6s'; glyGroup.style.opacity='1';
+  statusEl.textContent='해당 과정 진행 중… 포도당이 2분자의 피루브산으로 분해됩니다.';
+  setTimeout(()=>{atpStar.style.transition='opacity .5s';atpStar.style.opacity='1';},500);
+  setTimeout(()=>{nadhBubble.style.transition='opacity .5s';nadhBubble.style.opacity='1';},800);
+  setTimeout(()=>{
+    gm.remove(); drawTwoPyruvate();
+    statusEl.textContent='포도당이 2개의 피루브산(C₃H₄O₃)으로 분해되었습니다! 발효 방식을 선택하세요.';
+    btnAlcohol.disabled=false; btnLactate.disabled=false; state='done';
+  },1000);
+}
+function drawTwoPyruvate(){
+  pyruvateLayer.innerHTML='';
+  const top=document.createElementNS(SVGNS,'g');
+  top.setAttribute('id','pyrTop'); top.classList.add('fade-in');
+  top.appendChild(makeMolecule(910,180,3));
+  top.appendChild(makeLabel(910,222,'피루브산',14));
+  pyruvateLayer.appendChild(top);
+  const bot=document.createElementNS(SVGNS,'g');
+  bot.setAttribute('id','pyrBot'); bot.classList.add('fade-in');
+  bot.appendChild(makeMolecule(910,280,3));
+  bot.appendChild(makeLabel(910,322,'피루브산',14));
+  pyruvateLayer.appendChild(bot);
+  pyruvateLayer.appendChild(makeLabel(910,150,'(C₃H₄O₃) × 2',13));
+}
+function showRegen(msg){
+  document.getElementById('regenText').textContent=msg;
+  regenGroup.style.transition='opacity .6s'; regenGroup.style.opacity='1';
+}
+function alcoholFermentation(){
+  if(state!=='done')return;
+  state='ferment'; btnAlcohol.disabled=true; btnLactate.disabled=true;
+  productLayer.innerHTML=''; co2Layer.innerHTML='';
+  statusEl.textContent='알코올 발효: 각 피루브산에서 CO₂가 빠져나간 뒤, NADH의 수소를 받아 에탄올로 환원됩니다.';
+  const top=document.getElementById('pyrTop'); const bot=document.getElementById('pyrBot');
+  top.style.transition='transform 1s'; bot.style.transition='transform 1s';
+  top.style.transform='translate(-560px, 200px)';
+  bot.style.transform='translate(-560px, 230px)';
+  setTimeout(()=>{
+    [{x:480,y:360},{x:480,y:490}].forEach((p,i)=>{
+      const g=document.createElementNS(SVGNS,'g'); g.classList.add('fade-in');
+      const c=document.createElementNS(SVGNS,'circle');
+      c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r',18);
+      c.setAttribute('fill','var(--co2)'); c.setAttribute('stroke','#3a9cbf'); c.setAttribute('stroke-width','1.5');
+      g.appendChild(c); g.appendChild(makeLabel(p.x,p.y+4,'CO₂',12));
+      co2Layer.appendChild(g);
+      setTimeout(()=>{g.style.transition='transform 1.4s ease-out, opacity 1.4s';g.style.transform='translate(30px,-70px)';g.style.opacity='0.35';},150+i*120);
+    });
+  },1000);
+  setTimeout(()=>showRegen('NADH → NAD⁺ 재생 (해당 과정으로 복귀)'),1200);
+  setTimeout(()=>{
+    top.remove(); bot.remove();
+    [{y:380},{y:510}].forEach(p=>{
+      const g=document.createElementNS(SVGNS,'g'); g.classList.add('fade-in');
+      g.appendChild(makeMolecule(350,p.y,2));
+      g.appendChild(makeLabel(350,p.y+40,'에탄올(C₂H₅OH)',14));
+      productLayer.appendChild(g);
+    });
+    statusEl.textContent='✅ 알코올 발효 완료! 1 포도당 → 2 에탄올 + 2 CO₂ + 2 ATP, NADH는 NAD⁺로 재생';
+  },1600);
+  btnReset.disabled=false;
+}
+function lactateFermentation(){
+  if(state!=='done')return;
+  state='ferment'; btnAlcohol.disabled=true; btnLactate.disabled=true;
+  productLayer.innerHTML=''; co2Layer.innerHTML='';
+  statusEl.textContent='젖산 발효: 각 피루브산이 NADH의 수소를 받아 젖산으로 환원됩니다 (CO₂ 방출 없음).';
+  const top=document.getElementById('pyrTop'); const bot=document.getElementById('pyrBot');
+  top.style.transition='transform 1s'; bot.style.transition='transform 1s';
+  top.style.transform='translate(-560px, 200px)';
+  bot.style.transform='translate(-560px, 230px)';
+  setTimeout(()=>showRegen('NADH → NAD⁺ 재생 (해당 과정으로 복귀)'),900);
+  setTimeout(()=>{
+    top.remove(); bot.remove();
+    [{y:380},{y:510}].forEach(p=>{
+      const g=document.createElementNS(SVGNS,'g'); g.classList.add('fade-in');
+      g.appendChild(makeMolecule(350,p.y,3));
+      g.appendChild(makeLabel(350,p.y+40,'젖산(C₃H₆O₃)',14));
+      productLayer.appendChild(g);
+    });
+    statusEl.textContent='✅ 젖산 발효 완료! 1 포도당 → 2 젖산 + 2 ATP, NADH는 NAD⁺로 재생 (CO₂ 없음)';
+  },1300);
+  btnReset.disabled=false;
+}
+function reset(){
+  state='start';
+  glyGroup.style.opacity='0.35'; regenGroup.style.opacity='0';
+  atpStar.style.opacity='0'; nadhBubble.style.opacity='0';
+  btnAlcohol.disabled=true; btnLactate.disabled=true;
+  clickHint.style.display='';
+  statusEl.textContent='포도당(C₆H₁₂O₆)을 클릭하면 해당 과정이 시작됩니다.';
+  drawGlucose();
+}
+btnAlcohol.addEventListener('click',alcoholFermentation);
+btnLactate.addEventListener('click',lactateFermentation);
+btnReset.addEventListener('click',reset);
+drawGlucose();
+</script>
+</body>
+</html>

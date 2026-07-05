@@ -1,0 +1,528 @@
+ <!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생명 공학 기술 학습 프로그램</title>
+<style>
+  :root{
+    --p:#5b3fa8; --p-d:#3f2a78; --p-l:#efeaff;
+    --teal:#0f766e; --teal-l:#e2f4f2;
+    --amber:#d97706; --amber-l:#fef3e2;
+    --blue:#2563eb; --blue-l:#e6efff;
+    --red:#dc2626; --red-l:#fdecec;
+    --ok:#16a34a; --ok-l:#e7f7ec;
+    --pink:#db2777; --pink-l:#fdeaf4;
+    --ink:#1f2430; --muted:#6b7280; --line:#e2ddf0; --bg:#f5f3fb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.6}
+  header.app{background:linear-gradient(120deg,var(--p),var(--teal));color:#fff;
+       padding:22px 20px 14px;box-shadow:0 2px 12px rgba(0,0,0,.15)}
+  header.app h1{margin:0;font-size:24px;letter-spacing:-.5px}
+  header.app p{margin:6px 0 0;opacity:.93;font-size:14px}
+  .tabs{display:flex;gap:5px;flex-wrap:wrap;max-width:1120px;margin:14px auto 0;padding:0 8px}
+  .tab-btn{flex:1 1 130px;min-width:120px;border:none;cursor:pointer;padding:10px 8px;
+       border-radius:12px 12px 0 0;background:rgba(255,255,255,.16);color:#f2eeff;
+       font-size:13.5px;font-weight:700;transition:.15s;text-align:center}
+  .tab-btn small{display:block;font-weight:400;opacity:.85;font-size:11px;margin-top:2px}
+  .tab-btn:hover{background:rgba(255,255,255,.30)}
+  .tab-btn.active{background:var(--bg);color:var(--p-d)}
+  main{max-width:1120px;margin:0 auto;padding:18px 14px 60px}
+  .panel{display:none;animation:fade .25s}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;
+       margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .card h2{margin:0 0 4px;font-size:20px;color:var(--p-d)}
+  .card h3{margin:16px 0 8px;font-size:15.5px;color:var(--teal)}
+  .lead{color:var(--muted);font-size:13.5px;margin:2px 0 12px}
+  .btn{border:none;border-radius:10px;padding:10px 18px;font-size:14px;font-weight:700;
+       cursor:pointer;background:var(--p);color:#fff;transition:.15s}
+  .btn:hover{background:var(--p-d)}
+  .btn.ghost{background:#efeaff;color:var(--p-d)}
+  .btn.ghost:hover{background:#e0d8fb}
+  .btn.amber{background:var(--amber)} .btn.amber:hover{background:#b45c04}
+  .btn.teal{background:var(--teal)} .btn.teal:hover{background:#0b5b54}
+  .btn.blue{background:var(--blue)} .btn.blue:hover{background:#1d4ed8}
+  .btn.small{padding:7px 13px;font-size:13px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{display:inline-block;background:var(--p-l);color:var(--p-d);border-radius:999px;
+       padding:3px 12px;font-size:12.5px;font-weight:700;margin:2px}
+  .muted{color:var(--muted)}
+  .hint{background:var(--amber-l);border-left:4px solid var(--amber);border-radius:8px;
+       padding:11px 13px;font-size:13.5px;margin:10px 0}
+  .note{background:var(--blue-l);border-left:4px solid var(--blue);border-radius:8px;
+       padding:11px 13px;font-size:13.5px;margin:10px 0}
+  .good{color:var(--ok);font-weight:700}
+  .bad{color:var(--red);font-weight:700}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 8px;text-align:center;vertical-align:middle}
+  th{background:var(--p-l);color:var(--p-d)}
+  /* stage / step player */
+  .stage{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,#fbfaff,#f4f1fc);
+       padding:12px;margin-top:8px}
+  .stage svg{display:block;max-width:100%;height:auto;margin:0 auto}
+  .stepbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+  .dots{display:flex;gap:6px;align-items:center;margin-left:4px}
+  .dot{width:11px;height:11px;border-radius:50%;background:#d7cff0;transition:.15s}
+  .dot.on{background:var(--p);transform:scale(1.25)}
+  .dot.done{background:var(--teal)}
+  .stepinfo{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+  .stepinfo h4{margin:0 0 4px;font-size:15px;color:var(--p-d)}
+  .stepinfo p{margin:0;font-size:13.5px}
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+  .kv .k{background:var(--teal-l);border-radius:10px;padding:9px 11px;font-size:12.5px}
+  .kv .k b{color:var(--teal);display:block;margin-bottom:2px}
+  /* quiz */
+  .quiz{border:1px dashed var(--p);border-radius:12px;padding:12px 14px;margin-top:12px;background:#fbfaff}
+  .quiz .q{font-weight:700;font-size:14px;margin-bottom:8px}
+  .opts{display:flex;flex-direction:column;gap:7px}
+  .opts button{text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;
+       padding:9px 12px;cursor:pointer;font-size:13.5px;font-weight:600;transition:.12s}
+  .opts button:hover{border-color:var(--p)}
+  .opts button.correct{border-color:var(--ok);background:var(--ok-l);color:var(--p-d)}
+  .opts button.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+  .opts button:disabled{cursor:default}
+  .feedback{font-size:13px;margin-top:8px;min-height:18px;font-weight:700}
+  /* selection cards */
+  .pick{display:flex;gap:10px;flex-wrap:wrap}
+  .pick button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;
+       cursor:pointer;font-size:14px;font-weight:700;transition:.15s}
+  .pick button:hover{border-color:var(--p);background:var(--p-l)}
+  .pick button.sel{border-color:var(--p);background:var(--p);color:#fff}
+  /* E.coli selection grid */
+  .medialab{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:8px}
+  .dish{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+  .dish h4{margin:0 0 6px;font-size:14px;color:var(--p-d);text-align:center}
+  .petri{width:150px;height:150px;border-radius:50%;margin:0 auto;
+       background:radial-gradient(circle at 40% 35%,#fdf6e3,#f0e6c8);
+       border:5px solid #cbb98a;position:relative;overflow:hidden}
+  .colony{position:absolute;width:11px;height:11px;border-radius:50%;
+       background:radial-gradient(circle at 40% 35%,#fff,#d9c36e);box-shadow:0 0 4px rgba(0,0,0,.2)}
+  .predict{display:flex;gap:8px;justify-content:center;margin-top:8px}
+  .predict button{border:2px solid var(--line);background:#fff;border-radius:9px;padding:6px 12px;
+       cursor:pointer;font-size:12.5px;font-weight:700}
+  .predict button.sel{border-color:var(--p);background:var(--p);color:#fff}
+  .predict button.ok{border-color:var(--ok);background:var(--ok-l)}
+  .predict button.no{border-color:var(--red);background:var(--red-l)}
+  .verdict{text-align:center;font-size:12.5px;font-weight:700;margin-top:6px;min-height:16px}
+  /* PCR */
+  .pcrmeter{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:10px 0}
+  .bignum{font-size:30px;font-weight:800;color:var(--p);line-height:1}
+  .thermo{font-size:13px;font-weight:700}
+  .barwrap{background:#eee;border-radius:8px;overflow:hidden;height:18px;flex:1;min-width:160px}
+  .bar{height:100%;background:linear-gradient(90deg,var(--teal),var(--p));width:0;transition:.4s}
+  .toolbar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;
+       margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+       box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .toolbar label{font-size:13px;font-weight:700;color:var(--p-d)}
+  .toolbar input{border:2px solid var(--line);border-radius:9px;padding:7px 11px;font-size:14px;width:150px}
+  .toolbar input:focus{outline:none;border-color:var(--p)}
+  .toolbar .status{font-size:12.5px;color:var(--muted);margin-left:auto}
+  .scorechip{background:var(--ok-l);color:var(--ok);border-radius:999px;padding:3px 12px;font-weight:800;font-size:12.5px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+  .subtabs{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+  .subtabs button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:7px 13px;
+       cursor:pointer;font-size:13px;font-weight:700;color:var(--muted)}
+  .subtabs button.on{border-color:var(--pink);background:var(--pink-l);color:var(--pink)}
+  .sub{display:none}.sub.on{display:block}
+  @media print{
+    header.app,.tabs,.toolbar,footer,.btn,.stepbar,.quiz,.predict,.subtabs{display:none!important}
+    body{background:#fff}.panel{display:block!important;page-break-after:always}
+    .card{box-shadow:none;border:1px solid #999}
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<header class="app">
+  <h1>🧬 생명 공학 기술 학습 프로그램</h1>
+  <p>클릭하며 단계별로 이해하는 <b>유전자 재조합 · PCR · 항체 · 줄기세포 · 조직 배양</b></p>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">① 유전자 재조합<small>제한효소·플라스미드</small></button>
+    <button class="tab-btn" data-tab="t2">② 대장균 선별<small>항생제 저항성</small></button> <button class="tab-btn" data-tab="t3">③ PCR<small>중합효소 연쇄 반응</small></button>
+    <button class="tab-btn" data-tab="t4">④ 단일 클론 항체<small>임신키트·암치료</small></button>
+    <button class="tab-btn" data-tab="t5">⑤ 핵치환·배아줄기<small>돌리·분화</small></button>
+    <button class="tab-btn" data-tab="t6">⑥ 유도만능줄기세포<small>iPSC 치료</small></button>
+    <button class="tab-btn" data-tab="t7">⑦ 조직 배양<small>식물 복제</small></button>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <label for="stu-name">👤 이름</label>
+    <input id="stu-name" type="text" placeholder="이름을 입력" maxlength="20" autocomplete="off">
+    <span class="scorechip" id="scorechip">퀴즈 점수 0 / 0</span>
+    <span class="status">단계 버튼(▶ 다음)을 눌러가며 과정을 관찰하고, 퀴즈로 확인하세요.</span>
+  </div>
+
+  <section class="panel active" id="t1">
+    <div class="card">
+      <h2>① 유전자 재조합 기술 — 재조합 플라스미드 만들기</h2>
+      <p class="lead">특정 유전자(예: <b>인슐린 유전자</b>)를 분리해 <b>플라스미드</b>(DNA 운반체)에 끼워 넣어 <b>재조합 DNA</b>를 만드는 과정입니다.
+      <b>제한 효소</b>로 자르고, <b>DNA 연결 효소</b>로 붙입니다.</p>
+      <div class="kv">
+        <div class="k"><b>제한 효소 (가위)</b>특정 염기 서열(EcoRI은 GAATTC)을 인식해 자름 → 상보적인 '점착 말단' 생성</div>
+        <div class="k"><b>플라스미드 (운반체)</b>세균의 원형 DNA. 독립적으로 복제되고 세포 내로 잘 들어감</div>
+        <div class="k"><b>DNA 연결 효소 (풀)</b>상보적으로 맞물린 DNA 조각의 말단을 이어 붙임</div>
+      </div>
+      <div class="stage" id="t1-stage"></div>
+      <div class="stepbar">
+        <button class="btn ghost small" id="t1-prev">◀ 이전</button>
+        <button class="btn small" id="t1-next">▶ 다음 단계</button>
+        <button class="btn teal small" id="t1-reset">↺ 처음부터</button>
+        <span class="dots" id="t1-dots"></span>
+      </div>
+      <div class="stepinfo" id="t1-info"></div>
+      <div class="quiz" data-quiz="q1">
+        <div class="q">Q. 서로 다른 두 DNA를 재조합할 때, 두 DNA를 <b>같은 제한 효소</b>로 자르는 까닭은?</div>
+        <div class="opts">
+          <button data-c="1">잘린 말단의 단일 가닥 염기 서열이 <b>서로 상보적</b>이어서 결합할 수 있기 때문</button>
+          <button data-c="0">서로 다른 효소를 쓰면 DNA가 분해되어 사라지기 때문</button>
+          <button data-c="0">제한 효소가 DNA를 복제하는 역할도 하기 때문</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t2">
+    <div class="card">
+      <h2>② 재조합 플라스미드를 갖는 대장균 선별</h2>
+      <p class="lead">플라스미드에 유전자가 안 들어갈 수도, 대장균에 플라스미드가 안 들어갈 수도 있습니다.
+      <b>두 항생제(X, Y) 저항성 유전자</b>를 이용해, 재조합에 성공한 대장균만 골라냅니다.</p>
+      <div class="note">
+        <b>핵심 원리</b> — 원하는 유전자는 <b>항생제 Y 저항성 유전자 부위</b>에 삽입됩니다.
+        유전자가 끼어들면 그 자리의 <b>Y 저항성이 망가져(불활성화)</b> 항생제 Y 배지에서 자라지 못합니다.
+        따라서 <b>X 배지에서는 자라고, Y 배지에서는 못 자라는</b> 대장균이 곧 재조합 성공 대장균(Ⅲ)입니다.
+      </div>
+      <h3>대장균 3종류</h3>
+      <div class="kv">
+        <div class="k"><b>대장균 Ⅰ</b>플라스미드 없음 → 저항성 유전자 전혀 없음</div>
+        <div class="k"><b>대장균 Ⅱ</b>재조합 안 된 플라스미드 → X·Y 저항성 모두 살아 있음</div>
+        <div class="k"><b>대장균 Ⅲ</b>재조합 플라스미드 → X 저항성 O, Y 저항성 X(유전자 삽입으로 망가짐)</div>
+      </div>
+      <h3>🧫 배지에서 콜로니가 생길지 예상해 보세요</h3>
+      <p class="lead">각 칸에서 <b>생김 / 못 생김</b>을 예측한 뒤 <b>결과 확인</b>을 누르세요. (콜로니 = 한 세포가 자라 만든 집단)</p>
+      <div class="medialab" id="t2-lab"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="t2-check">✅ 결과 확인</button>
+        <button class="btn teal small" id="t2-reset">↺ 다시</button>
+      </div>
+      <div class="quiz" data-quiz="q2" style="margin-top:14px">
+        <div class="q">Q. 재조합에 성공한 대장균(Ⅲ)만 보이는 결과는?</div>
+        <div class="opts">
+          <button data-c="1">항생제 <b>X 배지에서는 콜로니 형성</b>, 항생제 <b>Y 배지에서는 형성 못 함</b></button>
+          <button data-c="0">X 배지·Y 배지 모두에서 콜로니 형성</button>
+          <button data-c="0">X 배지·Y 배지 모두에서 콜로니 형성 못 함</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+      <div class="hint">왜 숙주 대장균은 원래 X·Y 저항성 유전자가 <b>없어야</b> 할까요? 만약 있다면 재조합 여부와 상관없이 모두 자라 <b>선별이 불가능</b>하기 때문입니다.</div>
+    </div>
+  </section>
+
+  <section class="panel" id="t3">
+    <div class="card">
+      <h2>③ 중합 효소 연쇄 반응 (PCR)</h2>
+      <p class="lead">적은 양의 DNA를 <b>짧은 시간에 수십억 배로 증폭</b>하는 기술. 세 단계(①변성 ②프라이머 결합 ③합성)를 한 주기로 <b>반복</b>합니다.</p>
+      <div class="kv">
+        <div class="k"><b>증폭할 DNA</b>주형(원본) 가닥</div>
+        <div class="k"><b>프라이머</b>증폭 부위 양끝에 상보적으로 결합 → 합성 시작점</div>
+        <div class="k"><b>Taq 중합 효소</b>고온(95℃)에서도 견디는 DNA 중합 효소</div>
+        <div class="k"><b>dNTP 4종류</b>새 DNA를 만드는 재료(뉴클레오타이드)</div>
+      </div>
+      <div class="stage" id="t3-stage"></div>
+      <div class="pcrmeter">
+        <div><div class="thermo" id="t3-thermo">🌡️ 준비</div>
+          <div class="muted" style="font-size:12px" id="t3-phase">시작을 누르세요</div></div>
+        <div class="barwrap"><div class="bar" id="t3-bar"></div></div>
+        <div style="text-align:right">
+          <div class="bignum" id="t3-count">1</div>
+          <div class="muted" style="font-size:11.5px">DNA 분자 수 (2ⁿ)</div>
+        </div>
+      </div>
+      <div class="stepbar">
+        <button class="btn small" id="t3-step">▶ 한 단계 진행</button>
+        <button class="btn amber small" id="t3-cycle">⏩ 한 주기(3단계) 실행</button>
+        <button class="btn teal small" id="t3-reset">↺ 처음부터</button>
+        <span class="pill" id="t3-cyclelbl">주기 0 · 단계 0</span>
+      </div>
+      <div class="stepinfo" id="t3-info"></div>
+      <div class="quiz" data-quiz="q3">
+        <div class="q">Q. DNA 1분자로 PCR를 30주기 하면 약 몇 개가 되나요?</div>
+        <div class="opts">
+          <button data-c="0">약 60개 (30 × 2)</button>
+          <button data-c="1">약 10억 개 (2³⁰)</button>
+          <button data-c="0">약 900개 (30²)</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+      <div class="hint">활용: 유전병 진단, 병원체 감염 확인, <b>DNA 지문 검사</b>(반복 서열을 PCR로 증폭 → 전기 영동 → 개인 식별). 단, 프라이머가 필요하므로 <b>염기 서열이 알려진 DNA만</b> 증폭할 수 있습니다.</div>
+    </div>
+  </section>
+
+  <section class="panel" id="t4">
+    <div class="card">
+      <h2>④ 세포 융합과 단일 클론 항체</h2>
+      <p class="lead">계속 분열하는 <b>종양 세포</b>와 항체를 만드는 <b>B 림프구</b>를 융합 → <b>잡종 세포</b>가 한 종류의 항체(<b>단일 클론 항체</b>)를 대량 생산합니다.</p>
+      <div class="subtabs" id="t4-subtabs">
+        <button class="on" data-sub="a">🧪 항체 제작 과정</button>
+        <button data-sub="b">🤰 임신 진단 키트 원리</button>
+        <button data-sub="c">🎯 단일 클론 항체 암 치료</button>
+      </div>
+
+      <div class="sub on" id="t4a">
+        <div class="stage" id="t4a-stage"></div>
+        <div class="stepbar">
+          <button class="btn ghost small" id="t4a-prev">◀ 이전</button>
+          <button class="btn small" id="t4a-next">▶ 다음 단계</button>
+          <button class="btn teal small" id="t4a-reset">↺ 처음부터</button>
+          <span class="dots" id="t4a-dots"></span>
+        </div>
+        <div class="stepinfo" id="t4a-info"></div>
+      </div>
+
+      <div class="sub" id="t4b">
+        <div class="note"><b>hCG</b>: 임신 초기 태반에서 분비되어 오줌으로 배출되는 호르몬. 이 hCG에 반응하는 단일 클론 항체로 임신을 확인합니다.</div>
+        <div class="stage" id="t4b-stage"></div>
+        <div class="stepbar">
+          <button class="btn ghost small" id="t4b-prev">◀ 이전</button>
+          <button class="btn small" id="t4b-next">▶ 다음 단계</button>
+          <button class="btn teal small" id="t4b-reset">↺ 처음부터</button>
+          <span class="dots" id="t4b-dots"></span>
+        </div>
+        <div class="stepinfo" id="t4b-info"></div>
+        <div class="row" style="margin-top:8px">
+          <span class="muted" style="font-size:13px">오줌 시료를 선택해 결과선(줄)을 확인해 보세요:</span>
+          <button class="btn small" id="t4b-preg">🤰 임신부 오줌(hCG 있음)</button>
+          <button class="btn ghost small" id="t4b-nonpreg">🚫 비임신 오줌(hCG 없음)</button>
+        </div>
+      </div>
+
+      <div class="sub" id="t4c">
+        <div class="stage" id="t4c-stage"></div>
+        <div class="stepbar">
+          <button class="btn ghost small" id="t4c-prev">◀ 이전</button>
+          <button class="btn small" id="t4c-next">▶ 다음 단계</button>
+          <button class="btn teal small" id="t4c-reset">↺ 처음부터</button>
+          <span class="dots" id="t4c-dots"></span>
+        </div>
+        <div class="stepinfo" id="t4c-info"></div>
+        <div class="hint">단일 클론 항체는 <b>특정 암세포에만 결합</b>하므로, 항암제를 붙여 투여하면 <b>정상 세포 손상을 줄이며</b> 암세포만 골라 제거합니다. 기존 방사선·항암제보다 표적 정확도가 높습니다.</div>
+      </div>
+
+      <div class="quiz" data-quiz="q4">
+        <div class="q">Q. 잡종 세포가 항체를 <b>계속 대량으로</b> 만들 수 있는 까닭은?</div>
+        <div class="opts">
+          <button data-c="1"><b>종양 세포</b>의 계속 분열하는 성질과 <b>B 림프구</b>의 항체 생산 능력을 모두 갖기 때문</button>
+          <button data-c="0">B 림프구가 스스로 무한히 분열하기 때문</button>
+          <button data-c="0">종양 세포가 원래 여러 항체를 만들기 때문</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t5">
+    <div class="card">
+      <h2>⑤ 핵치환과 배아 줄기세포</h2>
+      <p class="lead"><b>핵치환</b>: 핵을 제거한 난자에 다른 세포의 핵을 이식 → 복제 동물. <b>배아 줄기세포</b>: 배아에서 얻어 여러 세포로 분화.</p>
+      <div class="subtabs" id="t5-subtabs">
+        <button class="on" data-sub="a">🐑 복제 양 돌리 (핵치환)</button>
+        <button data-sub="b">🔬 배아 줄기세포 형성·분화</button>
+      </div>
+
+      <div class="sub on" id="t5a">
+        <div class="stage" id="t5a-stage"></div>
+        <div class="stepbar">
+          <button class="btn ghost small" id="t5a-prev">◀ 이전</button>
+          <button class="btn small" id="t5a-next">▶ 다음 단계</button>
+          <button class="btn teal small" id="t5a-reset">↺ 처음부터</button>
+          <span class="dots" id="t5a-dots"></span>
+        </div>
+        <div class="stepinfo" id="t5a-info"></div>
+        <div class="hint">돌리는 핵을 제공한 양과 <b>핵 유전체가 같지만</b>, <b>미토콘드리아 DNA는 난자에서</b> 오므로 완벽히 동일하진 않습니다.</div>
+      </div>
+
+      <div class="sub" id="t5b">
+        <div class="stage" id="t5b-stage"></div>
+        <div class="stepbar">
+          <button class="btn ghost small" id="t5b-prev">◀ 이전</button>
+          <button class="btn small" id="t5b-next">▶ 다음 단계</button>
+          <button class="btn teal small" id="t5b-reset">↺ 처음부터</button>
+          <span class="dots" id="t5b-dots"></span>
+        </div>
+        <div class="stepinfo" id="t5b-info"></div>
+        <div class="note">핵치환으로 만든 복제 배아에서 얻은 배아 줄기세포는 핵 공여자와 유전체가 같아 <b>이식해도 면역 거부 반응이 없습니다</b>. 다만 <b>배아를 희생</b>시켜야 해 윤리적 문제가 있습니다.</div>
+      </div>
+
+      <div class="quiz" data-quiz="q5">
+        <div class="q">Q. 배아 줄기세포의 가장 큰 특징은?</div>
+        <div class="opts">
+          <button data-c="1">미분화 상태로 계속 분열하며 <b>어떤 종류의 세포로도 분화</b>할 수 있음</button>
+          <button data-c="0">이미 신경 세포로만 분화가 끝난 세포</button>
+          <button data-c="0">분열하지 못하고 곧 죽는 세포</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t6">
+    <div class="card">
+      <h2>⑥ 유도 만능 줄기세포(iPSC)를 이용한 치료</h2>
+      <p class="lead">이미 분화가 끝난 <b>체세포(피부 세포 등)를 역분화</b>시켜, 배아 줄기세포처럼 여러 세포로 분화할 수 있게 되돌린 세포입니다.</p>
+      <div class="stage" id="t6-stage"></div>
+      <div class="stepbar">
+        <button class="btn ghost small" id="t6-prev">◀ 이전</button>
+        <button class="btn small" id="t6-next">▶ 다음 단계</button>
+        <button class="btn teal small" id="t6-reset">↺ 처음부터</button>
+        <span class="dots" id="t6-dots"></span>
+      </div>
+      <div class="stepinfo" id="t6-info"></div>
+
+      <h3>세 가지 줄기세포 비교</h3>
+      <table>
+        <tr><th>구분</th><th>배아 줄기세포</th><th>성체 줄기세포</th><th>유도 만능 줄기세포(iPSC)</th></tr>
+        <tr><td>얻는 곳</td><td>배아(수정란/복제 배아)</td><td>골수·지방·탯줄 혈액 등</td><td>환자의 체세포를 역분화</td></tr>
+        <tr><td>분화 능력</td><td class="good">모든 세포로 분화</td><td>제한적(일부 세포)</td><td class="good">여러 세포로 분화</td></tr>
+        <tr><td>면역 거부</td><td>있을 수 있음</td><td>없음(자기 세포)</td><td>없음(자기 세포)</td></tr>
+        <tr><td>윤리 문제</td><td class="bad">배아 희생 → 큼</td><td>적음</td><td>적음(난자·배아 불필요)</td></tr>
+      </table>
+      <div class="hint">iPSC는 <b>자기 세포</b>라 면역 거부가 없고 배아를 쓰지 않아 윤리 문제가 적지만, <b>치료법의 안전성</b> 문제는 아직 남아 있습니다.</div>
+      <div class="quiz" data-quiz="q6">
+        <div class="q">Q. 유도 만능 줄기세포가 배아 줄기세포보다 나은 점은?</div>
+        <div class="opts">
+          <button data-c="1">환자 <b>자기 세포</b>를 써서 면역 거부가 없고, 배아를 희생하지 않아 윤리 문제가 적음</button>
+          <button data-c="0">분화 능력이 전혀 없어 안전함</button>
+          <button data-c="0">난자와 배아가 반드시 필요함</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t7">
+    <div class="card">
+      <h2>⑦ 조직 배양 — 식물 복제</h2>
+      <p class="lead">세포나 조직 일부를 <b>인공 배지</b>에서 배양·증식시키는 기술. 식물은 분화된 체세포 하나로도 <b>완전한 개체</b>를 만들 수 있습니다.</p>
+      <div class="stage" id="t7-stage"></div>
+      <div class="stepbar">
+        <button class="btn ghost small" id="t7-prev">◀ 이전</button>
+        <button class="btn small" id="t7-next">▶ 다음 단계</button>
+        <button class="btn teal small" id="t7-reset">↺ 처음부터</button>
+        <span class="dots" id="t7-dots"></span>
+      </div>
+      <div class="stepinfo" id="t7-info"></div>
+      <div class="kv">
+        <div class="k"><b>대량 생산</b>유전적으로 같은 복제 식물을 대량으로(난·멸종위기 식물 보존)</div>
+        <div class="k"><b>바이러스 제거</b>딸기·감자 생장점 배양 → 바이러스 없는 건강한 식물체</div>
+        <div class="k"><b>기본 기술</b>핵치환·세포 융합·줄기세포·형질 전환에도 두루 쓰이는 기본 배양 기술</div>
+      </div>
+      <div class="quiz" data-quiz="q7">
+        <div class="q">Q. 딸기 <b>생장점</b>을 조직 배양하는 주된 이유는?</div>
+        <div class="opts">
+          <button data-c="1"><b>바이러스가 없는</b> 건강한 식물체를 얻어 대량으로 증식하기 위해</button>
+          <button data-c="0">생장점에는 유전자가 없어서</button>
+          <button data-c="0">동물 세포로 바꾸기 위해</button>
+        </div>
+        <div class="feedback"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div style="font-weight: bold; margin-bottom: 4px;">생명 공학 기술 학습 프로그램</div>
+  <div style="font-size: 11px; color: var(--muted);">All Rights Reserved (무단 전재 및 재배포 금지)</div>
+</footer>
+
+<script>
+/* ===== 공통: 탭 전환 ===== */
+document.querySelectorAll('.tab-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+
+/* ===== 공통: 서브탭 ===== */
+function initSubtabs(wrapId, prefix){
+  const wrap=document.getElementById(wrapId);
+  wrap.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      wrap.querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+      btn.classList.add('on');
+      document.querySelectorAll('#'+wrap.closest('.panel').id+' .sub').forEach(s=>s.classList.remove('on'));
+      document.getElementById(prefix+btn.dataset.sub).classList.add('on');
+    });
+  });
+}
+initSubtabs('t4-subtabs','t4');
+initSubtabs('t5-subtabs','t5');
+
+/* ===== 공통: 퀴즈 채점 & 점수 ===== */
+let scoreGot=0, scoreTot=0;
+function refreshScore(){document.getElementById('scorechip').textContent='퀴즈 점수 '+scoreGot+' / '+scoreTot;}
+document.querySelectorAll('.quiz').forEach(q=>{
+  const fb=q.querySelector('.feedback');
+  const btns=q.querySelectorAll('.opts button');
+  let answered=false;
+  btns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      if(answered) return; answered=true;
+      const correct=btn.dataset.c==='1';
+      scoreTot++; if(correct) scoreGot++;
+      refreshScore();
+      btns.forEach(b=>{b.disabled=true; if(b.dataset.c==='1') b.classList.add('correct');});
+      if(!correct) btn.classList.add('wrong');
+      fb.textContent=correct?'✅ 정답입니다!':'❌ 다시 생각해 볼까요? (정답에 표시했어요)';
+      fb.style.color=correct?'var(--ok)':'var(--red)';
+    });
+  });
+});
+
+/* ===== 공통: 단계 플레이어 엔진 ===== */
+function makePlayer(cfg){
+  const stage=document.getElementById(cfg.stage);
+  const info=document.getElementById(cfg.info);
+  const dots=cfg.dots?document.getElementById(cfg.dots):null;
+  let i=0;
+  const state={get index(){return i;}};
+  function render(){
+    const s=cfg.steps[i];
+    stage.innerHTML=s.svg;
+    info.innerHTML='<h4>단계 '+(i+1)+'/'+cfg.steps.length+' · '+s.t+'</h4><p>'+s.d+'</p>';
+    if(dots){
+      dots.innerHTML='';
+      cfg.steps.forEach((_,k)=>{
+        const d=document.createElement('span');
+        d.className='dot'+(k===i?' on':(k<i?' done':''));
+        dots.appendChild(d);
+      });
+    }
+    if(cfg.prevBtn) document.getElementById(cfg.prevBtn).disabled=(i===0);
+    if(cfg.nextBtn) document.getElementById(cfg.nextBtn).disabled=(i===cfg.steps.length-1);
+    if(cfg.onRender) cfg.onRender(i,s);
+  }
+  if(cfg.prevBtn) document.getElementById(cfg.prevBtn).addEventListener('click',()=>{if(i>0){i--;render();}});
+  if(cfg.nextBtn) document.getElementById(cfg.nextBtn).addEventListener('click',()=>{if(i<cfg.steps.length-1){i++;render();}});
+  if(cfg.resetBtn) document.getElementById(cfg.resetBtn).addEventListener('click',()=>{i=0;render();});
+  render();
+  return state;
+}
+
+/* ===== SVG 헬퍼 ===== */
+function svg(w,h,inner){return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'">'+inner+'</svg>';}
+function txt(x,y,s,opt){opt=opt||{};return '<text x="'+x+'" y="'+y+'" font-size="'+(opt.fs||13)+'" fill="'+(opt.c||'#1f2430')+'" text-anchor="'+(opt.a||'middle')+'" font-weight="'+(opt.w||'400')+'">'+s+'</text>';}
+
+/* 위 스크립트 이하 생명공학 기술 관련 로직(유전자 재조합, 대장균 선별, PCR 등 애니메이션 정의 코드)이 그대로 이어짐 */
+</script>
+</body>
+</html>

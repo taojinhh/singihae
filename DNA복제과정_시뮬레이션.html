@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNA 복제 과정 시뮬레이션</title>
+<style>
+  :root{
+    --old:#37AEE0;         /* 원래(주형) 가닥 - 파랑 */
+    --old-dark:#1E88C4;
+    --new:#F26D8B;         /* 새로 합성되는 가닥 - 분홍 */
+    --new-dark:#D64B6C;
+    --primer:#5FBF73;      /* RNA 프라이머 - 초록 */
+    --primer-dark:#3E9E52;
+    --poly:#F6C48A;        /* DNA 중합효소 - 주황 */
+    --poly-dark:#E0A25E;
+    --ligase:#3FAE5A;      /* DNA 연결효소 */
+    --phos:#FFD24D;        /* 인산 - 노랑 */
+    --sugar:#57D6C3;       /* 당 - 청록 */
+    --bg:#fbf7ff;          /* 아주 옅은 라벤더 */
+    --card:#ffffff;
+    --ink:#4a4458;
+    --muted:#8a83a0;
+    --line:#ece6f5;
+    --accent:#a98ee0;      /* 파스텔 퍼플 */
+    --accent-deep:#8b6fd0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:"Malgun Gothic","맑은 고딕",AppleSDGothicNeo,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.5;
+  }
+  header{
+    background:linear-gradient(120deg,#ffe3f1 0%,#e8e0ff 45%,#dcf3ff 100%);
+    color:#6a5b8c; padding:30px 20px 26px; text-align:center;
+    box-shadow:0 4px 18px rgba(169,142,224,.18);
+    border-bottom:1px solid #f0e8ff;
+  }
+  header h1{
+    margin:0; font-size:30px; font-weight:800; letter-spacing:-.5px;
+    background:linear-gradient(90deg,#e5397e,#8b3fd6,#1b8fc7);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(0 1px 1px rgba(255,255,255,.7));
+  }
+  header p{margin:9px 0 0; font-size:14.5px; color:#6d5f92; font-weight:700;}
+  .wrap{max-width:1080px; margin:0 auto; padding:18px;}
+  .tabs{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .tab{
+    flex:1 1 auto; min-width:160px; cursor:pointer; border:2px solid var(--line);
+    background:var(--card); border-radius:12px; padding:12px 14px; text-align:center;
+    font-size:15px; font-weight:700; color:var(--muted); transition:.18s;
+  }
+  .tab .num{
+    display:inline-flex; width:24px;height:24px; border-radius:50%; background:var(--line);
+    color:#fff; align-items:center; justify-content:center; font-size:13px; margin-right:6px;
+  }
+  .tab:hover{border-color:var(--accent);}
+  .tab.active{border-color:var(--accent); color:var(--accent-deep); background:#f4eeff;}
+  .tab.active .num{background:var(--accent);}
+  .panel{display:none;}
+  .panel.active{display:block; animation:fade .3s;}
+  @keyframes fade{from{opacity:0; transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px;
+    padding:16px; box-shadow:0 2px 8px rgba(30,60,90,.06);
+  }
+  .stage{
+    width:100%; background:#fdfbff; border:1px solid var(--line); border-radius:12px;
+    overflow:hidden;
+  }
+  svg{display:block; width:100%; height:auto;}
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:14px;}
+  button.btn{
+    cursor:pointer; border:none; border-radius:12px; padding:11px 18px; font-size:15px;
+    font-weight:700; color:#fff; background:linear-gradient(135deg,#b79bea,#f2a9cf); transition:.15s;
+    box-shadow:0 3px 8px rgba(169,142,224,.35);
+  }
+  button.btn:hover{filter:brightness(1.05); transform:translateY(-1px);}
+  button.btn:disabled{background:#e0dae8; color:#fff; cursor:default; box-shadow:none; transform:none;}
+  button.ghost{background:#fff; color:var(--accent-deep); border:2px solid #d9caf2; box-shadow:none;}
+  .step-badge{
+    margin-left:auto; font-weight:700; color:var(--accent-deep); font-size:14px;
+    background:#f4eeff; border-radius:20px; padding:6px 14px;
+  }
+  .explain{
+    margin-top:14px; background:#fffdf3; border:1px solid #f0e6c0; border-left:5px solid #f2c94c;
+    border-radius:10px; padding:14px 16px;
+  }
+  .explain h3{margin:0 0 6px; font-size:16px; color:#8a6d00;}
+  .explain p{margin:0; font-size:15px; color:#5a4d1a;}
+  .legend{display:flex; flex-wrap:wrap; gap:14px 20px; margin-top:14px; padding:12px 14px;
+    background:#f7f2ff; border-radius:12px; font-size:13.5px;}
+  .legend span{display:inline-flex; align-items:center; gap:7px; color:var(--muted); font-weight:600;}
+  .swatch{width:15px;height:15px;border-radius:4px; display:inline-block; border:1px solid rgba(0,0,0,.1);}
+  .hint{font-size:13px; color:var(--muted); margin-top:8px;}
+  /* 모듈3 실습 */
+  .pal{display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:6px;}
+  .nuc-btn{
+    cursor:pointer; border:none; border-radius:12px; padding:14px 8px 10px; width:88px;
+    color:#fff; font-weight:800; font-size:15px; text-align:center; transition:.15s;
+    box-shadow:0 3px 6px rgba(0,0,0,.15); position:relative;
+  }
+  .nuc-btn small{display:block; font-size:11px; font-weight:600; opacity:.9; margin-top:2px;}
+  .nuc-btn:hover{transform:translateY(-2px); filter:brightness(1.05);}
+  .nuc-btn:disabled{opacity:.4; cursor:default; transform:none;}
+  .nuc-A{background:#e05b5b;} .nuc-T{background:#e0a13a;}
+  .nuc-G{background:#4a86c7;} .nuc-C{background:#7b53b8;}
+  .feedback{text-align:center; font-weight:800; font-size:16px; margin-top:12px; min-height:24px;}
+  .feedback.ok{color:#2e9e50;} .feedback.no{color:#d64b6c;}
+  .progress-txt{text-align:center; color:var(--muted); font-size:14px; margin-top:4px;}
+  .done-banner{
+    display:none; text-align:center; margin-top:14px; padding:14px; border-radius:12px;
+    background:#e8f7ec; border:1px solid #b6e4c2; color:#227a3d; font-weight:800; font-size:16px;
+  }
+  footer{text-align:center; color:var(--muted); font-size:12.5px; padding:22px; line-height:1.6;}
+  @media(max-width:560px){
+    header h1{font-size:21px;}
+    .tab{min-width:calc(50% - 4px); font-size:13.5px;}
+    .step-badge{margin-left:0;}
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<header>
+  <h1>🧬 DNA 복제 과정 시뮬레이션</h1>
+  <p>버튼과 그림을 <b>클릭</b>하며 DNA가 복제되는 과정을 단계별로 관찰해 보세요</p>
+</header>
+
+<div class="wrap">
+  <div class="tabs">
+    <div class="tab active" data-tab="0"><span class="num">1</span>반보존적 복제</div>
+    <div class="tab" data-tab="1"><span class="num">2</span>복제 분기점 상세</div>
+    <div class="tab" data-tab="2"><span class="num">3</span>염기 짝짓기 실습</div>
+  </div>
+
+  <div class="panel active" id="panel0">
+    <div class="card">
+      <div class="stage"><svg id="svg1" viewBox="0 0 900 440"></svg></div>
+      <div class="controls">
+        <button class="btn ghost" id="prev1">◀ 이전</button>
+        <button class="btn" id="next1">다음 단계 ▶</button>
+        <button class="btn ghost" id="reset1">↺ 처음부터</button>
+        <span class="step-badge" id="badge1">단계 1 / 4</span>
+      </div>
+      <div class="explain">
+        <h3 id="etitle1"></h3>
+        <p id="etext1"></p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--old)"></i>원래(주형) 가닥</span>
+        <span><i class="swatch" style="background:var(--new)"></i>새로 합성된 가닥</span>
+        <span>🔑 A=T, G≡C 상보결합</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel1">
+    <div class="card">
+      <div class="stage"><svg id="svg2" viewBox="0 0 900 480"></svg></div>
+      <div class="controls">
+        <button class="btn ghost" id="prev2">◀ 이전</button>
+        <button class="btn" id="next2">다음 단계 ▶</button>
+        <button class="btn ghost" id="reset2">↺ 처음부터</button>
+        <span class="step-badge" id="badge2">단계 1 / 5</span>
+      </div>
+      <div class="explain">
+        <h3 id="etitle2"></h3>
+        <p id="etext2"></p>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--old)"></i>주형 가닥</span>
+        <span><i class="swatch" style="background:var(--new)"></i>새 가닥</span>
+        <span><i class="swatch" style="background:var(--primer)"></i>RNA 프라이머</span>
+        <span><i class="swatch" style="background:var(--poly)"></i>DNA 중합효소</span>
+        <span><i class="swatch" style="background:var(--ligase)"></i>DNA 연결효소</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="panel2">
+    <div class="card">
+      <p class="hint" style="text-align:center;margin-top:0">
+        주형 가닥(파랑)의 빨강 테두리 염기와 <b>상보적인</b> 뉴클레오타이드를 아래에서 골라 클릭하세요.
+        DNA 중합효소가 되어 새 가닥을 5'→3' 방향으로 완성해 봅시다!
+      </p>
+      <div class="stage"><svg id="svg3" viewBox="0 0 720 460"></svg></div>
+      <div class="feedback" id="fb3"></div>
+      <div class="pal" id="pal3">
+        <button class="nuc-btn nuc-A" data-base="A">A<small>아데닌</small></button>
+        <button class="nuc-btn nuc-T" data-base="T">T<small>타이민</small></button>
+        <button class="nuc-btn nuc-G" data-base="G">G<small>구아닌</small></button>
+        <button class="nuc-btn nuc-C" data-base="C">C<small>사이토신</small></button>
+      </div>
+      <div class="progress-txt" id="prog3"></div>
+      <div class="done-banner" id="done3">🎉 새 가닥 합성 완료! 주형과 상보적인 DNA 한 가닥이 만들어졌어요.</div>
+      <div class="controls" style="justify-content:center">
+        <button class="btn ghost" id="reset3">↺ 다시 하기</button>
+      </div>
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--sugar)"></i>당(디옥시리보스)</span>
+        <span><i class="swatch" style="background:var(--phos)"></i>인산</span>
+        <span>💡 결합 시 인산 2개(P-P)가 떨어져 나갑니다</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    고등학교 생명과학 · DNA 복제(반보존적 복제) 학습용 시뮬레이션<br>
+    <span style="font-size: 11.5px; opacity: 0.8;">All Rights Reserved (무단 전재 및 재배포 금지)</span>
+  </footer>
+</div>
+
+<script>
+/* ===================== 공통 유틸 ===================== */
+const SVGNS="http://www.w3.org/2000/svg";
+const comp={A:"T",T:"A",G:"C",C:"G"};
+const baseColor={A:"#e05b5b",T:"#e0a13a",G:"#4a86c7",C:"#7b53b8"};
+function el(tag,attr,parent){
+  const e=document.createElementNS(SVGNS,tag);
+  for(const k in attr) e.setAttribute(k,attr[k]);
+  if(parent) parent.appendChild(e);
+  return e;
+}
+function clear(svg){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+
+/* 탭 전환 */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('panel'+t.dataset.tab).classList.add('active');
+  };
+});
+
+/* ===================== 모듈 1 : 반보존적 복제 ===================== */
+(function(){
+  const svg=document.getElementById('svg1');
+  const seq=["A","C","T","A","G","T","C","A"]; // 위쪽(주형) 가닥 서열
+  let step=0; const MAX=4;
+  const texts=[
+    {t:"① 복제 전의 DNA", d:"두 가닥이 서로 상보적인 염기(A=T, G≡C)로 짝을 이루며 수소 결합으로 붙어 있는 이중 나선 상태입니다. 파란 두 가닥이 원래의 DNA입니다."},
+    {t:"② 두 가닥이 풀린다", d:"염기 사이의 수소 결합이 끊어지면서 이중 가닥이 두 개의 단일 가닥으로 풀립니다. 풀린 각각의 가닥은 새 가닥을 만드는 '주형(틀)'이 됩니다."},
+    {t:"③ 새로운 가닥이 합성된다", d:"각 주형 가닥의 염기와 상보적인 뉴클레오타이드가 하나씩 결합합니다. DNA 중합효소가 이들을 이어 붙여 새 가닥(분홍)을 합성합니다."},
+    {t:"④ 동일한 DNA 2개 완성 (반보존적 복제)", d:"복제 결과 염기 서열이 완전히 같은 DNA 2개가 만들어집니다. 각각은 '원래 가닥 1개 + 새 가닥 1개'로 이루어지므로 이를 반보존적 복제라고 합니다."}
+  ];
+  const N=seq.length, rung=90, x0=90, topY=150, botY=250, sepY=70;
+
+  function baseCap(x,y,dir,base,fill){
+    // 화살표 모양 염기 캡 (dir: 1 오른쪽/아래로 향함)
+    const g=el("g",{},svg);
+    el("rect",{x:x-16,y:y-13,width:32,height:26,rx:5,fill:fill},g);
+    el("text",{x:x,y:y+6,"text-anchor":"middle","font-size":16,"font-weight":"bold",fill:"#fff"},g).textContent=base;
+    return g;
+  }
+
+  function draw(){
+    clear(svg);
+    // 제목
+    el("text",{x:450,y:34,"text-anchor":"middle","font-size":18,"font-weight":"bold",fill:"#2b7fc4"},svg)
+      .textContent="반보존적 복제 — 원래 가닥을 틀로 삼아 똑같은 DNA 두 개가 만들어진다";
+
+    if(step===0){ drawDuplex(x0, topY, seq, false); label(x0-58,topY,"원래 DNA","#1E88C4"); }
+    else if(step===1){ drawSeparating(); }
+    else if(step===2){ drawSynth(); }
+    else { drawTwo(); }
+  }
+
+  // 붙어있는 이중가닥
+  function drawDuplex(bx,cy,s,pink){
+    const upperY=cy-24, lowerY=cy+24;
+    // 백본
+    el("rect",{x:bx-40,y:upperY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    el("rect",{x:bx-40,y:lowerY-8,width:rung*(N-1)+80,height:16,rx:8,fill:pink?"var(--new)":"var(--old)"},svg);
+    for(let i=0;i<N;i++){
+      const x=bx+i*rung;
+      el("line",{x1:x,y1:upperY,x2:x,y2:lowerY,stroke:"#cfe4f0","stroke-width":3},svg);
+      baseCap(x,upperY+13,1,s[i],"var(--old)");
+      baseCap(x,lowerY-13,1,comp[s[i]],pink?"var(--new)":"var(--old)");
+    }
+  }
+
+  function label(x,y,txt,color){
+    el("text",{x:x,y:y+5,"text-anchor":"end","font-size":13,"font-weight":"bold",fill:color||"#555"},svg).textContent=txt;
+  }
+
+  // 갈라지는 중
+  function drawSeparating(){
+    const cy=200;
+    // 위 가닥
+    el("rect",{x:x0-40,y:cy-sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    // 아래 가닥
+    el("rect",{x:x0-40,y:cy+sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    for(let i=0;i<N;i++){
+      const x=x0+i*rung;
+      baseCap(x,cy-sepY+13,1,seq[i],"var(--old)");
+      baseCap(x,cy+sepY-13,1,comp[seq[i]],"var(--old)");
+      // 끊어진 수소결합 표시
+      el("line",{x1:x,y1:cy-sepY+22,x2:x,y2:cy-18,stroke:"#f2a4b4","stroke-width":2,"stroke-dasharray":"3 4"},svg);
+      el("line",{x1:x,y1:cy+18,x2:x,y2:cy+sepY-22,stroke:"#f2a4b4","stroke-width":2,"stroke-dasharray":"3 4"},svg);
+    }
+    el("text",{x:450,y:cy+4,"text-anchor":"middle","font-size":13,fill:"#d64b6c","font-weight":"bold"},svg)
+      .textContent="⚡ 수소 결합이 끊어짐";
+    label(x0-58,cy-sepY,"주형 가닥","#1E88C4");
+    label(x0-58,cy+sepY,"주형 가닥","#1E88C4");
+  }
+
+  // 새 가닥 합성 중
+  function drawSynth(){
+    const cy=200;
+    el("rect",{x:x0-40,y:cy-sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    el("rect",{x:x0-40,y:cy+sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    // 새 가닥 백본(분홍)
+    el("rect",{x:x0-40,y:cy-sepY+26,width:rung*(N-1)+80,height:11,rx:6,fill:"var(--new)",opacity:.9},svg);
+    el("rect",{x:x0-40,y:cy+sepY-37,width:rung*(N-1)+80,height:11,rx:6,fill:"var(--new)",opacity:.9},svg);
+    for(let i=0;i<N;i++){
+      const x=x0+i*rung;
+      baseCap(x,cy-sepY+13,1,seq[i],"var(--old)");
+      baseCap(x,cy+sepY-13,1,comp[seq[i]],"var(--old)");
+      // 새로 붙는 상보 염기
+      baseCap(x,cy-sepY+30,1,comp[seq[i]],"var(--new)");
+      baseCap(x,cy+sepY-30,1,seq[i],"var(--new)");
+      el("line",{x1:x,y1:cy-sepY+20,x2:x,y2:cy-sepY+22,stroke:"#aaa"},svg);
+    }
+    el("text",{x:450,y:cy+4,"text-anchor":"middle","font-size":13,fill:"#2b7fc4","font-weight":"bold"},svg)
+      .textContent="주형과 상보적인 뉴클레오타이드가 결합하여 새 가닥(분홍) 합성";
+  }
+
+  // 두 개의 DNA 완성
+  function drawTwo(){
+    drawDuplexAt(120, seq, "top");
+    drawDuplexAt(280, seq, "bot");
+    el("text",{x:450,y:400,"text-anchor":"middle","font-size":14,fill:"#227a3d","font-weight":"bold"},svg)
+      .textContent="→ 두 DNA의 염기 서열이 완전히 동일! 각각 [원래 파랑 + 새 분홍] 으로 구성";
+  }
+  function drawDuplexAt(cy, s, which){
+    const upperY=cy-20, lowerY=cy+20;
+    const topPink = (which==="bot"); // 아래 DNA는 위 백본이 새 가닥
+    el("rect",{x:x0-40,y:upperY-7,width:rung*(N-1)+80,height:14,rx:7,fill:topPink?"var(--new)":"var(--old)"},svg);
+    el("rect",{x:x0-40,y:lowerY-7,width:rung*(N-1)+80,height:14,rx:7,fill:topPink?"var(--old)":"var(--new)"},svg);
+    for(let i=0;i<N;i++){
+      const x=x0+i*rung;
+      el("line",{x1:x,y1:upperY,x2:x,y2:lowerY,stroke:"#d6e6f0","stroke-width":2},svg);
+      baseCap(x,upperY+12,1,s[i],topPink?"var(--new)":"var(--old)");
+      baseCap(x,lowerY-12,1,comp[s[i]],topPink?"var(--old)":"var(--new)");
+    }
+    label(x0-58,cy,which==="top"?"DNA ①":"DNA ②","#555");
+  }
+
+  function render(){
+    draw();
+    document.getElementById('badge1').textContent=`단계 ${step+1} / ${MAX}`;
+    document.getElementById('etitle1').textContent=texts[step].t;
+    document.getElementById('etext1').textContent=texts[step].d;
+    document.getElementById('prev1').disabled=(step===0);
+    document.getElementById('next1').disabled=(step===MAX-1);
+  }
+  document.getElementById('next1').onclick=()=>{ if(step<MAX-1){step++; render();} };
+  document.getElementById('prev1').onclick=()=>{ if(step>0){step--; render();} };
+  document.getElementById('reset1').onclick=()=>{ step=0; render(); };
+  render();
+})();
+
+/* ===================== 모듈 2 : 복제 분기점 ===================== */
+(function(){
+  const svg=document.getElementById('svg2');
+  let step=0; const MAX=5;
+  const texts=[
+    {t:"① 이중 나선이 풀린다", d:"\uD5EC\uD2AC\uCF00\uC774\uC2A4\uAC00 \uC5FC\uAE30 \uC0AC\uC774\uC758 \uC218\uC18C \uAC1B\uD569\uC744 \uAF4A\uC5B4 \uC774\uC91B \uAC10\uB2E5\uC744 \uB2E8\uC77C \uAC10\uB2E5\uC73C\uB85C \uD480\uC5B4\uB0B8\uB2C8\uB2E4. \uD480\uB9B0 \uC9C0\uC510\uC744 '\uBC30\uC81C \uBD84\uAE30\uC810'\uC774\uB77C \uD558\uBA70 Y\uC790 \uBAA8\uC591\uC774 \uB429\uB2C8\uB2E4."},
+    {t:"② RNA 프라이머가 붙는다", d:"DNA \uC911\uD569\uD6A8\uC18C\uB294 \uC2A4\uC2A4\uB85C \uD569\uC131\uC744 \uC2DC\uC791\uD558\uC9C0 \uBABB\uD569\uB2C8\uB2E4. \uADF8\uB798\uC11C \uD569\uC131\uC774 \uC2DC\uC791\uB418\uB294 \uC790\uB9AC\uC5D0 \uC9E7\uC740 RNA \uD504\uB77C\uC774\uBA38(\uCE20\uB85D)\uAC00 \uBA3C\uC800 \uB9CC\uB4E4\uC5B4\uC9CB \uC2DC\uC791\uC810\uC744 \uC81C\uAC35\uD569\uB2C8\uB2E4."},
+    {t:"③ 선도 가닥: 연속적으로 합성", d:"\uBD84\uAE30\uC810\uC774 \uC5F4\uB9AC\uB294 \uBC29\uD5A5\uACFC \uAC19\uC740 \uC2E0 \uAC10\uB2E5\uC5D0\uC11C\uB294 DNA \uC911\uD569\uD6A8\uC18C(\uC8FC\uD669)\uAC00 5'→3' \uBC29\uD5A5\uAEC4 \uAF4A\uC73C \uC5C6\uC774 \uC5F0\uC18D\uC801\uC73C\uB85C \uC0C8 \uAC10\uB2E5\uC744 \uD569\uC131\uD569\uB2C8\uB2E4. \uC774\uB97C \uC120\uB3C4 \uAC10\uB2E5\uC774\uB77C \uD569\uB2C8\uB2E4."},
+    {t:"④ 지연 가닥: 짧은 조각으로 합성", d:"\uBC18\uB300\uCF5D \uAC10\uB2E5\uC740 \uBD84\uAE30\uC810\uACFC \uBC18\uB300 \uBC29\uD5A5\uC73C\uB85C\uB9CC 5'→3' \uD569\uC131\uC774 \uAC00\uB2A5\uD574, \uD504\uB77C\uC774\uBA38\uB97C \uC5EC\uB7EC \uBC88 \uB9CC\uB4E4\uC170 \uC9E7\uC740 \uC870\uAC01(\uC624\uCE74\uC790\uED04 \uC808\uED01)\uC73C\uB85C \uAF4A\uC5B4\uC11C \uD569\uC131\uD569\uB2C8\uB2E4. \uC774\uB97C \uC9C0\uC51O \uAC10\uB2E5\uC774\uB77C \uD569\uB2C8\uB2E4."},
+    {t:"⑤ DNA 연결효소가 조각을 잇는다", d:"\uC9C0\uC51O \uAC10\uB2E5\uC758 \uC9E7\uC740 \uC870\uAC01\uB4E4\uC740 DNA \uC5F0\uACB0\uD6A8\uC18C(\uCE20\uB85D \uB369\uC5B4\uB9AC)\uAC00 \uC774\uC5B4 \uBD90\uCE50 \uD558\uB098\uC758 \uC5F0\uC18D\uB41C \uAC10\uB2E5\uC73C\uB85C \uC644\uC131\uD569\uB2C8\uB2E4. \uC774\uB807\uAC8C \uC591\uCF5D \uC0AC \uAC10\uB2E5\uC774 \uBAA8\uB450 \uC644\uC131\uD569\uB2C8\uB2E4."}
+  ];
+
+  function enzyme(x,y,label,fill,dark){
+    const g=el("g",{},svg);
+    el("ellipse",{cx:x,cy:y,rx:34,ry:26,fill:fill,stroke:dark,"stroke-width":2},g);
+    el("ellipse",{cx:x,cy:y-4,rx:20,ry:14,fill:"#fff",opacity:.25},g);
+    if(label) el("text",{x:x,y:y+42,"text-anchor":"middle","font-size":11,"font-weight":"bold",fill:dark},g).textContent=label;
+    return g;
+  }
+  function strand(pts,color,w){
+    let d="M"+pts[0][0]+","+pts[0][1];
+    for(let i=1;i<pts.length;i++) d+=" L"+pts[i][0]+","+pts[i][1];
+    el("path",{d:d,fill:"none",stroke:color,"stroke-width":w||9,"stroke-linecap":"round","stroke-linejoin":"round"},svg);
+  }
+  function seg(x1,y1,x2,y2,color,w,dash){
+    const a={x1,y1,x2,y2,stroke:color,"stroke-width":w||9,"stroke-linecap":"round"};
+    if(dash)a["stroke-dasharray"]=dash;
+    el("line",a,svg);
+  }
+  function tick(x,y1,y2){ el("line",{x1:x,y1:y1,x2:x,y2:y2,stroke:"#cfe4f0","stroke-width":2},svg); }
+  function tag(x,y,txt,color){ el("text",{x:x,y:y,"text-anchor":"middle","font-size":12,"font-weight":"bold",fill:color||"#555"},svg).textContent=txt; }
+  function arrow(x,y,dir,color){
+    const g=el("g",{},svg);
+    el("line",{x1:x,y1:y,x2:x+dir*22,y2:y,stroke:color,"stroke-width":2.5},g);
+    el("path",{d:`M${x+dir*22},${y} l${-dir*7},-4 l0,8 z`,fill:color},g);
+  }
+
+  function draw(){
+    clear(svg);
+    el("text",{x:450,y:30,"text-anchor":"middle","font-size":18,"font-weight":"bold",fill:"#2b7fc4"},svg)
+      .textContent="복제 분기점 — 선도 가닥과 지연 가닥";
+
+    // 좌측 아직 안 풀린 이중나선
+    const forkX=330, midY=250;
+    el("rect",{x:40,y:midY-38,width:forkX-40,height:12,rx:6,fill:"var(--old)"},svg);
+    el("rect",{x:40,y:midY+26,width:forkX-40,height:12,rx:6,fill:"var(--old)"},svg);
+    for(let i=0;i<7;i++){ const x=70+i*36; tick(x,midY-30,midY+30); }
+    tag(60,midY-48,"5'","#1E88C4"); tag(60,midY+70,"3'","#1E88C4");
+    el("text",{x:150,y:midY+95,"text-anchor":"middle","font-size":12,fill:"#666"},svg).textContent="원래의 이중나선 DNA";
+
+    if(step===0){
+      // 살짝 갈라진 Y
+      strand([[forkX,midY-32],[forkX+90,midY-70],[forkX+320,midY-95]],"var(--old)");
+      strand([[forkX,midY+32],[forkX+90,midY+70],[forkX+320,midY+95]],"var(--old)");
+      tag(forkX+330,midY-95,"3'","#1E88C4"); tag(forkX+330,midY+100,"5'","#1E88C4");
+      el("text",{x:forkX+150,y:midY,"text-anchor":"middle","font-size":13,fill:"#d64b6c","font-weight":"bold"},svg).textContent="⚡ 수소결합이 끊어져";
+      el("text",{x:forkX+150,y:midY+18,"text-anchor":"middle","font-size":13,fill:"#d64b6c","font-weight":"bold"},svg).textContent="가닥이 풀린다 (복제 분기점)";
+      return;
+    }
+
+    // 갈라진 두 주형 가닥 (윗주형 3'→ , 아래주형 5'→)
+    strand([[forkX,midY-32],[forkX+90,midY-78],[forkX+330,midY-95]],"var(--old)");
+    strand([[forkX,midY+32],[forkX+90,midY+78],[forkX+330,midY+95]],"var(--old)");
+    tag(forkX+345,midY-95,"3'","#1E88C4"); tag(forkX+345,midY+100,"5'","#1E88C4");
+
+    // 위쪽 = 선도 가닥, 아래 = 지연 가닥
+    if(step>=1){
+      // RNA 프라이머
+      seg(forkX+120,midY-88,forkX+175,midY-92,"var(--primer)",8);
+      tag(forkX+148,midY-100,"RNA 프라이머","var(--primer-dark)");
+      // 아래 프라이머
+      seg(forkX+120,midY+88,forkX+175,midY+92,"var(--primer)",8);
+      tag(forkX+250,midY+112,"RNA 프라이머","var(--primer-dark)");
+    }
+    if(step>=2){
+      // 선도 가닥 새 가닥(연속) + 중합효소
+      seg(forkX+175,midY-92,forkX+330,midY-98,"var(--new)",8);
+      enzyme(forkX+345,midY-95,"DNA 중합효소","var(--poly)","var(--poly-dark)");
+      arrow(forkX+300,midY-108,1,"#d64b6c");
+      tag(forkX+250,midY-118,"연속 합성 (5'→3')","var(--new-dark)");
+      tag(forkX+430,midY-70,"선도 가닥","#333");
+    }
+    if(step>=3){
+      // 지연 가닥: 오카자키 절편 2개
+      seg(forkX+175,midY+92,forkX+250,midY+94,"var(--new)",8);      // 조각1(합성중)
+      enzyme(forkX+150,midY+90,"DNA 중합효소","var(--poly)","var(--poly-dark)");
+      arrow(forkX+180,midY+108,-1,"#d64b6c");
+      // 먼저 만들어진 조각(오른쪽, 프라이머+새가닥)
+      seg(forkX+270,midY+96,forkX+300,midY+97,"var(--primer)",8); // 프라이머
+      seg(forkX+300,midY+97,forkX+400,midY+99,"var(--new)",8);    // 새 조각
+      tag(forkX+240,midY+120,"합성 중인 짧은 조각","var(--new-dark)");
+      tag(forkX+430,midY+80,"지연 가닥","#333");
+    }
+    if(step>=4){
+      // 연결효소가 조각 잇기
+      enzyme(forkX+250,midY+97,"","var(--ligase)","#2e7d32");
+      enzyme(forkX+275,midY+97,"","var(--ligase)","#2e7d32");
+      tag(forkX+265,midY+140,"DNA 연결효소가 조각을 이어줌","#2e7d32");
+      // 이어진 표시
+      seg(forkX+175,midY+92,forkX+400,midY+99,"var(--new)",8);
+    }
+  }
+
+  function render(){
+    draw();
+    document.getElementById('badge2').textContent=`단계 ${step+1} / ${MAX}`;
+    document.getElementById('etitle2').textContent=texts[step].t;
+    document.getElementById('etext2').textContent=texts[step].d;
+    document.getElementById('prev2').disabled=(step===0);
+    document.getElementById('next2').disabled=(step===MAX-1);
+  }
+  document.getElementById('next2').onclick=()=>{ if(step<MAX-1){step++; render();} };
+  document.getElementById('prev2').onclick=()=>{ if(step>0){step--; render();} };
+  document.getElementById('reset2').onclick=()=>{ step=0; render(); };
+  render();
+})();
+
+/* ===================== 모듈 3 : 염기 짝짓기 실습 ===================== */
+(function(){
+  const svg=document.getElementById('svg3');
+  const template=["G","T","A","C","G","A"]; // 주형 가닥(위→아래, 3'→5')
+  let idx=0; // 현재 합성해야 할 위치
+  const rowY=(i)=>70+i*62;
+  const tmplX=470, newX=250;
+
+  function nucShape(x,y,base,side,filled){
+    // side: 'new'(왼쪽,분홍) or 'tmpl'(오른쪽,파랑)
+    const g=el("g",{},svg);
+    const col=side==="new"?"var(--new)":"var(--old)";
+    // 인산(원)
+    el("circle",{cx:side==="new"?x-46:x+46,cy:y-14,r:8,fill:"var(--phos)",stroke:"#e0b32e"},g);
+    // 당(오각형)
+    const sx=side==="new"?x-30:x+30;
+    el("polygon",{points:penta(sx,y),fill:"var(--sugar)",stroke:"#33b3a0","stroke-width":1.5},g);
+    // 백본 연결선
+    el("line",{x1:side==="new"?x-46:x+46,y1:y-14,x2:sx,y2:y-6,stroke:"#999","stroke-width":2},g);
+    // 염기 캡 (화살표형)
+    const dir=side==="new"?1:-1;
+    const bx=side==="new"?x-6:x+6;
+    el("rect",{x:bx-14,y:y-12,width:28,height:24,rx:5,fill:col},g);
+    el("text",{x:bx,y:y+6,"text-anchor":"middle","font-size":15,"font-weight":"bold",fill:"#fff"},g).textContent=base;
+    return g;
+  }
+  function penta(cx,cy){
+    let p="";
+    for(let k=0;k<5;k++){ const a=-Math.PI/2 + k*2*Math.PI/5; p+=`${(cx+13*Math.cos(a)).toFixed(1)},${(cy+13*Math.sin(a)).toFixed(1)} `; }
+    return p.trim();
+  }
+
+  function draw(){
+    clear(svg);
+    // 백본 (세로 막대)
+    el("rect",{x:tmplX+52,y:40,width:14,height:template.length*62,rx:7,fill:"var(--old)"},svg);
+    el("rect",{x:newX-66,y:40,width:14,height:template.length*62,rx:7,fill:"var(--new)",opacity:idx>0?1:.25},svg);
+    // 라벨
+    el("text",{x:newX-6,y:26,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"var(--new-dark)"},svg).textContent="〈합성 중인 새 가닥〉";
+    el("text",{x:tmplX+6,y:26,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"#1E88C4"},svg).textContent="〈주형 가닥〉";
+    el("text",{x:newX-66,y:40+template.length*62+18,"text-anchor":"middle","font-size":12,fill:"#777"},svg).textContent="5' → 3' 방향으로 합성";
+
+    for(let i=0;i<template.length;i++){
+      const y=rowY(i);
+      // 주형 염기 (항상 표시)
+      const tg=nucShape(tmplX,y,template[i],"tmpl",true);
+      // 현재 자리 강조
+      if(i===idx){
+        el("rect",{x:tmplX-18,y:y-20,width:44,height:40,rx:8,fill:"none",stroke:"#e05b5b","stroke-width":3},svg);
+      }
+      // 이미 합성된 새 가닥 염기
+      if(i<idx){
+        nucShape(newX,y,comp[template[i]],"new",true);
+        // 수소결합
+        el("line",{x1:newX+8,y1:y,x2:tmplX-8,y2:y,stroke:"#bbb","stroke-width":2,"stroke-dasharray":"3 3"},svg);
+      }
+    }
+    // 안내 화살표
+    if(idx<template.length){
+      const y=rowY(idx);
+      el("text",{x:newX+40,y:y+5,"text-anchor":"middle","font-size":13,fill:"#e05b5b","font-weight":"bold"},svg)
+        .textContent="여기에?";
+    }
+  }
+
+  function updateProgress(){
+    document.getElementById('prog3').textContent=`합성 진행: ${idx} / ${template.length}`;
+    const done = idx>=template.length;
+    document.getElementById('done3').style.display=done?'block':'none';
+    document.querySelectorAll('#pal3 .nuc-btn').forEach(b=>b.disabled=done);
+  }
+
+  document.querySelectorAll('#pal3 .nuc-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      if(idx>=template.length) return;
+      const chosen=btn.dataset.base;
+      const need=comp[template[idx]];
+      const fb=document.getElementById('fb3');
+      if(chosen===need){
+        idx++;
+        fb.className="feedback ok";
+        fb.textContent=`정답! ${template[idx-1]} 에는 ${need} 가 결합합니다 ✔`;
+        draw(); updateProgress();
+      }else{
+        fb.className="feedback no";
+        fb.textContent=`땡! 주형의 ${template[idx]} 와 ${chosen} 는 짝이 아니에요. (${template[idx]}=${comp[template[idx]]})`;
+      }
+    };
+  });
+  document.getElementById('reset3').onclick=()=>{
+    idx=0; document.getElementById('fb3').textContent=""; document.getElementById('fb3').className="feedback";
+    draw(); updateProgress();
+  };
+  draw(); updateProgress();
+})();
+</script>
+</body>
+</html>

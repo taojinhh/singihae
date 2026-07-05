@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>흥분의 전도와 전달 — 클릭 학습 프로그램</title>
+<style>
+  :root{
+    --ink:#26263a;            /* 선명한 글자색 */
+    --ink-soft:#4a4a63;
+    --na:#f5a623;            /* Na+ 주황 */
+    --na-d:#d98613;
+    --k:#9b5de5;             /* K+ 보라 */
+    --k-d:#7b3fc4;
+    --line:#c9c9dd;
+    --card:#ffffff;
+    --accent:#e15b64;
+    --accent2:#3aa17e;
+    --blue:#3d7bd6;
+    --shadow:0 8px 24px rgba(80,70,120,.14);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"맑은 고딕","Malgun Gothic",-apple-system,"Segoe UI",sans-serif;
+    color:var(--ink);
+    /* 파스텔톤 배경 */
+    background:
+      radial-gradient(1200px 600px at 12% -8%, #ffe9ec 0%, transparent 55%),
+      radial-gradient(1100px 620px at 100% 0%, #e6f3ff 0%, transparent 55%),
+      radial-gradient(1000px 700px at 50% 120%, #eafaf0 0%, transparent 55%),
+      linear-gradient(160deg,#fbf7ff 0%, #f4f7fd 100%);
+    min-height:100vh;
+    line-height:1.6;
+  }
+  header.top{
+    text-align:center;
+    padding:26px 16px 6px;
+  }
+  header.top h1{
+    margin:0;
+    font-size:clamp(24px,3.6vw,38px);
+    letter-spacing:-.5px;
+    color:var(--ink);
+    font-weight:800;
+  }
+  header.top p{
+    margin:6px 0 0;
+    color:var(--ink-soft);
+    font-size:15px;
+  }
+  /* 탭 네비게이션 */
+  nav.tabs{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+    padding:16px 12px 10px;max-width:1080px;margin:0 auto;
+  }
+  nav.tabs button{
+    border:2px solid transparent;
+    background:rgba(255,255,255,.75);
+    color:var(--ink-soft);
+    font-weight:700;font-size:14px;
+    padding:9px 16px;border-radius:999px;cursor:pointer;
+    transition:.18s;backdrop-filter:blur(4px);
+    box-shadow:0 2px 8px rgba(90,80,130,.08);
+  }
+  nav.tabs button .n{
+    display:inline-flex;width:20px;height:20px;border-radius:50%;
+    background:#d9d9ea;color:#fff;font-size:12px;
+    align-items:center;justify-content:center;margin-right:7px;font-weight:800;
+  }
+  nav.tabs button:hover{transform:translateY(-2px)}
+  nav.tabs button.active{
+    background:#fff;color:var(--ink);border-color:var(--accent);
+    box-shadow:var(--shadow);
+  }
+  nav.tabs button.active .n{background:var(--accent)}
+
+  main{max-width:1080px;margin:0 auto;padding:8px 16px 60px}
+  section.scene{display:none;animation:fade .35s ease}
+  section.scene.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  .card{
+    background:var(--card);border-radius:22px;box-shadow:var(--shadow);
+    padding:22px 22px 18px;margin-top:6px;
+    border:1px solid rgba(255,255,255,.8);
+  }
+  .scene-head{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+  .scene-head .badge{
+    background:linear-gradient(135deg,var(--accent),#f0868d);
+    color:#fff;font-weight:800;font-size:14px;padding:5px 13px;border-radius:10px;
+    white-space:nowrap;
+  }
+  .scene-head h2{margin:0;font-size:clamp(19px,2.4vw,26px);font-weight:800}
+
+  .stage-wrap{position:relative;margin-top:12px;border-radius:16px;overflow:hidden}
+  svg{display:block;width:100%;height:auto;user-select:none}
+
+  /* 설명 박스 */
+  .explain{
+    margin-top:14px;background:#fbfaff;border:1.5px solid #ece7f7;
+    border-left:6px solid var(--accent);border-radius:12px;
+    padding:14px 16px;min-height:64px;
+  }
+  .explain .stepno{
+    font-weight:800;color:var(--accent);font-size:13px;letter-spacing:.5px;
+    display:block;margin-bottom:2px;
+  }
+  .explain .txt{font-size:16px;color:var(--ink);font-weight:600}
+  .explain .txt b{color:var(--k-d);background:linear-gradient(transparent 60%, #efe3ff 60%);padding:0 2px}
+  .explain .txt em{font-style:normal;color:var(--na-d);background:linear-gradient(transparent 60%, #ffeecb 60%);padding:0 2px}
+
+  /* 컨트롤 */
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+  .btn{
+    border:none;cursor:pointer;font-weight:800;font-size:15px;
+    padding:12px 22px;border-radius:12px;transition:.15s;
+    box-shadow:0 4px 12px rgba(90,80,130,.15);
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),#ef7d84);color:#fff}
+  .btn-primary:disabled{background:#d7d7e4;color:#fff;cursor:default;box-shadow:none}
+  .btn-ghost{background:#f0eef8;color:var(--ink-soft)}
+  .btn-toggle{background:#eef4ff;color:var(--blue);border:2px solid #cfe0fb}
+  .btn-toggle.on{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .progress{display:flex;gap:6px;margin-left:auto;align-items:center}
+  .progress .dot{width:11px;height:11px;border-radius:50%;background:#dcdce9;transition:.2s}
+  .progress .dot.done{background:var(--accent2)}
+  .progress .dot.cur{background:var(--accent);transform:scale(1.35)}
+  .hint{font-size:13px;color:#9a97ad;margin-top:8px}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:14px;font-weight:700;color:var(--ink-soft)}
+  .legend .k{display:inline-flex;align-items:center;gap:6px}
+  .legend .chip{width:16px;height:16px;border-radius:50%;display:inline-block;border:2px solid rgba(0,0,0,.12)}
+
+  .ion{transition:transform .6s cubic-bezier(.4,0,.2,1), opacity .4s}
+  footer.foot{text-align:center;color:#a29fb;color:#a6a2ba;font-size:13px;padding:10px 0 34px}
+  .kbd{background:#efeef6;border:1px solid #ddd;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;color:#555}
+  .copyright {display:block; margin-top:12px; font-weight:600; font-size:12px; color:#888;}
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<header class="top">
+  <h1>🧠 흥분의 전도와 전달</h1>
+  <p>버튼(또는 그림)을 <b>클릭할 때마다</b> 신경 신호가 만들어지고 전달되는 과정이 한 단계씩 나타납니다.</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-go="0" class="active"><span class="n">1</span>뉴런의 종류</button>
+  <button data-go="1"><span class="n">2</span>휴지 전위</button>
+  <button data-go="2"><span class="n">3</span>활동 전위</button>
+  <button data-go="3"><span class="n">4</span>흥분의 전도</button>
+  <button data-go="4"><span class="n">5</span>흥분의 전달</button>
+</nav>
+
+<main>
+
+<section class="scene show" id="scene0">
+  <div class="card">
+    <div class="scene-head"><span class="badge">STEP 1</span><h2>자극에서 반응까지 — 뉴런의 종류</h2></div>
+    <p style="color:var(--ink-soft);margin:6px 0 0">자극이 감각 기관에서 시작해 <b>구심성 → 연합 → 원심성 뉴런</b>을 거쳐 반응 기관까지 전달됩니다.</p>
+    <div class="stage-wrap">
+      <svg viewBox="0 0 1000 300" id="svg0" aria-label="뉴런의 종류">
+        <line x1="120" y1="150" x2="880" y2="150" stroke="#e3e0ef" stroke-width="6"/>
+        <g id="flow0"></g>
+      </svg>
+    </div>
+    <div class="explain"><span class="stepno" id="s0no">시작</span><span class="txt" id="s0txt">아래 <b>다음 단계</b> 버튼을 누르면 자극이 전달되는 길을 따라갑니다.</span></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="s0next">▶ 다음 단계</button>
+      <button class="btn btn-ghost" id="s0reset">↺ 처음부터</button>
+      <div class="progress" id="s0prog"></div>
+    </div>
+    <div class="hint">💡 구심성(감각) 뉴런은 <b>들어오고</b>, 원심성(운동) 뉴런은 <b>나가고</b>, 연합 뉴런은 뇌·척수에서 <b>중개</b>합니다.</div>
+  </div>
+</section>
+
+<section class="scene" id="scene1">
+  <div class="card">
+    <div class="scene-head"><span class="badge">STEP 2</span><h2>휴지 전위 — 왜 세포 안이 (−)일까?</h2></div>
+    <p style="color:var(--ink-soft);margin:6px 0 0">자극이 없을 때 뉴런은 <b>분극</b> 상태입니다. Na⁺-K⁺ 펌프와 이온 통로가 만드는 <b>약 −70 mV</b>를 관찰해 보세요.</p>
+    <div class="stage-wrap">
+      <svg viewBox="0 0 1000 420" id="svg1"></svg>
+    </div>
+    <div class="legend">
+      <span class="k"><span class="chip" style="background:var(--na)"></span>Na⁺ (나트륨 이온)</span>
+      <span class="k"><span class="chip" style="background:var(--k)"></span>K⁺ (칼륨 이온)</span>
+    </div>
+    <div class="explain"><span class="stepno" id="s1no">시작</span><span class="txt" id="s1txt">클릭하면 이온이 어떻게 이동하는지 한 단계씩 보여줍니다.</span></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="s1next">▶ 다음 단계</button>
+      <button class="btn btn-ghost" id="s1reset">↺ 처음부터</button>
+      <div class="progress" id="s1prog"></div>
+    </div>
+  </div>
+</section>
+
+<section class="scene" id="scene2">
+  <div class="card">
+    <div class="scene-head"><span class="badge">STEP 3</span><h2>활동 전위 — 막전위의 급격한 변화</h2></div>
+    <p style="color:var(--ink-soft);margin:6px 0 0">역치 이상의 자극을 받으면 <b>분극 → 탈분극 → 재분극 → 과분극</b> 순서로 막전위가 변합니다.</p>
+    <div class="stage-wrap" style="display:grid;grid-template-columns:1.05fr .95fr;gap:6px" id="s2grid">
+      <svg viewBox="0 0 480 420" id="svg2graph"></svg>
+      <svg viewBox="0 0 480 420" id="svg2mem"></svg>
+    </div>
+    <div class="legend">
+      <span class="k"><span class="chip" style="background:var(--na)"></span>Na⁺</span>
+      <span class="k"><span class="chip" style="background:var(--k)"></span>K⁺</span>
+    </div>
+    <div class="explain"><span class="stepno" id="s2no">시작</span><span class="txt" id="s2txt">클릭하면 그래프의 점이 이동하며 통로가 열리고 닫히는 모습을 보여줍니다.</span></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="s2next">▶ 다음 단계</button>
+      <button class="btn btn-ghost" id="s2reset">↺ 처음부터</button>
+      <div class="progress" id="s2prog"></div>
+    </div>
+  </div>
+</section>
+
+<section class="scene" id="scene3">
+  <div class="card">
+    <div class="scene-head"><span class="badge">STEP 4</span><h2>흥분의 전도 — 축삭을 따라 이동</h2></div>
+    <p style="color:var(--ink-soft);margin:6px 0 0">한 지점의 활동 전위가 옆 지점을 자극하여 흥분이 <b>말단 방향으로 연쇄적으로</b> 이동합니다.</p>
+    <div class="controls" style="margin-top:12px">
+      <button class="btn btn-toggle on" id="s3modeA" data-mode="plain">민말이집 뉴런 (연속 전도)</button>
+      <button class="btn btn-toggle" id="s3modeB" data-mode="myelin">말이집 뉴런 (도약전도) ⚡</button>
+    </div>
+    <div class="stage-wrap">
+      <svg viewBox="0 0 1000 300" id="svg3"></svg>
+    </div>
+    <div class="explain"><span class="stepno" id="s3no">시작</span><span class="txt" id="s3txt">모드를 고르고 <b>다음 단계</b>를 누르면 흥분이 이동합니다.</span></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="s3next">▶ 다음 단계</button>
+      <button class="btn btn-ghost" id="s3reset">↺ 처음부터</button>
+      <div class="progress" id="s3prog"></div>
+    </div>
+    <div class="hint">💡 말이집(절연) 부분은 건너뛰고 <b>랑비에 결절</b>에서만 활동 전위가 발생하므로 도약전도가 <b>더 빠릅니다</b>.</div>
+  </div>
+</section>
+
+<section class="scene" id="scene4">
+  <div class="card">
+    <div class="scene-head"><span class="badge">STEP 5</span><h2>흥분의 전달 — 시냅스를 건너서</h2></div>
+    <p style="color:var(--ink-soft);margin:6px 0 0">시냅스에서는 전도가 아니라 <b>신경 전달 물질(아세틸콜린)</b>의 분비와 수용으로 흥분이 전해집니다.</p>
+    <div class="stage-wrap">
+      <svg viewBox="0 0 1000 380" id="svg4"></svg>
+    </div>
+    <div class="explain"><span class="stepno" id="s4no">시작</span><span class="txt" id="s4txt">클릭하면 신경 전달 물질이 분비되어 다음 뉴런을 자극하는 과정을 보여줍니다.</span></div>
+    <div class="controls">
+      <button class="btn btn-primary" id="s4next">▶ 다음 단계</button>
+      <button class="btn btn-ghost" id="s4reset">↺ 처음부터</button>
+      <div class="progress" id="s4prog"></div>
+    </div>
+    <div class="hint">💡 다 쓰인 신경 전달 물질은 <b>재흡수</b>되거나 <b>효소로 분해</b>되어 신속히 제거됩니다.</div>
+  </div>
+</section>
+
+<footer class="foot">
+  생명과학 · 항상성과 몸의 조절 — 신경계 | 키보드 <span class="kbd">→</span> 다음 단계, <span class="kbd">←</span> 처음부터
+  <span class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</span>
+</footer>
+</main>
+
+<script>
+/* ================= 공통 유틸 ================= */
+const NS="http://www.w3.org/2000/svg";
+function el(tag,attr={},parent){const e=document.createElementNS(NS,tag);for(const k in attr)e.setAttribute(k,attr[k]);if(parent)parent.appendChild(e);return e;}
+function txt(x,y,s,attr={},parent){const t=el("text",Object.assign({x,y},attr),parent);t.textContent=s;return t;}
+function buildProg(id,n){const p=document.getElementById(id);p.innerHTML="";for(let i=0;i<n;i++){const d=document.createElement("span");d.className="dot";p.appendChild(d);}}
+function setProg(id,cur,total){const dots=document.getElementById(id).children;for(let i=0;i<dots.length;i++){dots[i].className="dot"+(i<cur?" done":"")+(i===cur?" cur":"");}}
+
+/* ================= 탭 전환 ================= */
+const scenes=[...document.querySelectorAll(".scene")];
+const tabBtns=[...document.querySelectorAll("#tabs button")];
+let curScene=0;
+function goScene(i){
+  curScene=i;
+  scenes.forEach((s,k)=>s.classList.toggle("show",k===i));
+  tabBtns.forEach((b,k)=>b.classList.toggle("active",k===i));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+tabBtns.forEach(b=>b.addEventListener("click",()=>goScene(+b.dataset.go)));
+
+/* keyboard */
+document.addEventListener("keydown",e=>{
+  const map=[S0,S1,S2,S3,S4][curScene];
+  if(!map)return;
+  if(e.key==="ArrowRight"){map.next();e.preventDefault();}
+  if(e.key==="ArrowLeft"){map.reset();e.preventDefault();}
+});
+
+/* =================================================================
+   SCENE 0 : 뉴런의 종류
+================================================================= */
+const S0=(()=>{
+  const g=document.getElementById("flow0");
+  const noEl=document.getElementById("s0no"), txEl=document.getElementById("s0txt");
+  const nodes=[
+    {x:120,label:"자극",sub:"",color:"#f6c445",icon:"star"},
+    {x:265,label:"피부",sub:"감각 기관",color:"#f2a6ad",icon:"skin"},
+    {x:430,label:"구심성 뉴런",sub:"(감각)",color:"#f0a24e",icon:"neuron"},
+    {x:590,label:"연합 뉴런",sub:"중추",color:"#8ac47f",icon:"neuron"},
+    {x:750,label:"원심성 뉴런",sub:"(운동)",color:"#a78be0",icon:"neuron"},
+    {x:890,label:"근육",sub:"반응 기관",color:"#e88b8b",icon:"muscle"}
+  ];
+  const steps=[
+    {i:0,no:"① 자극",t:"피부 등 <em>감각 기관</em>에 자극이 도착합니다."},
+    {i:1,no:"② 감각 기관",t:"감각 기관이 자극을 받아들입니다."},
+    {i:2,no:"③ 구심성 뉴런",t:"<b>구심성(감각) 뉴런</b>이 자극을 중추 신경계로 전달합니다."},
+    {i:3,no:"④ 연합 뉴런",t:"뇌·척수의 <b>연합 뉴런</b>이 정보를 처리·판단합니다."},
+    {i:4,no:"⑤ 원심성 뉴런",t:"<b>원심성(운동) 뉴런</b>이 명령을 반응 기관으로 전달합니다."},
+    {i:5,no:"⑥ 반응",t:"근육 등 <em>반응 기관</em>이 반응합니다. 자극→반응 경로 완성!"}
+  ];
+  let step=-1;
+  buildProg("s0prog",steps.length);
+
+  function drawNode(n,idx){
+    const gg=el("g",{opacity:.28,id:"n0_"+idx},g);
+    if(n.icon==="star"){
+      let pts="";for(let a=0;a<10;a++){const r=a%2?12:26;const ang=Math.PI/5*a-Math.PI/2;pts+=(n.x+r*Math.cos(ang))+","+(150+r*Math.sin(ang))+" ";}
+      el("polygon",{points:pts,fill:n.color,stroke:"#e0a91e","stroke-width":2},gg);
+    }else if(n.icon==="neuron"){
+      el("circle",{cx:n.x,cy:150,r:22,fill:n.color,stroke:"#fff","stroke-width":3},gg);
+      el("circle",{cx:n.x,cy:150,r:8,fill:"#fff",opacity:.7},gg);
+      for(let a=0;a<7;a++){const ang=Math.PI*2/7*a;el("line",{x1:n.x+18*Math.cos(ang),y1:150+18*Math.sin(ang),x2:n.x+34*Math.cos(ang),y2:150+34*Math.sin(ang),stroke:n.color,"stroke-width":3,"stroke-linecap":"round"},gg);}
+    }else{
+      el("rect",{x:n.x-24,y:128,width:48,height:44,rx:10,fill:n.color,stroke:"#fff","stroke-width":3},gg);
+    }
+    txt(n.x,206,n.label,{"text-anchor":"middle","font-size":16,"font-weight":800,fill:"#26263a"},gg);
+    if(n.sub)txt(n.x,225,n.sub,{"text-anchor":"middle","font-size":12,fill:"#7a7790"},gg);
+  }
+  function build(){
+    g.innerHTML="";
+    nodes.forEach(drawNode);
+    // 화살표들
+    for(let i=0;i<nodes.length-1;i++){
+      const x1=nodes[i].x+30,x2=nodes[i+1].x-30;
+      const a=el("g",{id:"a0_"+i,opacity:0},g);
+      el("line",{x1,y1:150,x2:x2-8,y2:150,stroke:"#e15b64","stroke-width":4},a);
+      el("polygon",{points:`${x2},150 ${x2-12},144 ${x2-12},156`,fill:"#e15b64"},a);
+    }
+  }
+  function render(){
+    for(let i=0;i<nodes.length;i++){
+      const nn=document.getElementById("n0_"+i);
+      if(nn){nn.setAttribute("opacity",i<=step?1:.28);}
+    }
+    for(let i=0;i<nodes.length-1;i++){
+      const aa=document.getElementById("a0_"+i);
+      if(aa)aa.setAttribute("opacity",i<step?1:0);
+    }
+    if(step<0){noEl.textContent="시작";txEl.innerHTML="아래 <b>다음 단계</b> 버튼을 누르면 자극이 전달되는 길을 따라갑니다.";}
+    else{noEl.textContent=steps[step].no;txEl.innerHTML=steps[step].t;}
+    setProg("s0prog",step<0?-1:step,steps.length);
+  }
+  function next(){if(step<steps.length-1){step++;render();}}
+  function reset(){step=-1;render();}
+  document.getElementById("s0next").onclick=next;
+  document.getElementById("s0reset").onclick=reset;
+  document.getElementById("svg0").addEventListener("click",next);
+  build();render();
+  return {next,reset};
+})();
+
+/* =================================================================
+   SCENE 1 : 휴지 전위
+================================================================= */
+const S1=(()=>{
+  const svg=document.getElementById("svg1");
+  const noEl=document.getElementById("s1no"), txEl=document.getElementById("s1txt");
+  const MT=155, MB=250;             // 세포막 위/아래 경계
+  const PX=500, KX=780, NAX=210;    // 펌프 / K통로 / Na통로 x좌표
+  let step=-1;
+  const steps=[
+    {no:"① 이온 분포",t:"세포 <em>밖</em>에는 <em>Na⁺</em>가 아주 많고, 세포 <b>안</b>에는 <b>K⁺</b>가 많습니다. 통로는 대부분 닫혀 있어요."},
+    {no:"② Na⁺-K⁺ 펌프 (능동수송)",t:"<b>Na⁺-K⁺ 펌프</b>가 ATP를 써서 <em>Na⁺ 3개를 밖으로</em>, <b>K⁺ 2개를 안으로</b> 퍼냅니다. (나가는 (+)가 더 많아요!)"},
+    {no:"③ K⁺ 새어 나감",t:"일부 열린 K⁺ 통로로 <b>K⁺이 밖으로</b> 조금씩 빠져나갑니다. Na⁺ 통로는 거의 닫혀 있어요."},
+    {no:"④ 분극 완성",t:"밖에는 Na⁺(+)가 훨씬 많아 <em>밖은 (+)</em>, 안은 상대적으로 <b>(−)</b> — 이 <b>분극</b> 상태의 막전위가 약 <b>−70 mV</b>(휴지 전위)입니다."}
+  ];
+  buildProg("s1prog",steps.length);
+
+  // ---- 이온 헬퍼 ----
+  function makeIon(parent,type){
+    const c=type==="na"?"#f5a623":"#9b5de5", d=type==="na"?"#d98613":"#7b3fc4";
+    const gg=el("g",{class:"ion"},parent);
+    el("circle",{r:12,fill:c,stroke:d,"stroke-width":2},gg);
+    txt(0,4,"+",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#fff"},gg);
+    return gg;
+  }
+  function place(g,x,y){g.setAttribute("transform",`translate(${x},${y})`);}
+
+  // ---- 이동 이온(펌프/누출) 참조 ----
+  let naPump=[], kPump=[], kLeak=[], volt, chargeG, arrowG, atpEl, kBar;
+
+  function buildOnce(){
+    svg.innerHTML="";
+    // 배경
+    el("rect",{x:0,y:0,width:1000,height:MT,fill:"#fff6df"},svg);       // 세포 밖
+    el("rect",{x:0,y:MB,width:1000,height:420-MB,fill:"#e5f0fb"},svg);  // 세포 안
+    el("rect",{x:0,y:MT,width:1000,height:MB-MT,fill:"#fce9b8"},svg);   // 막
+    for(let x=8;x<1000;x+=26){
+      el("circle",{cx:x,cy:MT+10,r:9,fill:"#f2c94c",stroke:"#e0a91e","stroke-width":1.5},svg);
+      el("circle",{cx:x,cy:MB-10,r:9,fill:"#f2c94c",stroke:"#e0a91e","stroke-width":1.5},svg);
+    }
+    txt(20,MT-16,"세포 밖",{"font-size":18,"font-weight":800,fill:"#a2802a"},svg);
+    txt(20,MB+32,"세포 안",{"font-size":18,"font-weight":800,fill:"#3d7bd6"},svg);
+
+    // 전하 부호 그룹 (④에서 표시)
+    chargeG=el("g",{id:"charge1",opacity:0},svg);
+    for(let x=55;x<980;x+=78){
+      txt(x,MT-3,"+",{"text-anchor":"middle","font-size":20,"font-weight":800,fill:"#e15b64"},chargeG);
+      txt(x,MB+1,"−",{"text-anchor":"middle","font-size":22,"font-weight":800,fill:"#3d7bd6"},chargeG);
+    }
+
+    // Na⁺ 통로 (닫힘, 왼쪽)
+    el("rect",{x:NAX-22,y:MT,width:44,height:MB-MT,rx:8,fill:"#fbe6c6",stroke:"#f5a623","stroke-width":2.5},svg);
+    el("line",{x1:NAX-14,y1:(MT+MB)/2,x2:NAX+14,y2:(MT+MB)/2,stroke:"#d98613","stroke-width":4},svg);
+    txt(NAX,MT-16,"Na⁺ 통로 (닫힘)",{"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#d98613"},svg);
+
+    // K⁺ 통로 (오른쪽) — ③에서 열림
+    el("rect",{x:KX-22,y:MT,width:44,height:MB-MT,rx:8,fill:"#e8d5f6",stroke:"#9b5de5","stroke-width":2.5},svg);
+    kBar=el("line",{x1:KX-14,y1:(MT+MB)/2,x2:KX+14,y2:(MT+MB)/2,stroke:"#7b3fc4","stroke-width":4},svg);
+    txt(KX,MT-16,"K⁺ 통로",{"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#7b3fc4"},svg);
+
+    // Na⁺-K⁺ 펌프 (가운데)
+    el("rect",{x:PX-58,y:MT-6,width:116,height:MB-MT+12,rx:18,fill:"#c98fe0",stroke:"#9b5de5","stroke-width":3},svg);
+    txt(PX,MT+38,"Na⁺-K⁺",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#fff"},svg);
+    txt(PX,MT+56,"펌프",{"text-anchor":"middle","font-size":14,"font-weight":800,fill:"#fff"},svg);
+    atpEl=txt(PX,MT+74,"+ ATP",{"text-anchor":"middle","font-size":11,"font-weight":800,fill:"#ffe9a8",opacity:0},svg);
+
+    // 펌프 화살표/라벨 그룹 (②에서 표시)
+    arrowG=el("g",{id:"pumparrow1",opacity:0},svg);
+    // 3 Na⁺ 밖으로(위) — 펌프 왼쪽
+    el("line",{x1:PX-34,y1:MT+6,x2:PX-34,y2:MT-30,stroke:"#d98613","stroke-width":4},arrowG);
+    el("polygon",{points:`${PX-34},${MT-38} ${PX-42},${MT-24} ${PX-26},${MT-24}`,fill:"#d98613"},arrowG);
+    txt(PX-34,MT-44,"3 Na⁺",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#d98613"},arrowG);
+    // 2 K⁺ 안으로(아래) — 펌프 오른쪽
+    el("line",{x1:PX+34,y1:MB-6,x2:PX+34,y2:MB+30,stroke:"#7b3fc4","stroke-width":4},arrowG);
+    el("polygon",{points:`${PX+34},${MB+38} ${PX+26},${MB+24} ${PX+42},${MB+24}`,fill:"#7b3fc4"},arrowG);
+    txt(PX+34,MB+52,"2 K⁺",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#7b3fc4"},arrowG);
+
+    // ---- 정적(배경) 이온 ----
+    const bg=el("g",{},svg);
+    // 밖: Na⁺ 아주 많이 (주황이 압도적)
+    const outNa=[[80,55],[140,95],[300,58],[360,102],[430,60],[600,58],[650,102],[710,60],[860,55],[910,100],[830,105],[560,102],[950,62],[120,120],[680,120],[900,55]];
+    outNa.forEach(p=>place(makeIon(bg,"na"),p[0],p[1]));
+    // 밖: K⁺ 아주 조금
+    [[470,60],[760,120]].forEach(p=>place(makeIon(bg,"k"),p[0],p[1]));
+    // 안: K⁺ 많이 (보라 우세)
+    const inK=[[80,320],[150,365],[290,335],[350,378],[420,332],[600,335],[660,378],[720,332],[860,335],[910,378],[950,330],[560,378],[120,392]];
+    inK.forEach(p=>place(makeIon(bg,"k"),p[0],p[1]));
+    // 안: Na⁺ 아주 조금
+    [[240,392],[930,300]].forEach(p=>place(makeIon(bg,"na"),p[0],p[1]));
+
+    // ---- 이동 이온: 펌프가 옮기는 3 Na⁺ / 2 K⁺ ----
+    const mov=el("g",{},svg);
+    naPump=[makeIon(mov,"na"),makeIon(mov,"na"),makeIon(mov,"na")];
+    kPump=[makeIon(mov,"k"),makeIon(mov,"k")];
+    kLeak=[makeIon(mov,"k"),makeIon(mov,"k")];
+
+    // 막전위 표시
+    volt=el("g",{id:"volt1",opacity:0},svg);
+    el("rect",{x:775,y:24,width:160,height:60,rx:14,fill:"#fff",stroke:"#e15b64","stroke-width":2.5},volt);
+    txt(855,49,"막전위",{"text-anchor":"middle","font-size":13,fill:"#7a7790"},volt);
+    txt(855,74,"−70 mV",{"text-anchor":"middle","font-size":24,"font-weight":800,fill:"#e15b64"},volt);
+
+    positionMovers();
+  }
+
+  // 이동 이온을 현재 step에 맞게 배치
+  function positionMovers(){
+    // 3 Na⁺: step<1 → 세포 안(펌프 아래), step>=1 → 세포 밖(펌프 위)
+    const naStart=[[PX-26,330],[PX,362],[PX+26,330]];
+    const naEnd  =[[PX-30,92],[PX,66],[PX+30,92]];
+    naPump.forEach((g,i)=>{const p=step>=1?naEnd[i]:naStart[i];place(g,p[0],p[1]);});
+    // 2 K⁺: step<1 → 세포 밖(펌프 위), step>=1 → 세포 안(펌프 아래)
+    const kStart=[[PX-24,96],[PX+24,110]];
+    const kEnd  =[[PX-24,344],[PX+24,362]];
+    kPump.forEach((g,i)=>{const p=step>=1?kEnd[i]:kStart[i];place(g,p[0],p[1]);});
+    // 누출 K⁺: step<2 → 안, step>=2 → 밖(K통로 위)
+    const lStart=[[KX-20,330],[KX+20,362]];
+    const lEnd  =[[KX-18,100],[KX+18,66]];
+    kLeak.forEach((g,i)=>{const p=step>=2?lEnd[i]:lStart[i];place(g,p[0],p[1]);});
+  }
+
+  function render(){
+    positionMovers();
+    atpEl.setAttribute("opacity",step>=1?1:0);
+    arrowG.setAttribute("opacity",step>=1?1:0);
+    kBar.setAttribute("opacity",step>=2?0:1);              // ③부터 K통로 열림
+    volt.setAttribute("opacity",step>=3?1:0);
+    chargeG.setAttribute("opacity",step>=3?1:0);
+    if(step<0){noEl.textContent="시작";txEl.innerHTML="클릭하면 이온이 어떻게 이동하는지 한 단계씩 보여줍니다.";}
+    else{noEl.textContent=steps[step].no;txEl.innerHTML=steps[step].t;}
+    setProg("s1prog",step<0?-1:step,steps.length);
+  }
+  function next(){if(step<steps.length-1){step++;render();}}
+  function reset(){step=-1;render();}
+  document.getElementById("s1next").onclick=next;
+  document.getElementById("s1reset").onclick=reset;
+  svg.addEventListener("click",next);
+  buildOnce();render();
+  return {next,reset};
+})();
+
+/* =================================================================
+   SCENE 2 : 활동 전위 (그래프 + 막)
+================================================================= */
+const S2=(()=>{
+  const gsvg=document.getElementById("svg2graph");
+  const msvg=document.getElementById("svg2mem");
+  const noEl=document.getElementById("s2no"), txEl=document.getElementById("s2txt");
+
+  /* ---------- 그래프 좌표계 ---------- */
+  const GX0=90,GX1=440,GY_TOP=40,GY_BOT=360;
+  const V_MAX=45,V_MIN=-90;
+  function vx(t){return GX0+(GX1-GX0)*(t/5);}
+  function vy(v){return GY_TOP+(GY_BOT-GY_TOP)*(V_MAX-v)/(V_MAX-V_MIN);}
+  const pts=[
+    {t:0.0,v:-70},{t:1.0,v:-70},   // 분극
+    {t:1.5,v:35},                  // 탈분극 정점
+    {t:2.6,v:-80},                 // 재분극~과분극 저점
+    {t:3.6,v:-70},{t:5.0,v:-70}    // 회복
+  ];
+  const endIdx=[1,2,3,5];
+  const segColors=["#f0a24e","#e15b64","#8ac47f","#3d7bd6"];
+  const segRanges=[[0,1],[1,2],[2,3],[3,5]];
+
+  /* ---------- 단계 정의 (이온 개수 포함) ---------- */
+  // 총 이온: Na 12개, K 9개 (전하 보존)
+  // naIn: 세포 안 Na 개수 / kOut: 세포 밖 K 개수
+  // 밖 양이온 = (12-naIn)Na + kOut K,  안 양이온 = naIn Na + (9-kOut) K
+  const NA_TOT=12, K_TOT=9;
+  const steps=[
+    {no:"① 분극 (휴지 전위)",col:"#f0a24e",mv:"−70 mV",
+     naIn:1, kOut:1, naOpen:false, kOpen:false,
+     t:"휴지 상태입니다. 밖에는 <em>Na⁺가 아주 많고</em> 안에는 <b>K⁺</b>가 많습니다. <b>밖의 양이온이 더 많아</b> 안이 (−), 밖이 (+) — 막전위 <b>−70 mV</b>."},
+    {no:"② 탈분극 — Na⁺ 대량 유입",col:"#e15b64",mv:"+35 mV",
+     naIn:6, kOut:1, naOpen:true, kOpen:false,
+     t:"자극! <em>Na⁺ 통로가 열려</em> 밖의 Na⁺ <b>5개</b>가 한꺼번에 안으로 밀려듭니다. 이제 <b>안의 양이온이 더 많아져</b> 막전위가 <b>−70 → +35 mV</b>로 역전·급상승!"},
+    {no:"③ 재분극 — K⁺ 대량 유출",col:"#8ac47f",mv:"−80 mV",
+     naIn:6, kOut:7, naOpen:false, kOpen:true,
+     t:"Na⁺ 통로가 닫히고 <b>K⁺ 통로가 열려</b> 안의 K⁺ <b>6개</b>가 한꺼번에 밖으로 나갑니다. 다시 <b>밖의 양이온이 많아져</b> 막전위가 <b>급하강</b>(−80 mV, 과분극)!"},
+    {no:"④ 회복 (Na⁺-K⁺ 펌프)",col:"#3d7bd6",mv:"−70 mV",
+     naIn:1, kOut:1, naOpen:false, kOpen:false,
+     t:"<b>Na⁺-K⁺ 펌프</b>가 들어온 Na⁺를 밖으로, 나간 K⁺를 안으로 되돌려 처음의 이온 분포와 <b>−70 mV</b>로 <b>회복</b>됩니다."}
+  ];
+  let step=0;
+  buildProg("s2prog",steps.length);
+
+  /* ================= 그래프 ================= */
+  function drawGraph(uptoStep,animate){
+    gsvg.innerHTML="";
+    el("rect",{x:0,y:0,width:480,height:420,fill:"#fbfdff",rx:14},gsvg);
+    el("line",{x1:GX0,y1:GY_TOP-6,x2:GX0,y2:GY_BOT+10,stroke:"#9a97ad","stroke-width":2},gsvg);
+    el("line",{x1:GX0-6,y1:GY_BOT,x2:GX1+10,y2:GY_BOT,stroke:"#9a97ad","stroke-width":2},gsvg);
+    [[35,"+35"],[0,"0"],[-50,"−50"],[-70,"−70"]].forEach(([v,l])=>{
+      el("line",{x1:GX0-5,y1:vy(v),x2:GX1,y2:vy(v),stroke:"#eceaf4","stroke-width":1},gsvg);
+      txt(GX0-12,vy(v)+4,l,{"text-anchor":"end","font-size":13,"font-weight":700,fill:"#7a7790"},gsvg);
+    });
+    txt(34,GY_TOP-14,"막전위(mV)",{"font-size":13,"font-weight":800,fill:"#26263a"},gsvg);
+    txt(GX1-6,GY_BOT+30,"시간(ms)",{"text-anchor":"end","font-size":13,"font-weight":800,fill:"#26263a"},gsvg);
+    el("line",{x1:vx(1),y1:GY_BOT+4,x2:vx(1),y2:GY_BOT+22,stroke:"#e15b64","stroke-width":2.5},gsvg);
+    txt(vx(1),GY_BOT+38,"자극",{"text-anchor":"middle","font-size":12,"font-weight":800,fill:"#e15b64"},gsvg);
+
+    // 곡선 구간
+    for(let s=0;s<=uptoStep;s++){
+      const [a,b]=segRanges[s];
+      let d="";
+      for(let i=a;i<=b;i++){d+=(i===a?"M":"L")+vx(pts[i].t)+" "+vy(pts[i].v)+" ";}
+      const p=el("path",{d,fill:"none",stroke:segColors[s],"stroke-width":4.5,"stroke-linecap":"round","stroke-linejoin":"round"},gsvg);
+      if(s===uptoStep && animate){
+        const len=p.getTotalLength();
+        p.style.strokeDasharray=len; p.style.strokeDashoffset=len;
+        p.getBoundingClientRect();
+        p.style.transition="stroke-dashoffset .6s ease";
+        requestAnimationFrame(()=>{p.style.strokeDashoffset=0;});
+      }
+    }
+    // 상승/하강 라벨
+    if(uptoStep>=1)txt(vx(1.55)+6,vy(-8),"Na⁺ 유입 ↑",{"font-size":12,"font-weight":800,fill:"#e15b64"},gsvg);
+    if(uptoStep>=2)txt(vx(2.5)+4,vy(0),"K⁺ 유출 ↓",{"font-size":12,"font-weight":800,fill:"#4a9e6f"},gsvg);
+    // 현재 점 + 값
+    const idx=endIdx[uptoStep];
+    const cx=vx(pts[idx].t),cy=vy(pts[idx].v);
+    el("circle",{cx,cy,r:9,fill:"#fff",stroke:steps[uptoStep].col,"stroke-width":4},gsvg);
+    txt(cx+6,cy-14,["①","②","③","④"][uptoStep],{"font-size":16,"font-weight":800,fill:steps[uptoStep].col},gsvg);
+  }
+
+  /* ================= 세포막 (한 번만 그리고 이온은 이동) ================= */
+  const MT=150,MB=250,NAX=150,KX=340;
+  let naIons=[], kIons=[], naCh, kCh, volt, capEl, outTally, inTally, cmpEl;
+
+  function makeIon(type){
+    const c=type==="na"?"#f5a623":"#9b5de5", d=type==="na"?"#d98613":"#7b3fc4";
+    const g=el("g",{class:"ion"},msvg);
+    el("circle",{r:11,fill:c,stroke:d,"stroke-width":2},g);
+    txt(0,4,"+",{"text-anchor":"middle","font-size":12,"font-weight":800,fill:"#fff"},g);
+    return g;
+  }
+  function place(g,x,y){g.setAttribute("transform",`translate(${x},${y})`);}
+
+  function buildChannel(x,color,dcolor,label,dir){
+    const g=el("g",{},msvg);
+    el("rect",{x:x-19,y:MT,width:15,height:MB-MT,rx:6,fill:"#fff",stroke:color,"stroke-width":3},g);
+    el("rect",{x:x+4,y:MT,width:15,height:MB-MT,rx:6,fill:"#fff",stroke:color,"stroke-width":3},g);
+    const glow=el("rect",{x:x-4,y:MT,width:8,height:MB-MT,fill:color,opacity:0},g);
+    const bar=el("line",{x1:x-15,y1:(MT+MB)/2,x2:x+15,y2:(MT+MB)/2,stroke:dcolor,"stroke-width":4},g);
+    let arrow;
+    if(dir==="down") arrow=el("polygon",{points:`${x},${MB+22} ${x-9},${MB+6} ${x+9},${MB+6}`,fill:dcolor,opacity:0},g);
+    else             arrow=el("polygon",{points:`${x},${MT-22} ${x-9},${MT-6} ${x+9},${MT-6}`,fill:dcolor,opacity:0},g);
+    txt(x,MT-30,label,{"text-anchor":"middle","font-size":13,"font-weight":800,fill:dcolor},msvg);
+    return {glow,bar,arrow};
+  }
+
+  function buildMem(){
+    msvg.innerHTML="";
+    el("rect",{x:0,y:0,width:480,height:MT,fill:"#fff6df"},msvg);
+    el("rect",{x:0,y:MB,width:480,height:420-MB,fill:"#e5f0fb"},msvg);
+    el("rect",{x:0,y:MT,width:480,height:MB-MT,fill:"#fce9b8"},msvg);
+    for(let x=8;x<480;x+=24){
+      el("circle",{cx:x,cy:MT+10,r:8,fill:"#f2c94c",stroke:"#e0a91e","stroke-width":1.3},msvg);
+      el("circle",{cx:x,cy:MB-10,r:8,fill:"#f2c94c",stroke:"#e0a91e","stroke-width":1.3},msvg);
+    }
+    txt(12,MT-30,"세포 밖",{"font-size":14,"font-weight":800,fill:"#a2802a"},msvg);
+    txt(12,MB+40,"세포 안",{"font-size":14,"font-weight":800,fill:"#3d7bd6"},msvg);
+    // 이온 (채널보다 먼저 그려 뒤에 깔림)
+    naIons=[]; for(let i=0;i<NA_TOT;i++)naIons.push(makeIon("na"));
+    kIons=[];  for(let i=0;i<K_TOT;i++)kIons.push(makeIon("k"));
+    // 채널 (이온 위에)
+    naCh=buildChannel(NAX,"#f5a623","#d98613","Na⁺ 통로","down");
+    kCh =buildChannel(KX,"#9b5de5","#7b3fc4","K⁺ 통로","up");
+    // 막전위 배지
+    volt=el("g",{},msvg);
+    el("rect",{x:330,y:14,width:138,height:52,rx:12,fill:"#fff",stroke:"#e15b64","stroke-width":2.5},volt);
+    txt(399,34,"막전위",{"text-anchor":"middle","font-size":12,fill:"#7a7790"},volt);
+    // 양이온 총수 집계 배지 (가운데 통로 사이 빈 공간)
+    outTally=el("g",{},msvg);
+    el("rect",{x:196,y:66,width:88,height:36,rx:10,fill:"#fff6df",stroke:"#e0a91e","stroke-width":2},outTally);
+    txt(240,80,"밖 양이온",{"text-anchor":"middle","font-size":11,"font-weight":700,fill:"#a2802a"},outTally);
+    outTally._n=txt(240,97,"",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#c46a1a"},outTally);
+    inTally=el("g",{},msvg);
+    el("rect",{x:196,y:300,width:88,height:36,rx:10,fill:"#e5f0fb",stroke:"#5b9bd5","stroke-width":2},inTally);
+    txt(240,314,"안 양이온",{"text-anchor":"middle","font-size":11,"font-weight":700,fill:"#3d7bd6"},inTally);
+    inTally._n=txt(240,331,"",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#2b5ea8"},inTally);
+    cmpEl=txt(240,204,"",{"text-anchor":"middle","font-size":14,"font-weight":800,fill:"#7a7790"},msvg);
+    capEl=txt(240,406,"",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#4a4a63"},msvg);
+  }
+
+  // 영역에 이온들을 격자로 배치
+  function pack(ions,x0,y0){ // 4열 격자
+    ions.forEach((g,i)=>{
+      const cx=x0+(i%4)*42, cy=y0+Math.floor(i/4)*40;
+      g.style.transitionDelay=(i*0.03)+"s";
+      place(g,cx,cy);
+    });
+  }
+  function updateMem(st){
+    const s=steps[st];
+    // Na: 앞쪽 naIn개는 세포 안(왼쪽), 나머지는 세포 밖(왼쪽)
+    const naInside=naIons.slice(0,s.naIn), naOutside=naIons.slice(s.naIn);
+    pack(naOutside,44,44);   // 밖·왼쪽
+    pack(naInside,44,276);   // 안·왼쪽
+    // K: 앞쪽 kOut개는 세포 밖(오른쪽), 나머지는 세포 안(오른쪽)
+    const kOutside=kIons.slice(0,s.kOut), kInside=kIons.slice(s.kOut);
+    pack(kOutside,272,44);   // 밖·오른쪽
+    pack(kInside,272,276);   // 안·오른쪽
+    // 통로 상태
+    naCh.glow.setAttribute("opacity",s.naOpen?.5:0);
+    naCh.bar.setAttribute("opacity",s.naOpen?0:1);
+    naCh.arrow.setAttribute("opacity",s.naOpen?1:0);
+    kCh.glow.setAttribute("opacity",s.kOpen?.5:0);
+    kCh.bar.setAttribute("opacity",s.kOpen?0:1);
+    kCh.arrow.setAttribute("opacity",s.kOpen?1:0);
+    // 양이온 총수 집계 (밖 vs 안)
+    const outN=naOutside.length+kOutside.length, inN=naInside.length+kInside.length;
+    outTally._n.textContent=outN+" ⊕";
+    inTally._n.textContent=inN+" ⊕";
+    // 더 많은 쪽 강조
+    outTally._n.setAttribute("fill",outN>inN?"#e15b64":"#c46a1a");
+    inTally._n.setAttribute("fill",inN>outN?"#e15b64":"#2b5ea8");
+    // 부등호 + 어느 쪽이 (+)인지
+    cmpEl.textContent = outN>inN ? "밖 > 안  →  안이 (−)" : (inN>outN ? "안 > 밖  →  안이 (+)" : "밖 = 안");
+    cmpEl.setAttribute("fill", inN>outN ? "#e15b64" : "#3d7bd6");
+    // 막전위 값 + 캡션
+    let vt=volt.querySelector("text.mv");
+    if(!vt){vt=txt(399,58,"",{"text-anchor":"middle","font-size":22,"font-weight":800,fill:"#e15b64","class":"mv"},volt);}
+    vt.textContent=s.mv;
+    capEl.textContent="밖 양이온 "+outN+"개 · 안 양이온 "+inN+"개";
+    capEl.setAttribute("fill",s.col);
+  }
+
+  function render(animate){
+    drawGraph(step,animate);
+    updateMem(step);
+    noEl.textContent=steps[step].no;
+    txEl.innerHTML=steps[step].t;
+    setProg("s2prog",step,steps.length);
+  }
+  function next(){if(step<steps.length-1){step++;render(true);}}
+  function reset(){step=0;render(false);}
+  document.getElementById("s2next").onclick=next;
+  document.getElementById("s2reset").onclick=reset;
+  gsvg.addEventListener("click",next);msvg.addEventListener("click",next);
+  buildMem();render(false);
+  return {next,reset};
+})();
+
+/* =================================================================
+   SCENE 3 : 흥분의 전도
+================================================================= */
+const S3=(()=>{
+  const svg=document.getElementById("svg3");
+  const noEl=document.getElementById("s3no"), txEl=document.getElementById("s3txt");
+  let mode="plain";     // plain | myelin
+  let step=-1;
+  // 축삭을 8개 구획으로. myelin에서는 결절 위치만 흥분.
+  const AX_Y=150,AX_X0=90,AX_X1=910,SEG=8;
+  const segW=(AX_X1-AX_X0)/SEG;
+  function segCenter(i){return AX_X0+segW*(i+0.5);}
+
+  const plainSteps=[
+    "막의 한 부위가 자극을 받아 <em>Na⁺이 들어오며</em> 활동 전위가 발생합니다.",
+    "그 지점이 <b>옆 부위를 자극</b>해 인접한 곳에서도 탈분극이 일어납니다.",
+    "탈분극·재분극이 <b>이웃으로 계속 반복</b>되며 흥분이 옮겨갑니다.",
+    "이렇게 흥분이 <b>축삭 말단 방향으로 연쇄적</b>으로 이동합니다.",
+    "흥분이 <b>축삭 돌기 말단</b>까지 도달했습니다!"
+  ];
+  const myelinSteps=[
+    "말이집(절연) 부분은 건너뛰고 <b>랑비에 결절</b>에서만 활동 전위가 발생합니다.",
+    "흥분이 결절에서 결절로 <em>껑충 뛰어넘습니다</em> (도약전도).",
+    "절연 구간을 건너뛰므로 흥분이 <b>훨씬 빠르게</b> 이동합니다.",
+    "흥분이 <b>축삭 말단</b>에 도착 — 민말이집보다 빠릅니다! ⚡"
+  ];
+  function steps(){return mode==="plain"?plainSteps:myelinSteps;}
+  // 흥분 위치(활성 구획 인덱스)를 step에 매핑
+  function activeSegs(){
+    if(mode==="plain"){
+      // 연속: step 0→seg0, 1→0,1 ... 실제로는 진행 구간 강조
+      const front=Math.min(step+1,SEG);
+      return {front, nodes:null};
+    }else{
+      // 도약: 결절은 0,2,4,6 위치만
+      const nodeIdx=[0,2,4,6,7];
+      const front=nodeIdx[Math.min(step+1,nodeIdx.length-1)];
+      return {front, nodes:nodeIdx};
+    }
+  }
+
+  function build(){
+    svg.innerHTML="";
+    el("rect",{x:0,y:0,width:1000,height:300,fill:"transparent"},svg);
+    // 세포체
+    const g=el("g",{},svg);
+    el("circle",{cx:55,cy:AX_Y,r:34,fill:"#f6c445",stroke:"#e0a91e","stroke-width":3},g);
+    el("circle",{cx:55,cy:AX_Y,r:12,fill:"#e0a91e"},g);
+    for(let a=0;a<8;a++){const ang=Math.PI*2/8*a;el("line",{x1:55+30*Math.cos(ang),y1:AX_Y+30*Math.sin(ang),x2:55+48*Math.cos(ang),y2:AX_Y+48*Math.sin(ang),stroke:"#f6c445","stroke-width":4,"stroke-linecap":"round"},g);}
+    txt(55,230,"신경 세포체",{"text-anchor":"middle","font-size":13,"font-weight":700,fill:"#7a7790"},svg);
+
+    if(mode==="plain"){
+      el("rect",{x:AX_X0,y:AX_Y-16,width:AX_X1-AX_X0,height:32,rx:16,fill:"#fcd9a1",stroke:"#e0a91e","stroke-width":2,id:"axon"},svg);
+    }else{
+      // 말이집 마디들 + 랑비에 결절
+      for(let i=0;i<SEG;i++){
+        if(i%2===0){ // 말이집
+          el("rect",{x:AX_X0+segW*i+4,y:AX_Y-22,width:segW-8,height:44,rx:20,fill:"#f6b26b",stroke:"#e08a3a","stroke-width":2},svg);
+        }
+      }
+      // 축 얇은 선
+      el("line",{x1:AX_X0,y1:AX_Y,x2:AX_X1,y2:AX_Y,stroke:"#fcd9a1","stroke-width":10},svg);
+      // 결절 위치 표시
+      const nodeIdx=[0,2,4,6];
+      // 랑비에 결절은 말이집 사이 = i가 홀수 위치 경계
+      for(let i=1;i<SEG;i+=2){
+        txt(AX_X0+segW*i,AX_Y-30,"랑비에 결절",{"text-anchor":"middle","font-size":10,"font-weight":700,fill:"#c46a1a",opacity:.0},svg);
+      }
+    }
+    // 말단
+    el("path",{d:`M${AX_X1} ${AX_Y-16} q40 -6 46 -34 M${AX_X1} ${AX_Y+16} q40 6 46 34 M${AX_X1} ${AX_Y} q46 0 60 0`,fill:"none",stroke:"#fcd9a1","stroke-width":8,"stroke-linecap":"round"},svg);
+    txt(940,120,"축삭 말단",{"text-anchor":"middle","font-size":12,"font-weight":700,fill:"#7a7790"},svg);
+    // 흥분 파동 그룹
+    el("g",{id:"wave3"},svg);
+  }
+
+  function render(){
+    build();
+    const wave=document.getElementById("wave3");
+    const {front,nodes}=activeSegs();
+    if(step<0){
+      noEl.textContent="시작";
+      txEl.innerHTML="모드를 고르고 <b>다음 단계</b>를 누르면 흥분이 이동합니다.";
+      setProg("s3prog",-1,steps().length);
+      return;
+    }
+    if(mode==="plain"){
+      // 진행 지점까지 색칠 + 활성 파동
+      for(let i=0;i<=front && i<SEG;i++){
+        const x=AX_X0+segW*i;
+        const isActive=(i===front||i===front-1);
+        el("rect",{x,y:AX_Y-16,width:segW,height:32,rx:0,
+          fill:isActive?"#e15b64":"#f7b7bb",opacity:isActive?1:.6},wave);
+      }
+      // 활동전위 표시(+/-)
+      const fx=segCenter(Math.min(front,SEG-1));
+      el("circle",{cx:fx,cy:AX_Y,r:22,fill:"none",stroke:"#e15b64","stroke-width":4,opacity:.8},wave);
+      txt(fx,AX_Y-30,"활동 전위",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#e15b64"},wave);
+      // 방향 화살표
+      if(front<SEG-1){
+        const ax=fx+34;
+        el("polygon",{points:`${ax+16},${AX_Y} ${ax},${AX_Y-9} ${ax},${AX_Y+9}`,fill:"#e15b64"},wave);
+      }
+    }else{
+      // 도약: 결절들에 점 찍고 현재 결절 강조 + 점프 아크
+      const nodePos=[1,3,5,7].map(i=>AX_X0+segW*i); // 결절 x
+      // 활성 결절 index by step
+      const activeNode=Math.min(step,nodePos.length-1);
+      for(let n=0;n<=activeNode;n++){
+        const x=nodePos[n];
+        const on=(n===activeNode);
+        el("circle",{cx:x,cy:AX_Y,r:on?18:12,fill:on?"#e15b64":"#f7b7bb",stroke:"#e15b64","stroke-width":on?4:2},wave);
+        if(on){txt(x,AX_Y-30,"활동 전위",{"text-anchor":"middle","font-size":13,"font-weight":800,fill:"#e15b64"},wave);}
+        // 점프 아크
+        if(n>0){
+          const px=nodePos[n-1],cxm=(px+x)/2;
+          el("path",{d:`M${px} ${AX_Y-14} Q ${cxm} ${AX_Y-70} ${x} ${AX_Y-14}`,fill:"none",stroke:"#3d7bd6","stroke-width":3.5,"stroke-dasharray":"2 0"},wave);
+          el("polygon",{points:`${x},${AX_Y-14} ${x-9},${AX_Y-24} ${x+1},${AX_Y-26}`,fill:"#3d7bd6"},wave);
+        }
+      }
+      txt(500,275,"도약전도 ⚡",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#3d7bd6"},wave);
+    }
+    noEl.textContent="단계 "+(step+1);
+    txEl.innerHTML=steps()[step];
+    setProg("s3prog",step,steps().length);
+  }
+  function next(){if(step<steps().length-1){step++;render();}}
+  function reset(){step=-1;render();}
+  function setMode(m){
+    mode=m;step=-1;
+    document.getElementById("s3modeA").classList.toggle("on",m==="plain");
+    document.getElementById("s3modeB").classList.toggle("on",m==="myelin");
+    render();
+  }
+  document.getElementById("s3next").onclick=next;
+  document.getElementById("s3reset").onclick=reset;
+  document.getElementById("s3modeA").onclick=()=>setMode("plain");
+  document.getElementById("s3modeB").onclick=()=>setMode("myelin");
+  svg.addEventListener("click",next);
+  render();
+  return {next,reset};
+})();
+
+/* =================================================================
+   SCENE 4 : 흥분의 전달 (시냅스)
+================================================================= */
+const S4=(()=>{
+  const svg=document.getElementById("svg4");
+  const noEl=document.getElementById("s4no"), txEl=document.getElementById("s4txt");
+  let step=-1;
+  const steps=[
+    {no:"① 흥분 도달",t:"흥분(활동 전위)이 <b>축삭 돌기 말단</b>에 도달합니다."},
+    {no:"② 소포 융합",t:"신경 전달 물질을 담은 <b>시냅스 소포</b>가 세포막과 융합합니다."},
+    {no:"③ 물질 분비",t:"소포 안의 <em>아세틸콜린</em>이 <b>시냅스 틈</b>으로 분비됩니다."},
+    {no:"④ 확산·자극",t:"분비된 물질이 확산되어 다음 뉴런의 <b>수용체</b>를 자극합니다."},
+    {no:"⑤ 흥분 전달",t:"다음 뉴런에서 <b>활동 전위가 발생</b> — 흥분이 전달되었습니다!"}
+  ];
+  buildProg("s4prog",steps.length);
+
+  // 좌표
+  const PRE_BOT=190;   // 시냅스 이전 뉴런 말단 아래 경계
+  const POST_TOP=270;  // 시냅스 이후 뉴런 위 경계
+  function build(){
+    svg.innerHTML="";
+    // 시냅스 이전 뉴런 말단 (위, 둥근 버튼 모양)
+    el("path",{d:`M300 20 Q150 20 140 90 Q135 150 300 ${PRE_BOT} Q700 ${PRE_BOT} 700 130 Q700 20 500 20 Z`,
+      fill:"#f7c9a0",stroke:"#e08a3a","stroke-width":3},svg);
+    txt(500,55,"시냅스 이전 뉴런",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#c46a1a"},svg);
+    txt(180,120,"축삭 돌기 말단",{"font-size":13,"font-weight":700,fill:"#c46a1a"},svg);
+
+    // 흥분 도달 표시 (전기 신호)
+    el("g",{id:"spark4"},svg);
+
+    // 시냅스 이후 뉴런 (아래)
+    el("rect",{x:60,y:POST_TOP,width:880,height:110,rx:16,fill:"#cfe6c9",stroke:"#6fae62","stroke-width":3},svg);
+    txt(500,POST_TOP+95,"시냅스 이후 뉴런",{"text-anchor":"middle","font-size":15,"font-weight":800,fill:"#4c8a3f"},svg);
+    // 수용체
+    const recX=[300,430,560,690];
+    recX.forEach(x=>{
+      el("path",{d:`M${x-16} ${POST_TOP} L${x-16} ${POST_TOP-14} Q${x} ${POST_TOP-30} ${x+16} ${POST_TOP-14} L${x+16} ${POST_TOP}`,
+        fill:"#a6d29a",stroke:"#6fae62","stroke-width":2.5},svg);
+    });
+    txt(760,POST_TOP-10,"수용체",{"font-size":13,"font-weight":700,fill:"#4c8a3f"},svg);
+    // 시냅스 틈 라벨
+    txt(80,(PRE_BOT+POST_TOP)/2+5,"시냅스 틈",{"font-size":13,"font-weight":800,fill:"#7a7790"},svg);
+
+    // 소포 그룹
+    el("g",{id:"ves4"},svg);
+    el("g",{id:"nt4"},svg);
+  }
+  function vesicle(x,y,r,filled){
+    const g=el("g",{transform:`translate(${x},${y})`},document.getElementById("ves4"));
+    el("circle",{r,fill:"#eaf4ff",stroke:"#5b9bd5","stroke-width":2.5},g);
+    if(filled){
+      for(let i=0;i<6;i++){const a=Math.PI*2/6*i;el("circle",{cx:(r*0.5)*Math.cos(a),cy:(r*0.5)*Math.sin(a),r:3.2,fill:"#3d7bd6"},g);}
+    }
+    return g;
+  }
+  function ntDot(x,y){
+    el("circle",{cx:x,cy:y,r:4.5,fill:"#3d7bd6",stroke:"#2b5ea8","stroke-width":1},document.getElementById("nt4"));
+  }
+  function render(){
+    build();
+    const spark=document.getElementById("spark4");
+    // 항상 소포 몇 개
+    vesicle(360,150,20,true);
+    vesicle(300,120,17,true);
+    vesicle(470,140,16,true);
+
+    if(step>=0){
+      // 흥분 도달 스파크
+      el("polygon",{points:"500,70 490,100 505,100 495,130 520,95 507,95 517,70",fill:"#f6c445",stroke:"#e0a91e","stroke-width":1.5},spark);
+      txt(560,95,"흥분 도달",{"font-size":13,"font-weight":800,fill:"#e0a91e"},spark);
+    }
+    if(step>=1){
+      // 소포가 막쪽으로 이동/융합 (아래로)
+      vesicle(560,PRE_BOT-24,20,true);
+      el("path",{d:`M540 ${PRE_BOT-6} Q560 ${PRE_BOT+6} 580 ${PRE_BOT-6}`,fill:"none",stroke:"#e08a3a","stroke-width":3},svg);
+      txt(600,PRE_BOT-20,"소포 융합",{"font-size":12,"font-weight":700,fill:"#c46a1a"},svg);
+    }
+    if(step>=2){
+      // 물질 분비 (틈으로 흩어짐)
+      const rel=[[540,215],[560,225],[580,215],[600,230],[555,240],[585,240]];
+      rel.forEach(p=>ntDot(p[0],p[1]));
+      txt(650,225,"신경 전달 물질 분비",{"font-size":12,"font-weight":700,fill:"#3d7bd6"},svg);
+    }
+    if(step>=3){
+      // 확산해서 수용체로
+      const diff=[[300,255],[430,250],[560,255],[690,252],[360,240],[500,245]];
+      diff.forEach(p=>ntDot(p[0],p[1]));
+      // 화살표 아래로
+      [300,430,560,690].forEach(x=>el("polygon",{points:`${x},${POST_TOP-2} ${x-6},${POST_TOP-14} ${x+6},${POST_TOP-14}`,fill:"#3d7bd6"},svg));
+      txt(120,250,"확산",{"font-size":12,"font-weight":700,fill:"#3d7bd6"},svg);
+    }
+    if(step>=4){
+      // 다음 뉴런 흥분
+      el("rect",{x:60,y:POST_TOP,width:880,height:110,rx:16,fill:"#ffe0b8",stroke:"#e08a3a","stroke-width":3,opacity:.9},svg);
+      txt(500,POST_TOP+60,"⚡ 활동 전위 발생!",{"text-anchor":"middle","font-size":22,"font-weight":800,fill:"#e15b64"},svg);
+    }
+    if(step<0){noEl.textContent="시작";txEl.innerHTML="클릭하면 신경 전달 물질이 분비되어 다음 뉴런을 자극하는 과정을 보여줍니다.";}
+    else{noEl.textContent=steps[step].no;txEl.innerHTML=steps[step].t;}
+    setProg("s4prog",step<0?-1:step,steps.length);
+  }
+  function next(){if(step<steps.length-1){step++;render();}}
+  function reset(){step=-1;render();}
+  document.getElementById("s4next").onclick=next;
+  document.getElementById("s4reset").onclick=reset;
+  svg.addEventListener("click",next);
+  render();
+  return {next,reset};
+})();
+</script>
+</body>
+</html>

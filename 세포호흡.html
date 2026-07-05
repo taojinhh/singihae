@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>세포 호흡 학습 시뮬레이션</title>
+<style>
+  :root{
+    --bg:#f4f1ea;        /* 종이 톤 */
+    --ink:#1f2a37;
+    --muted:#6b7280;
+    --line:#a8a29e;
+    --cyto:#d9efe7;       /* 세포질 */
+    --cyto-deep:#a7d2c4;
+    --mito-outer:#f5d6b3;
+    --mito-inter:#fde8c8; /* 막 사이 공간 */
+    --mito-matrix:#f1a47a;/* 미토콘드리아 기질 */
+    --mito-membrane:#c0743f;
+    --carbon:#3d5a80;     /* 탄소 색 */
+    --carbon-text:#fff;
+    --phos:#e0a800;       /* 인산기 */
+    --atp:#e85d75;
+    --nadh:#7c6cd6;
+    --fadh:#c46aa8;
+    --co2:#9aa0a6;
+    --o2:#3aa1d4;
+    --water:#5aa9e6;
+    --accent:#b3502d;
+    --good:#2e8b57;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Serif KR","Nanum Myeongjo",ui-serif,Georgia,serif;
+    -webkit-font-smoothing:antialiased;}
+  .app{max-width:1180px;margin:0 auto;padding:18px 22px 60px;}
+  header.topbar{display:flex;align-items:center;justify-content:space-between;
+    gap:14px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1.5px solid var(--ink);}
+  .title{font-size:22px;letter-spacing:.5px;font-weight:700}
+  .title em{font-style:normal;color:var(--accent)}
+  .breadcrumb{font-size:13px;color:var(--muted);letter-spacing:.5px}
+  .breadcrumb span.cur{color:var(--ink);font-weight:700}
+
+  /* 단계 네비게이션 (4단계) */
+  .stepnav{display:flex;gap:0;margin-top:12px;border:1.5px solid var(--ink);
+    border-radius:8px;overflow:hidden;background:#fff;
+    box-shadow:2px 2px 0 var(--ink);flex-wrap:wrap}
+  .step-btn{flex:1 1 0;min-width:140px;border:none;background:transparent;
+    padding:10px 14px;font-family:inherit;font-size:13px;font-weight:700;
+    cursor:pointer;border-right:1.5px solid var(--ink);
+    display:flex;align-items:center;gap:8px;justify-content:center;
+    transition:background .15s,color .15s;color:var(--ink)}
+  .step-btn:last-child{border-right:none}
+  .step-btn:hover{background:#fff3b0}
+  .step-btn.active{background:var(--ink);color:#fff;cursor:default}
+  .step-btn.active:hover{background:var(--ink)}
+  .step-btn.active .step-num{background:#fff;color:var(--ink)}
+  .step-num{display:inline-flex;align-items:center;justify-content:center;
+    width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;
+    font-size:11px;font-weight:900;flex-shrink:0}
+  .step-icon{font-size:16px;line-height:1}
+  @media (max-width:760px){
+    .step-btn{min-width:50%;font-size:12px;padding:9px 8px}
+    .step-btn .step-label{display:none}
+    .step-btn .step-num{margin-right:4px}
+  }
+
+  /* 카운터 */
+  .counters{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;
+    border:1.5px solid var(--ink);border-radius:999px;background:#fff;
+    font-size:13px;font-weight:600}
+  .chip .dot{width:10px;height:10px;border-radius:50%}
+  .chip .num{font-variant-numeric:tabular-nums;min-width:18px;text-align:right}
+  .chip.atp .dot{background:var(--atp)}
+  .chip.nadh .dot{background:var(--nadh)}
+  .chip.fadh .dot{background:var(--fadh)}
+  .chip.co2 .dot{background:var(--co2)}
+  .chip.h2o .dot{background:var(--water)}
+
+  /* 화면 컨테이너 */
+  .stage{position:relative;margin-top:14px;border:1.5px solid var(--ink);
+    border-radius:6px;background:#fff;overflow:hidden;min-height:560px}
+  .scene{display:none;padding:18px}
+  .scene.active{display:block}
+  .scene-title{font-size:18px;font-weight:700;margin:0 0 8px 0}
+  .scene-sub{font-size:14px;color:var(--muted);margin:0 0 14px 0}
+
+  /* 안내 메시지 (학습 가이드) */
+  .guide{position:absolute;left:18px;right:18px;bottom:14px;
+    background:#fffbea;border:1.5px dashed var(--accent);
+    border-radius:8px;padding:10px 14px;font-size:14px;line-height:1.5;
+    box-shadow:2px 2px 0 var(--ink)}
+  .guide b{color:var(--accent)}
+
+  /* 버튼 */
+  .btn{appearance:none;border:1.5px solid var(--ink);background:#fff;
+    color:var(--ink);padding:7px 12px;border-radius:6px;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:700;
+    box-shadow:2px 2px 0 var(--ink);transition:transform .08s}
+  .btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--ink)}
+  .btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+  .btn.primary{background:#fff3b0}
+  .btn.warn{background:#ffd6d6}
+  .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+
+  /* ============= 세포 전체 뷰 ============= */
+  .cell-wrap{position:relative;height:520px}
+  .cell-svg{width:100%;height:100%;display:block}
+  .hot{cursor:pointer;transition:filter .15s}
+  .hot:hover{filter:brightness(1.06) drop-shadow(0 0 6px rgba(0,0,0,.18))}
+
+  /* ============= 해당과정 ============= */
+  .glyco{position:relative;height:520px;
+    background:radial-gradient(ellipse at center,#eaf6f1 0%,#d2ebde 70%,#bcd9c9 100%);
+    border-radius:8px;border:1.5px solid var(--cyto-deep);overflow:hidden}
+  .glyco .label{position:absolute;top:10px;left:14px;font-weight:700;
+    color:#235c44;letter-spacing:1px;font-size:14px;text-transform:uppercase}
+  .gly-track{position:absolute;inset:60px 22px 80px 22px;
+    display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;gap:0}
+  .gly-cell{display:flex;flex-direction:column;align-items:center;gap:8px;
+    position:relative}
+  .gly-arrow{position:absolute;top:50%;right:-22px;transform:translateY(-50%);
+    font-size:34px;color:#1f5a40;font-weight:900;user-select:none;z-index:2}
+  .arrow-icon{display:inline-block;line-height:1}
+  .arrow-labels{position:absolute;bottom:calc(100% + 6px);left:50%;
+    transform:translateX(-50%);display:flex;flex-direction:column;
+    gap:4px;align-items:center;pointer-events:none}
+  .arrow-label{font-size:11px;font-weight:800;padding:3px 8px;border-radius:5px;
+    border:1.5px solid var(--ink);white-space:nowrap;
+    box-shadow:1px 1px 0 var(--ink);background:#fff;letter-spacing:.3px;
+    opacity:0;transform:scale(.5) translateY(8px);
+    transition:opacity .4s ease,transform .4s cubic-bezier(.34,1.56,.64,1)}
+  .arrow-label.show{opacity:1;transform:scale(1) translateY(0)}
+  .arrow-label.minus{background:#ffe7c2;color:#7a3a00;border-color:#7a3a00}
+  .arrow-label.atp-gain{background:#fde2e7;color:#a02437;border-color:#a02437}
+  .arrow-label.nadh-gain{background:#e6e1f7;color:#3a2a8a;border-color:#3a2a8a}
+  .stage-name{font-size:14px;font-weight:700;color:#1f3a2c;text-align:center}
+
+  /* 분자 (탄소 사슬) */
+  .mol{position:relative;display:flex;align-items:center;gap:4px;
+    padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.7);
+    border:1.5px dashed transparent;transition:all .2s;user-select:none}
+  .mol.clickable{cursor:pointer;border-color:#1f5a40}
+  .mol.clickable:hover{background:#fff;transform:scale(1.05);
+    box-shadow:0 4px 14px rgba(31,90,64,.25)}
+  .mol .name{font-size:13px;font-weight:700;color:#1f3a2c;margin-left:6px;
+    white-space:nowrap}
+  .atom{width:26px;height:26px;border-radius:50%;background:var(--carbon);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:800;border:1.5px solid #0b1e36;
+    box-shadow:inset -2px -3px 0 rgba(0,0,0,.18)}
+  .atom.p{background:var(--phos);color:#3a2a00;border-color:#7a5a00}
+  .atom.coa{width:auto;padding:0 10px;border-radius:14px;background:#8a6a4a;
+    border-color:#5a3a1a;color:#fff;font-size:11px;letter-spacing:.5px}
+
+  /* ATP / NADH 비주얼 */
+  .energy-row{position:absolute;bottom:14px;left:0;right:0;
+    display:flex;justify-content:center;gap:14px;align-items:center;
+    font-size:13px;color:#1f3a2c}
+  .energy-row .pill{padding:5px 10px;border-radius:999px;border:1.5px solid #1f3a2c;
+    background:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px}
+  .energy-row .pill .d{width:10px;height:10px;border-radius:50%}
+  .pulse{animation:pulse .8s ease-out 1}
+  @keyframes pulse{
+    0%{transform:scale(1);filter:brightness(1)}
+    40%{transform:scale(1.25);filter:brightness(1.3)}
+    100%{transform:scale(1);filter:brightness(1)}
+  }
+  .float-up{animation:floatUp 1.4s ease-out 1 forwards}
+  @keyframes floatUp{
+    0%{opacity:0;transform:translateY(20px) scale(.6)}
+    20%{opacity:1}
+    100%{opacity:0;transform:translateY(-90px) scale(1)}
+  }
+  .pop{animation:pop .35s ease-out 1}
+  @keyframes pop{
+    0%{transform:scale(.6);opacity:0}
+    100%{transform:scale(1);opacity:1}
+  }
+  .floater{position:absolute;font-weight:800;font-size:14px;
+    pointer-events:none;padding:4px 8px;border-radius:6px;
+    border:1.5px solid var(--ink);background:#fff;
+    box-shadow:2px 2px 0 var(--ink)}
+  .floater.atp{background:#fde2e7;color:#a02437}
+  .floater.nadh{background:#e6e1f7;color:#3a2a8a}
+  .floater.fadh{background:#f7e1ef;color:#7a2a6a}
+  .floater.co2{background:#eee;color:#444}
+  .floater.minus{background:#ffe7c2;color:#7a3a00}
+
+  /* ============= 미토콘드리아 ============= */
+  .mito-wrap{position:relative;width:1100px;height:540px;
+    max-width:100%;margin:0 auto}
+  .mito-svg{width:100%;height:100%;display:block}
+  /* 모바일/좁은 화면: 가로 스크롤로 좌표 정합성 유지 */
+  #scene-mito{overflow-x:auto}
+
+  /* 드래그 가능 분자 컨테이너 (절대 위치) */
+  .dragLayer{position:absolute;inset:0;pointer-events:none}
+  .draggable{position:absolute;pointer-events:auto;cursor:grab}
+  .draggable:active{cursor:grabbing}
+  .drop-zone{transition:filter .15s}
+  .drop-zone.hover{filter:drop-shadow(0 0 10px #ffc24a)}
+
+  /* TCA 회로 영역 라벨 */
+  .zone-label{position:absolute;font-size:12px;font-weight:700;
+    color:#7a3a1a;letter-spacing:.5px;text-transform:uppercase;
+    pointer-events:none;background:rgba(255,255,255,.7);
+    padding:2px 6px;border-radius:4px}
+
+  /* 전자전달계 안내 박스 (그림 밖 별도 영역) */
+  .etc-info{margin-top:10px;
+    background:#fff7d6;border:1.5px solid var(--accent);border-radius:8px;
+    padding:10px 14px;font-size:13px;line-height:1.6;color:#5a2a10;
+    box-shadow:2px 2px 0 var(--accent)}
+  .etc-info b{color:var(--accent)}
+
+  .legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;
+    margin-top:10px;color:var(--muted)}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;
+    vertical-align:middle;margin-right:4px;border:1px solid #333}
+
+  /* 작은 분자 (드래그용) */
+  .small-mol{display:inline-flex;align-items:center;gap:3px;
+    padding:5px 8px;border-radius:12px;background:#fff;
+    border:1.5px solid var(--ink);box-shadow:2px 2px 0 var(--ink);
+    font-size:12px;font-weight:700;
+    transition:transform .25s,opacity .25s,box-shadow .15s}
+  .small-mol .atom{width:20px;height:20px;font-size:10px}
+
+  /* 클릭 가능한 분자: 펄스 효과로 시선 유도 */
+  /* ⚠️ 부모 .dragLayer가 pointer-events:none이므로 여기서 auto로 명시해야 클릭이 작동 */
+  .clickable-mol{animation:click-pulse 1.6s ease-in-out infinite;cursor:pointer;
+    pointer-events:auto}
+  @keyframes click-pulse{
+    0%,100%{box-shadow:2px 2px 0 var(--ink),0 0 0 0 rgba(255,179,0,0)}
+    50%{box-shadow:2px 4px 0 var(--ink),0 0 0 5px rgba(255,179,0,.35)}
+  }
+  .clickable-mol:hover{transform:scale(1.08);
+    box-shadow:3px 5px 0 var(--ink),0 0 0 5px rgba(255,179,0,.5)}
+
+  /* 새로 등장하는 분자에 강한 시선 유도 효과 (1.2초간) */
+  .small-mol.spotlight{
+    animation:spotlight 1.2s ease-out 1, click-pulse 1.6s ease-in-out infinite 1.2s;
+    z-index:10
+  }
+  @keyframes spotlight{
+    0%{box-shadow:2px 2px 0 var(--ink),0 0 0 0 rgba(255,140,0,.9);
+       transform:scale(.5)}
+    20%{transform:scale(1.25)}
+    50%{box-shadow:2px 2px 0 var(--ink),0 0 0 16px rgba(255,140,0,.3)}
+    100%{box-shadow:2px 2px 0 var(--ink),0 0 0 0 rgba(255,140,0,0);
+         transform:scale(1)}
+  }
+
+  /* TCA 단계별 영구 라벨 (분자 자리에 남는 변화량) */
+  .tca-stage-label{position:absolute;font-size:11px;font-weight:800;
+    padding:3px 8px;border-radius:5px;background:#fff;
+    border:1.5px solid var(--ink);box-shadow:1px 1px 0 var(--ink);
+    pointer-events:none;white-space:nowrap;letter-spacing:.3px;
+    opacity:0;transform:scale(.5) translateY(8px);
+    transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1);
+    z-index:5}
+  .tca-stage-label.show{opacity:1;transform:scale(1) translateY(0)}
+  .tca-stage-label.nadh{background:#e6e1f7;color:#3a2a8a;border-color:#3a2a8a}
+  .tca-stage-label.co2{background:#e8e8e8;color:#444;border-color:#444}
+  .tca-stage-label.atp{background:#fde2e7;color:#a02437;border-color:#a02437}
+  .tca-stage-label.fadh{background:#f7e1ef;color:#7a2a6a;border-color:#7a2a6a}
+
+  /* 안내 텍스트 토스트 */
+  .toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:8px 14px;border-radius:999px;
+    font-size:13px;font-weight:600;z-index:50;opacity:0;
+    transition:opacity .25s;pointer-events:none}
+  .toast.show{opacity:1}
+
+  /* H+ 입자 */
+  .hion{position:absolute;font-weight:800;font-size:13px;color:#fff;
+    background:#5a8dee;width:22px;height:22px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:1.5px solid #1f4ab8;pointer-events:none;
+    box-shadow:0 2px 4px rgba(0,0,0,.2)}
+  .electron{position:absolute;width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle,#fff 30%,#ffd34a 60%,#e89000 100%);
+    border:1.5px solid #7a4a00;pointer-events:none;
+    box-shadow:0 0 8px #ffc24a}
+
+  /* 하단 푸터 (Footer) 스타일 추가 */
+  .site-footer {
+    text-align: center;
+    padding: 24px 0;
+    margin-top: 40px;
+    border-top: 1.5px solid var(--ink);
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  /* 반응형 */
+  @media (max-width:760px){
+    .title{font-size:18px}
+    .stage{min-height:480px}
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<div class="app">
+
+  <header class="topbar">
+    <div>
+      <div class="title">세포 호흡 학습 <em>시뮬레이션</em></div>
+    </div>
+    <div class="counters" aria-label="에너지 분자 카운터">
+      <span class="chip atp"><span class="dot"></span>ATP<span class="num" id="cnt-atp">0</span></span>
+      <span class="chip nadh"><span class="dot"></span>NADH<span class="num" id="cnt-nadh">0</span></span>
+      <span class="chip fadh"><span class="dot"></span>FADH₂<span class="num" id="cnt-fadh">0</span></span>
+      <span class="chip co2"><span class="dot"></span>CO₂<span class="num" id="cnt-co2">0</span></span>
+      <span class="chip h2o"><span class="dot"></span>H₂O<span class="num" id="cnt-h2o">0</span></span>
+    </div>
+  </header>
+
+  <nav class="stepnav" aria-label="학습 단계 이동">
+    <button class="step-btn active" data-step="cell" onclick="goStep('cell')">
+      <span class="step-num">1</span>
+      <span class="step-icon">🔬</span>
+      <span class="step-label">세포 구조</span>
+    </button>
+    <button class="step-btn" data-step="glyco" onclick="goStep('glyco')">
+      <span class="step-num">2</span>
+      <span class="step-icon">🍬</span>
+      <span class="step-label">해당 과정</span>
+    </button>
+    <button class="step-btn" data-step="tca" onclick="goStep('tca')">
+      <span class="step-num">3</span>
+      <span class="step-icon">🔄</span>
+      <span class="step-label">TCA 회로</span>
+    </button>
+    <button class="step-btn" data-step="etc" onclick="goStep('etc')">
+      <span class="step-num">4</span>
+      <span class="step-icon">⚡</span>
+      <span class="step-label">전자전달계</span>
+    </button>
+  </nav>
+
+  <div class="stage" id="stage">
+
+    <section class="scene active" id="scene-cell">
+      <h2 class="scene-title">세포의 구조 — 어디서 시작할까?</h2>
+      <p class="scene-sub">세포질 기질을 클릭하면 <b>해당 과정</b>이, 미토콘드리아를 클릭하면 <b>피루브산의 산화 · TCA 회로 · 산화적 인산화</b>가 일어나는 장소로 이동합니다.</p>
+
+      <div class="cell-wrap">
+        <svg class="cell-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+          <ellipse class="hot" id="hot-cyto" cx="500" cy="250" rx="460" ry="220"
+                   fill="#d9efe7" stroke="#1f5a40" stroke-width="3"/>
+          <text x="120" y="80" font-size="20" font-weight="700" fill="#1f5a40"
+                style="font-family:'Noto Serif KR',serif">세포질</text>
+          <text x="120" y="102" font-size="13" fill="#1f5a40">click → 해당 과정</text>
+
+          <ellipse cx="260" cy="280" rx="110" ry="80" fill="#e8d8b0" stroke="#8a6a30" stroke-width="2"/>
+          <ellipse cx="260" cy="280" rx="90" ry="60" fill="none" stroke="#8a6a30" stroke-width="1" stroke-dasharray="3 3"/>
+          <circle cx="240" cy="270" r="14" fill="#b88a40"/>
+          <text x="260" y="396" font-size="14" text-anchor="middle" fill="#5a3a10" font-weight="700">핵</text>
+
+          <g class="hot" id="hot-mito">
+            <ellipse cx="700" cy="240" rx="180" ry="90" fill="#f5d6b3" stroke="#7a3a1a" stroke-width="3"/>
+            <ellipse cx="700" cy="240" rx="160" ry="72" fill="#f1a47a" stroke="#7a3a1a" stroke-width="2"/>
+            <path d="M580 240 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0"
+                  fill="none" stroke="#7a3a1a" stroke-width="2.2"/>
+            <text x="700" y="350" text-anchor="middle" font-size="16" font-weight="700" fill="#7a3a1a">미토콘드리아</text>
+            <text x="700" y="370" text-anchor="middle" font-size="12" fill="#7a3a1a">click → 피루브산 산화 · TCA · 산화적 인산화</text>
+          </g>
+
+          <g class="hot" id="hot-mito2">
+            <ellipse cx="430" cy="120" rx="70" ry="32" fill="#f5d6b3" stroke="#7a3a1a" stroke-width="2"/>
+            <ellipse cx="430" cy="120" rx="60" ry="24" fill="#f1a47a" stroke="#7a3a1a" stroke-width="1.5"/>
+            <path d="M380 120 q10 -14 20 0 q10 14 20 0 q10 -14 20 0 q10 14 20 0 q10 -14 20 0"
+                  fill="none" stroke="#7a3a1a" stroke-width="1.5"/>
+          </g>
+
+          <g opacity=".55">
+            <path d="M510 410 q40 -50 90 -90" fill="none" stroke="#1f3a2c" stroke-width="2" stroke-dasharray="4 4"/>
+            <text x="445" y="430" font-size="13" fill="#1f3a2c" font-weight="700">세포질 기질을 클릭</text>
+            <path d="M860 200 q30 -40 80 -50" fill="none" stroke="#7a3a1a" stroke-width="2" stroke-dasharray="4 4"/>
+            <text x="855" y="160" font-size="13" fill="#7a3a1a" font-weight="700">미토콘드리아 클릭</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="guide">
+        <b>학습 안내</b> · 세포 호흡은 <b>① 해당 과정(세포질)</b> → <b>② 피루브산 산화 · TCA 회로(미토콘드리아 기질)</b> → <b>③ 산화적 인산화(미토콘드리아 내막)</b> 세 단계로 진행됩니다.
+        클릭으로 단계를 선택해 보세요.
+      </div>
+    </section>
+
+    <section class="scene" id="scene-glyco">
+      <h2 class="scene-title">해당 과정 <span style="color:var(--muted);font-weight:400;font-size:14px">— 세포질에서 일어나는 6탄소→3탄소 분해</span></h2>
+      <p class="scene-sub">물질을 <b>클릭</b>하여 반응을 진행하세요. 각 단계에서 ATP와 NADH 변화가 표시됩니다.</p>
+
+      <div class="glyco" id="glyco-stage">
+        <div class="label">세포질 (CYTOSOL)</div>
+
+        <div class="gly-track">
+          <div class="gly-cell" id="gly-step1">
+            <div class="stage-name">포도당 (C₆H₁₂O₆)</div>
+            <div class="mol clickable" id="mol-glucose" title="클릭: 인산화 시작">
+              <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+              <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+              <span class="name">포도당</span>
+            </div>
+            <div style="font-size:11px;color:#3a4a3a">클릭하면 2 ATP가 소비되어<br>과당-2-인산이 됩니다</div>
+            <div class="gly-arrow">
+              <div class="arrow-labels">
+                <span class="arrow-label minus" id="lbl-a1-atp">−2 ATP</span>
+              </div>
+              <span class="arrow-icon">→</span>
+            </div>
+          </div>
+
+          <div class="gly-cell" id="gly-step2" style="opacity:.3;pointer-events:none">
+            <div class="stage-name">과당-2-인산</div>
+            <div class="mol clickable" id="mol-f16bp" title="클릭: 분해">
+              <span class="atom p">P</span>
+              <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+              <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+              <span class="atom p">P</span>
+              <span class="name">과당-2-인산</span>
+            </div>
+            <div style="font-size:11px;color:#3a4a3a">클릭하면 2분자의 피루브산으로<br>분해되며 4 ATP + 2 NADH 생성</div>
+            <div class="gly-arrow">
+              <div class="arrow-labels">
+                <span class="arrow-label atp-gain" id="lbl-a2-atp">+4 ATP</span>
+                <span class="arrow-label nadh-gain" id="lbl-a2-nadh">+2 NADH</span>
+              </div>
+              <span class="arrow-icon">→</span>
+            </div>
+          </div>
+
+          <div class="gly-cell" id="gly-step3" style="opacity:.3;pointer-events:none">
+            <div class="stage-name">2 × 피루브산 (C₃)</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div class="mol" id="mol-pyr1">
+                <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+                <span class="name">피루브산</span>
+              </div>
+              <div class="mol" id="mol-pyr2">
+                <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+                <span class="name">피루브산</span>
+              </div>
+            </div>
+            <div style="font-size:11px;color:#3a4a3a;margin-top:6px">완성!<br>미토콘드리아로 운반됩니다 →</div>
+          </div>
+        </div>
+
+        <div class="energy-row">
+          <span class="pill"><span class="d" style="background:var(--atp)"></span>해당 과정 ATP 순합성: <b id="gly-atp-net">0</b></span>
+          <span class="pill"><span class="d" style="background:var(--nadh)"></span>NADH: <b id="gly-nadh">0</b></span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn primary" id="btn-to-mito" disabled onclick="goStep('tca')">피루브산을 미토콘드리아로 보내기 →</button>
+        <button class="btn warn" onclick="resetGlyco()">해당 과정 다시 시작</button>
+      </div>
+
+      <div class="guide" id="glyco-guide">
+        <b>해당 과정 1단계</b> · 6탄소 화합물 <b>포도당</b>을 클릭하세요. ATP 2개가 소비되어 과당-2-인산으로 활성화됩니다.
+      </div>
+    </section>
+
+    </div>
+
+  <footer class="site-footer">
+    All Rights Reserved (무단 전재 및 재배포 금지)
+  </footer>
+
+</div>
+</body>
+</html>

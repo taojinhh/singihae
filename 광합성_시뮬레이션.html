@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=2.0">
+<title>광합성 시뮬레이션 — 명반응과 캘빈 회로</title>
+<style>
+  :root{
+    --bg:#eef4ec;--panel:#fff;--ink:#22312b;--ink-soft:#5a6a62;--line:#d8e2da;
+    --green:#5b9c6a;--green-d:#3f7d50;--green-l:#cfe6d4;
+    --blue:#6b8fc4;--blue-l:#dbe6f3;--blue-d:#3f6aa6;
+    --orange:#e8a04a;--orange-d:#cf7d22;--red:#d2533f;--yellow:#f2c14e;--purple:#9a7cc0;
+    --shadow:0 6px 24px rgba(40,70,55,.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    -webkit-text-size-adjust:100%;line-height:1.5;}
+  .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 60px;}
+  header h1{font-size:clamp(20px,3.6vw,30px);margin:6px 0 2px;letter-spacing:-.5px;}
+  header p{margin:0 0 14px;color:var(--ink-soft);font-size:14px;}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:166px;}
+  .tab{border:none;cursor:pointer;padding:10px 16px;border-radius:999px;
+    background:var(--panel);color:var(--ink-soft);font-size:14px;font-weight:700;
+    box-shadow:var(--shadow);-webkit-tap-highlight-color:transparent;
+    transition:transform .08s,background .15s,color .15s;}
+  .tab .num{display:inline-flex;width:20px;height:20px;border-radius:50%;
+    background:var(--line);color:var(--ink-soft);align-items:center;justify-content:center;
+    font-size:12px;margin-right:7px;}
+  .tab.active{background:var(--green-d);color:#fff;}
+  .tab.active .num{background:rgba(255,255,255,.25);color:#fff;}
+  .tab:active{transform:scale(.97);}
+  .stage{display:none;}
+  .stage.show{display:block;animation:fade .35s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .card{background:var(--panel);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:16px;}
+  .card h2{font-size:18px;margin:0 0 4px;}
+  .card .lead{color:var(--ink-soft);font-size:14px;margin:0 0 10px;}
+  .stagebar{display:inline-flex;background:var(--green-l);color:var(--green-d);
+    font-weight:800;font-size:15px;padding:6px 16px;border-radius:999px;margin-bottom:8px;}
+  .stagebar.blue{background:var(--blue-l);color:var(--blue-d);}
+  svg{display:block;width:100%;height:auto;touch-action:manipulation;}
+  text{font-family:inherit;}
+  .hot{cursor:pointer;}
+  .hint{animation:hint 1.3s ease-in-out infinite;}
+  @keyframes hint{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+  .btn{border:none;cursor:pointer;font-weight:700;font-size:14px;padding:11px 18px;border-radius:12px;
+    color:#fff;background:var(--green-d);box-shadow:var(--shadow);
+    -webkit-tap-highlight-color:transparent;transition:transform .08s,filter .15s;}
+  .btn.ghost{background:var(--panel);color:var(--ink);border:1.5px solid var(--line);box-shadow:none;}
+  .btn.blue{background:var(--blue-d);}
+  .btn:active{transform:scale(.96);}
+  .btn:disabled{opacity:.4;cursor:default;}
+  .narr{margin-top:12px;background:#f4f8f3;border:1px solid var(--line);border-radius:12px;
+    padding:12px 14px;font-size:14.5px;min-height:48px;}
+  .narr b{color:var(--green-d);}
+  .stage-blue .narr b{color:var(--blue-d);}
+  .legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:10px;font-size:13px;color:var(--ink-soft);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.12);}
+  .counters{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .chip{flex:1 1 90px;min-width:84px;background:#f4f8f3;border:1px solid var(--line);
+    border-radius:12px;padding:8px 10px;text-align:center;}
+  .chip .v{font-size:22px;font-weight:800;line-height:1;}
+  .chip .k{font-size:12px;color:var(--ink-soft);margin-top:3px;}
+  .chip.atp .v{color:var(--orange-d);}.chip.nadph .v{color:var(--blue-d);}
+  .chip.o2 .v{color:var(--green-d);}.chip.glu .v{color:var(--purple);}
+  .summary{background:linear-gradient(180deg,#fff,#f4f8f3);border:1px solid var(--line);
+    border-radius:14px;padding:14px;margin-top:6px;}
+  .summary .eq{font-size:clamp(15px,2.6vw,19px);font-weight:800;text-align:center;letter-spacing:-.3px;}
+  .summary .eq sub{font-size:.7em;}
+  .summary small{display:block;text-align:center;color:var(--ink-soft);margin-top:6px;}
+  .pulse{animation:pulse 1.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  footer{color:var(--ink-soft);font-size:12px;text-align:center;margin-top:20px;line-height:1.6;}
+  @media(max-width:560px){.tab{padding:9px 12px;font-size:13px;}.card{padding:13px;}}
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<div class="wrap">
+  <header>
+    <h1>광합성 시뮬레이션</h1>
+    <p>그림 속 요소를 직접 <b>클릭</b>하며 명반응(전자 흐름·광인산화)과 캘빈 회로를 따라가 보세요.</p>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-stage="0"><span class="num">1</span>전자의 흐름</button>
+    <button class="tab" data-stage="1"><span class="num">2</span>광인산화 (화학 삼투)</button>
+    <button class="tab" data-stage="2"><span class="num">3</span>캘빈 회로</button>
+    <button class="tab" data-stage="3"><span class="num">★</span>전체 정리</button>
+  </nav>
+
+  <section class="stage show" id="s0">
+    <div class="card">
+      <span class="stagebar" id="flowLabel">비순환적 전자 흐름</span>
+      <h2>요소를 클릭하며 전자와 H⁺의 이동을 따라가기</h2>
+      <p class="lead">반짝이는 요소를 순서대로 클릭하세요. 전자가 전자 전달계를 지날 때 H⁺가 스트로마에서 틸라코이드 내부로 이동합니다.</p>
+      <svg id="flowSvg" viewBox="0 0 760 440" role="img" aria-label="전자 흐름 모식도"></svg>
+      <div class="controls">
+        <button class="btn ghost" id="flowReset">처음으로</button>
+        <button class="btn ghost" id="flowToggle">순환적 흐름 보기 ↺</button>
+      </div>
+      <div class="narr" id="flowNarr">반짝이는 <b>광계 II</b>를 클릭해 빛을 흡수시켜 보세요.</div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--yellow)"></i>반응 중심 (P680·P700)</span>
+        <span><i class="dot" style="background:#5b6cd2"></i>전자 (e⁻)</span>
+        <span><i class="dot" style="background:var(--red)"></i>1차 전자 수용체</span>
+        <span><i class="dot" style="background:#e9eef4;border-color:#9fb0c4"></i>수소 이온 (H⁺)</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage stage-blue" id="s1">
+    <div class="card">
+      <span class="stagebar blue">광인산화 · 화학 삼투</span>
+      <h2>물 → 광계 II → 전자 전달계 → H⁺ 이동 → ATP</h2>
+      <p class="lead">반짝이는 요소를 순서대로 클릭하세요. 물이 광계 II에 전자를 주고, 전자가 이동하며 H⁺를 안쪽으로 퍼 날라 ATP를 만듭니다.</p>
+      <svg id="phosSvg" viewBox="0 0 760 430" role="img" aria-label="광인산화 모식도"></svg>
+      <div class="controls">
+        <button class="btn ghost blue" id="phosReset">처음으로</button>
+      </div>
+      <div class="narr" id="phosNarr">반짝이는 <b>물(H₂O)</b>을 클릭해 분해시켜 보세요.</div>
+      <div class="counters">
+        <div class="chip"><div class="v" id="hInside">0</div><div class="k">내부 H⁺</div></div>
+        <div class="chip atp"><div class="v" id="phosAtp">0</div><div class="k">생성된 ATP</div></div>
+        <div class="chip o2"><div class="v" id="phosO2">0</div><div class="k">방출된 O₂</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage" id="s2">
+    <div class="card">
+      <span class="stagebar">캘빈 회로 · 탄소 고정 반응</span>
+      <h2>분자를 클릭하며 CO₂ 6개를 포도당으로</h2>
+      <p class="lead">스트로마에서 일어납니다. 반짝이는 분자를 클릭하면 다음 분자로 변하고, 그때 ATP·NADPH가 소모됩니다. (CO₂ 6개 = 포도당 1분자 기준)</p>
+      <svg id="calvinSvg" viewBox="0 0 760 480" role="img" aria-label="캘빈 회로 모식도"></svg>
+      <div class="controls">
+        <button class="btn ghost" id="calvinReset">처음으로</button>
+      </div>
+      <div class="narr" id="calvinNarr">반짝이는 <b>CO₂</b>를 클릭해 탄소 고정을 시작하세요.</div>
+      <div class="counters">
+        <div class="chip atp"><div class="v" id="cAtp">0</div><div class="k">사용 ATP</div></div>
+        <div class="chip nadph"><div class="v" id="cNadph">0</div><div class="k">사용 NADPH</div></div>
+        <div class="chip"><div class="v" id="cCo2">0</div><div class="k">고정 CO₂</div></div>
+        <div class="chip glu"><div class="v" id="cGlu">0</div><div class="k">포도당</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stage" id="s3">
+    <div class="card">
+      <span class="stagebar">전체 정리</span>
+      <h2>명반응과 캘빈 회로의 연결</h2>
+      <p class="lead">틸라코이드의 명반응이 만든 ATP·NADPH가 스트로마의 캘빈 회로로 전달되고, 캘빈 회로는 ADP·NADP⁺를 되돌려줍니다.</p>
+      <svg id="overSvg" viewBox="0 0 760 360" role="img" aria-label="광합성 전체 정리"></svg>
+      <div class="summary" style="margin-top:14px;">
+        <div class="eq">6 CO<sub>2</sub> + 12 H<sub>2</sub>O + 빛에너지 → C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> + 6 O<sub>2</sub> + 6 H<sub>2</sub>O</div>
+        <small>포도당 1분자를 만드는 데 캘빈 회로는 ATP 18개, NADPH 12개를 소비합니다.</small>
+      </div>
+      <div class="counters" style="margin-top:14px;">
+        <div class="chip o2"><div class="v">6</div><div class="k">O₂ 방출</div></div>
+        <div class="chip atp"><div class="v">18</div><div class="k">ATP 소비</div></div>
+        <div class="chip nadph"><div class="v">12</div><div class="k">NADPH 소비</div></div>
+        <div class="chip glu"><div class="v">1</div><div class="k">포도당 생성</div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    생명과학Ⅱ · 광합성 학습용 시뮬레이션 — 단일 HTML 파일<br>
+    All Rights Reserved (무단 전재 및 재배포 금지)
+  </footer>
+</div>
+
+<script>
+const SVGNS="http://www.w3.org/2000/svg";
+function el(tag,attrs={},parent){
+  const n=document.createElementNS(SVGNS,tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(n);
+  return n;
+}
+function clear(node){while(node.firstChild)node.removeChild(node.firstChild);}
+function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()||'#888';}
+
+function moveGroup(group,x1,y1,x2,y2,dur,done){
+  const t0=performance.now();
+  function step(now){
+    const p=Math.min(1,(now-t0)/dur);
+    const e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    const x=x1+(x2-x1)*e,y=y1+(y2-y1)*e;
+    group.setAttribute('transform',`translate(${x-x1},${y-y1})`);
+    if(p<1) requestAnimationFrame(step); else done&&done();
+  }
+  requestAnimationFrame(step);
+}
+function hToken(parent,x,y){
+  const g=el('g',{transform:'translate(0,0)','pointer-events':'none'},parent);
+  el('circle',{cx:x,cy:y,r:11,fill:'#e9eef4',stroke:'#9fb0c4','stroke-width':1.4},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':11,fill:'#3a4a5e','font-weight':800},g).textContent='H⁺';
+  return g;
+}
+function electronToken(parent,x,y){
+  const g=el('g',{'pointer-events':'none'},parent);
+  el('circle',{cx:x,cy:y,r:12,fill:'#5b6cd2',stroke:'#3a4aad','stroke-width':2},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':12,fill:'#fff','font-weight':800},g).textContent='e⁻';
+  return g;
+}
+function adpToken(parent,x,y){
+  const g=el('g',{'pointer-events':'none'},parent);
+  el('rect',{x:x-18,y:y-11,width:36,height:22,rx:6,fill:'#f3d9a6',stroke:'#d9a94c'},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':11,fill:'#8a5a12','font-weight':800},g).textContent='ADP';
+  return g;
+}
+function piToken(parent,x,y){
+  const g=el('g',{'pointer-events':'none'},parent);
+  el('circle',{cx:x,cy:y,r:11,fill:'#ffd36b',stroke:'#d9a94c'},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':10,fill:'#8a5a12','font-weight':800},g).textContent='Pi';
+  return g;
+}
+function atpToken(parent,x,y){
+  const g=el('g',{'pointer-events':'none'},parent);
+  el('rect',{x:x-20,y:y-12,width:40,height:24,rx:6,fill:'#ffb347',stroke:'#cf7d22','stroke-width':1.6},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':12,fill:'#7a3e00','font-weight':800},g).textContent='ATP';
+  return g;
+}
+function burst(parent,x,y,txt){
+  const g=el('g',{'pointer-events':'none'},parent);
+  const pts=[];
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2,r=(i%2===0)?22:12;pts.push((x+Math.cos(a)*r)+','+(y+Math.sin(a)*r));}
+  el('polygon',{points:pts.join(' '),fill:'#ffe39a',stroke:'#f0c64f'},g);
+  el('text',{x:x,y:y+4,'text-anchor':'middle','font-size':12,fill:'#9a6b00','font-weight':800},g).textContent=txt;
+  const t0=performance.now();
+  (function step(now){const p=Math.min(1,(now-t0)/1100);
+    g.setAttribute('opacity',p<.75?1:1-(p-.75)/.25);
+    if(p<1)requestAnimationFrame(step);else g.remove();
+  })(performance.now());
+  return g;
+}
+
+const tabs=[...document.querySelectorAll('.tab')];
+const stages=[...document.querySelectorAll('.stage')];
+tabs.forEach(t=>t.addEventListener('click',()=>{
+  const i=+t.dataset.stage;
+  tabs.forEach(x=>x.classList.toggle('active',x===t));
+  stages.forEach((s,k)=>s.classList.toggle('show',k===i));
+  if(i===0) flowReset();
+  if(i===1) phosReset();
+  if(i===2) calvinReset();
+  if(i===3) drawOver();
+}));
+
+/* ===== STAGE 1 : 전자의 흐름 ===== */
+const flowSvg=document.getElementById('flowSvg');
+const flowNarr=document.getElementById('flowNarr');
+const flowLabel=document.getElementById('flowLabel');
+let flowMode='noncyclic', flowStep=0, cycStep=0;
+let FL={};
+
+function flowBackground(g){
+  el('rect',{x:0,y:0,width:760,height:300,fill:'#e7f3e4'},g);
+  el('rect',{x:0,y:300,width:760,height:140,fill:'#cfe6d4'},g);
+  el('line',{x1:0,y1:300,x2:760,y2:300,stroke:'#a9cdb0','stroke-width':2,'stroke-dasharray':'7 6'},g);
+  el('text',{x:16,y:24,'font-size':14,fill:cssVar('--green-d'),'font-weight':800},g).textContent='스트로마 (바깥)';
+  el('text',{x:16,y:330,'font-size':14,fill:'#3c6b34','font-weight':800},g).textContent='틸라코이드 내부 (루멘)';
+}
+function psBox(g,x,y,name){
+  el('rect',{x:x,y:y,width:96,height:120,rx:10,fill:'#efe9f4',stroke:'#cdbfe0'},g);
+  el('rect',{x:x,y:y+104,width:96,height:16,fill:'#c9bcdc'},g);
+  el('text',{x:x+48,y:y+116,'text-anchor':'middle','font-size':12,fill:'#4a3d63','font-weight':700},g).textContent=name;
+  const cx=x+48,cy=y+78;
+  [[-22,8],[-8,16],[8,14],[22,6],[-16,-6],[16,-8],[-6,28],[10,26]].forEach(p=>
+    el('circle',{cx:cx+p[0],cy:cy+p[1],r:8,fill:'#6fae72',stroke:'#4d8a52'},g));
+  return {cx,react:{x:cx,y:cy-4}};
+}
+function pathArrow(g,x1,y1,x2,y2,color,dashed){
+  const id='fa'+Math.random().toString(36).slice(2,7);
+  const defs=el('defs',{},g);
+  const m=el('marker',{id:id,markerWidth:8,markerHeight:8,refX:6,refY:3,orient:'auto'},defs);
+  el('path',{d:'M0,0 L7,3 L0,6 Z',fill:color},m);
+  const ln=el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:color,'stroke-width':6,'stroke-linecap':'round','marker-end':`url(#${id})`},g);
+  if(dashed) ln.setAttribute('stroke-dasharray','6 6');
+}
+function lightBolt(g,x,y,on){
+  const op=on?1:.3;
+  el('text',{x:x-2,y:y-30,'text-anchor':'middle','font-size':12,fill:cssVar('--orange-d'),'font-weight':700,opacity:op},g).textContent='빛';
+  el('path',{d:`M ${x} ${y-22} q -9 7 0 14 q 9 -7 0 14`,stroke:cssVar('--orange-d'),fill:'none','stroke-width':2.4,opacity:op},g);
+}
+function makeHot(g,cx,cy,r,fn){
+  el('circle',{cx:cx,cy:cy,r:r+4,fill:'none',stroke:cssVar('--green'),'stroke-width':3,class:'hint','pointer-events':'none'},g);
+  const h=el('circle',{cx:cx,cy:cy,r:r+6,fill:'#fff','fill-opacity':0.01,class:'hot','pointer-events':'all'},g);
+  h.addEventListener('click',fn);
+  h.addEventListener('touchstart',function(ev){ev.preventDefault();fn();},{passive:false});
+}
+function pumpProtons(g,x,n,fromY,toY){
+  for(let i=0;i<n;i++){
+    const sx=x-20+i*20;
+    const h=hToken(g,sx,fromY);
+    setTimeout(()=>moveGroup(h,sx,fromY,sx,toY,1000),i*180);
+  }
+}
+
+function drawFlowNoncyclic(){
+  clear(flowSvg);
+  const g=el('g',{},flowSvg);
+  flowBackground(g);
+  flowLabel.textContent='비순환적 전자 흐름';
+  const ps2=psBox(g,110,250,'광계 II');
+  const ps1=psBox(g,430,250,'광계 I');
+  el('circle',{cx:ps2.react.x,cy:ps2.react.y,r:10,fill:cssVar('--yellow'),stroke:'#caa11c'},g);
+  el('text',{x:ps2.react.x,y:ps2.react.y+3,'text-anchor':'middle','font-size':8,fill:'#5a4a00','font-weight':700},g).textContent='P680';
+  el('circle',{cx:ps1.react.x,cy:ps1.react.y,r:10,fill:cssVar('--yellow'),stroke:'#caa11c'},g);
+  el('text',{x:ps1.react.x,y:ps1.react.y+3,'text-anchor':'middle','font-size':8,fill:'#5a4a00','font-weight':700},g).textContent='P700';
+  const acc2={x:ps2.react.x,y:150}, acc1={x:ps1.react.x,y:120};
+  el('ellipse',{cx:acc2.x,cy:acc2.y,rx:12,ry:14,fill:cssVar('--red'),stroke:'#a83a2a'},g);
+  el('ellipse',{cx:acc1.x,cy:acc1.y,rx:12,ry:14,fill:cssVar('--red'),stroke:'#a83a2a'},g);
+  el('text',{x:acc2.x,y:acc2.y-22,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='1차 전자 수용체';
+  el('text',{x:acc1.x,y:acc1.y-22,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='1차 전자 수용체';
+  const etcMid={x:(acc2.x+ps1.react.x)/2,y:(acc2.y+ps1.react.y)/2};
+  el('rect',{x:etcMid.x-42,y:etcMid.y-9,width:84,height:18,rx:5,fill:'#f0dcb8',stroke:'#d9b878'},g);
+  el('text',{x:etcMid.x,y:etcMid.y+4,'text-anchor':'middle','font-size':10,fill:'#7a5a1a'},g).textContent='전자 전달계';
+  const water={x:70,y:360};
+  el('text',{x:water.x,y:water.y,'text-anchor':'middle','font-size':14,fill:flowStep>=1?'#9aa':cssVar('--blue-d'),'font-weight':800},g).textContent='H₂O';
+  pathArrow(g,water.x+18,water.y-6,ps2.react.x-6,ps2.react.y+4,'#9bb6d8');
+  el('text',{x:water.x+2,y:water.y+20,'text-anchor':'middle','font-size':10,fill:flowStep>=1?cssVar('--green-d'):'#9aa'},g).textContent='2H⁺ + ½O₂ + 2e⁻';
+  const o2={x:water.x+2,y:410};
+  if(flowStep>=1){
+    el('circle',{cx:o2.x-9,cy:o2.y,r:9,fill:'none',stroke:cssVar('--green-d'),'stroke-width':2.2},g);
+    el('circle',{cx:o2.x+9,cy:o2.y,r:9,fill:'none',stroke:cssVar('--green-d'),'stroke-width':2.2},g);
+    el('text',{x:o2.x,y:o2.y+4,'text-anchor':'middle','font-size':10,fill:cssVar('--green-d'),'font-weight':800},g).textContent='O₂';
+    el('text',{x:o2.x+44,y:o2.y+4,'font-size':10,fill:cssVar('--green-d'),'font-weight':700},g).textContent='산소 방출!';
+  }
+  const nadp={x:680,y:150};
+  pathArrow(g,ps2.react.x,ps2.react.y-12,acc2.x,acc2.y+16,'#e8c9a0');
+  pathArrow(g,acc2.x+14,acc2.y+6,ps1.react.x-8,ps1.react.y-8,'#e8c9a0',true);
+  pathArrow(g,ps1.react.x,ps1.react.y-12,acc1.x,acc1.y+16,'#e8c9a0');
+  pathArrow(g,acc1.x+14,acc1.y,nadp.x-26,nadp.y,'#e8c9a0',true);
+  lightBolt(g,96,ps2.react.y-6,flowStep>=2);
+  lightBolt(g,416,ps1.react.y-6,flowStep>=4);
+
+  el('circle',{cx:nadp.x,cy:nadp.y,r:14,fill:flowStep>=6?'#cfe0f3':'#eef1ee',stroke:'#9bb6d8'},g);
+  el('text',{x:nadp.x,y:nadp.y+4,'text-anchor':'middle','font-size':10,fill:flowStep>=6?cssVar('--blue-d'):'#9aa','font-weight':700},g)
+    .textContent=flowStep>=6?'NADPH':'NADP⁺';
+  el('text',{x:nadp.x,y:nadp.y-26,'text-anchor':'middle','font-size':11,fill:flowStep>=5?cssVar('--blue-d'):cssVar('--ink-soft'),'font-weight':700},g)
+    .textContent=flowStep>=6?'NADPH 생성!':'최종 수용체';
+
+  FL={g,ps2,ps1,acc2,acc1,etcMid,water,nadp};
+
+  if(flowStep===0) makeHot(g,water.x,water.y-4,20,flowAdvance);
+  else if(flowStep===1) makeHot(g,ps2.react.x,ps2.react.y,16,flowAdvance);
+  else if(flowStep===2) makeHot(g,acc2.x,acc2.y,18,flowAdvance);
+  else if(flowStep===3) makeHot(g,ps1.react.x,ps1.react.y,16,flowAdvance);
+  else if(flowStep===4) makeHot(g,acc1.x,acc1.y,18,flowAdvance);
+  else if(flowStep===5) makeHot(g,nadp.x,nadp.y,22,flowAdvance);
+
+  flowSyncNarr();
+}
+function flowAdvance(){
+  const {g,ps2,ps1,acc2,acc1,etcMid,water,nadp}=FL;
+  if(flowStep===0){
+    const e=electronToken(g,water.x+18,water.y-6);
+    moveGroup(e,water.x+18,water.y-6,ps2.react.x,ps2.react.y,900,()=>{flowStep=1;drawFlowNoncyclic();});
+  } else if(flowStep===1){
+    const e=electronToken(g,ps2.react.x,ps2.react.y);
+    moveGroup(e,ps2.react.x,ps2.react.y,acc2.x,acc2.y,700,()=>{flowStep=2;drawFlowNoncyclic();});
+  } else if(flowStep===2){
+    const e=electronToken(g,acc2.x,acc2.y);
+    pumpProtons(g,etcMid.x,3,120,360);
+    moveGroup(e,acc2.x,acc2.y,ps1.react.x,ps1.react.y,1100,()=>{
+      burst(g,etcMid.x,etcMid.y-30,'ATP');flowStep=3;drawFlowNoncyclic();});
+  } else if(flowStep===3){
+    const e=electronToken(g,ps1.react.x,ps1.react.y);
+    moveGroup(e,ps1.react.x,ps1.react.y,acc1.x,acc1.y,700,()=>{flowStep=4;drawFlowNoncyclic();});
+  } else if(flowStep===4){
+    const e=electronToken(g,acc1.x,acc1.y);
+    moveGroup(e,acc1.x,acc1.y,nadp.x,nadp.y,900,()=>{flowStep=5;drawFlowNoncyclic();});
+  } else if(flowStep===5){
+    const h1=hToken(g,nadp.x-44,360), h2=hToken(g,nadp.x+44,360);
+    moveGroup(h1,nadp.x-44,360,nadp.x,nadp.y,800);
+    moveGroup(h2,nadp.x+44,360,nadp.x,nadp.y,800,()=>{flowStep=6;drawFlowNoncyclic();});
+  }
+}
+const NONCYCLIC_NARR=[
+ '먼저 반짝이는 <b>물(H₂O)</b>을 클릭하세요. 물이 분해되어 광계 II에 전자를 공급합니다.',
+ '<b>물의 광분해!</b> H₂O → 2H⁺ + ½O₂ + 2e⁻ 로 <b>산소(O₂)가 방출</b>되고, 전자가 광계 II로 채워졌습니다. 이제 반짝이는 <b>광계 II</b>를 클릭해 빛을 흡수시키세요.',
+ '<b>① 광계 II가 빛을 흡수</b>해 P680의 전자가 들떠 1차 전자 수용체로 방출되었습니다. 반짝이는 <b>1차 전자 수용체</b>를 클릭하세요.',
+ '<b>② 전자가 전자 전달계를 따라 이동</b>하며 H⁺를 스트로마 → 틸라코이드 내부로 퍼 날랐습니다. 그 에너지로 ATP가 만들어집니다! 반짝이는 <b>광계 I</b>을 클릭하세요.',
+ '<b>③ 광계 I이 빛을 흡수</b>해 P700의 전자가 들떠 방출되었습니다. 반짝이는 <b>1차 전자 수용체</b>를 클릭하세요.',
+ '<b>④ 전자가 전자 전달계를 거쳐 NADP⁺로 전달</b>되었습니다. 반짝이는 <b>NADP⁺</b>를 클릭해 환원시켜 보세요. (내부의 H⁺가 사용됩니다)',
+ '완성! <b>NADP⁺ + 2H⁺ + 2e⁻ → NADPH + H⁺</b>. 전자가 물→광계II→광계I→NADP⁺로 한 방향으로 흘렀고, 산물은 <b>ATP · NADPH · O₂</b> 입니다.'
+];
+function flowSyncNarr(){
+  if(flowMode==='cyclic') return;
+  flowNarr.innerHTML=NONCYCLIC_NARR[Math.min(flowStep,NONCYCLIC_NARR.length-1)];
+}
+
+function drawFlowCyclic(){
+  clear(flowSvg);
+  const g=el('g',{},flowSvg);
+  flowBackground(g);
+  flowLabel.textContent='순환적 전자 흐름';
+  const ps=psBox(g,330,250,'광계 I');
+  el('circle',{cx:ps.react.x,cy:ps.react.y,r:11,fill:cssVar('--yellow'),stroke:'#caa11c'},g);
+  el('text',{x:ps.react.x,y:ps.react.y+3,'text-anchor':'middle','font-size':8,fill:'#5a4a00','font-weight':700},g).textContent='P700';
+  const acc={x:ps.react.x,y:120};
+  el('ellipse',{cx:acc.x,cy:acc.y,rx:12,ry:14,fill:cssVar('--red'),stroke:'#a83a2a'},g);
+  el('text',{x:acc.x+54,y:acc.y,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='1차 전자 수용체';
+  const etc={x:150,y:230};
+  el('rect',{x:etc.x-42,y:etc.y-9,width:84,height:18,rx:5,fill:'#f0dcb8',stroke:'#d9b878'},g);
+  el('text',{x:etc.x,y:etc.y+4,'text-anchor':'middle','font-size':10,fill:'#7a5a1a'},g).textContent='전자 전달계';
+  pathArrow(g,ps.react.x,ps.react.y-12,acc.x,acc.y+16,'#e8c9a0');
+  pathArrow(g,acc.x-14,acc.y+4,etc.x+8,etc.y-22,'#e8c9a0',true);
+  pathArrow(g,etc.x,etc.y+10,ps.react.x-14,ps.react.y-6,'#e8c9a0',true);
+  lightBolt(g,426,ps.react.y-6,cycStep>=1);
+  FL={g,ps,acc,etc};
+  if(cycStep===0){
+    makeHot(g,ps.react.x,ps.react.y,16,()=>{
+      const e=electronToken(g,ps.react.x,ps.react.y);
+      moveGroup(e,ps.react.x,ps.react.y,acc.x,acc.y,700,()=>{cycStep=1;drawFlowCyclic();});
+    });
+    flowNarr.innerHTML='반짝이는 <b>광계 I</b>을 클릭해 빛을 흡수시켜 보세요.';
+  } else if(cycStep===1){
+    makeHot(g,acc.x,acc.y,18,()=>{
+      const e=electronToken(g,acc.x,acc.y);
+      pumpProtons(g,etc.x,2,120,360);
+      moveGroup(e,acc.x,acc.y,etc.x,etc.y,800,()=>{
+        burst(g,etc.x,etc.y-26,'ATP');
+        moveGroup(e,etc.x,etc.y,ps.react.x,ps.react.y,800,()=>{cycStep=2;drawFlowCyclic();});
+      });
+    });
+    flowNarr.innerHTML='<b>① 광계 I이 빛을 흡수</b>해 전자가 방출되었습니다. 반짝이는 <b>1차 전자 수용체</b>를 클릭하세요.';
+  } else {
+    flowNarr.innerHTML='<b>② 전자가 전자 전달계를 거쳐 다시 P700으로 되돌아왔습니다.</b> H⁺ 이동으로 <b>ATP만 생성</b>되고 NADPH는 만들어지지 않습니다. (순환적 흐름)';
+  }
+}
+function drawFlow(){ if(flowMode==='noncyclic') drawFlowNoncyclic(); else drawFlowCyclic(); }
+function flowReset(){ flowStep=0; cycStep=0; drawFlow(); }
+document.getElementById('flowReset').addEventListener('click',flowReset);
+document.getElementById('flowToggle').addEventListener('click',()=>{
+  flowMode=flowMode==='noncyclic'?'cyclic':'noncyclic';
+  document.getElementById('flowToggle').textContent=flowMode==='noncyclic'?'순환적 흐름 보기 ↺':'비순환적 흐름 보기 ↺';
+  flowReset();
+});
+
+/* ===== STAGE 2 : 광인산화 ===== */
+const phosSvg=document.getElementById('phosSvg');
+const phosNarr=document.getElementById('phosNarr');
+let PH={}, phosStep=0, phosHcount=0, phosAtp=0, phosO2=0, phosRotor=0, phosBusy=false;
+
+function phosComplex(g,cx,topY,name){
+  el('rect',{x:cx-26,y:topY-34,width:52,height:60,rx:9,fill:'#b39ddb',stroke:'#8a73b8'},g);
+  el('circle',{cx:cx-8,cy:topY-2,r:5,fill:'#6fae72'},g);
+  el('circle',{cx:cx+8,cy:topY-2,r:5,fill:'#6fae72'},g);
+  el('circle',{cx:cx,cy:topY-14,r:5,fill:cssVar('--yellow')},g);
+  el('text',{x:cx,y:topY+40,'text-anchor':'middle','font-size':11,fill:'#4a3d63','font-weight':700},g).textContent=name;
+}
+function phosHot(g,cx,cy,r,fn){
+  el('circle',{cx:cx,cy:cy,r:r+4,fill:'none',stroke:cssVar('--blue'),'stroke-width':3,class:'hint','pointer-events':'none'},g);
+  const h=el('circle',{cx:cx,cy:cy,r:r+6,fill:'#fff','fill-opacity':.01,class:'hot','pointer-events':'all'},g);
+  h.addEventListener('click',fn);
+  h.addEventListener('touchstart',function(ev){ev.preventDefault();fn();},{passive:false});
+}
+function drawPhos(){
+  clear(phosSvg);
+  const g=el('g',{},phosSvg);
+  const topY=150, botY=300;
+  el('rect',{x:0,y:0,width:760,height:topY,fill:'#e7f3e4'},g);
+  el('text',{x:16,y:26,'font-size':14,fill:cssVar('--green-d'),'font-weight':800},g).textContent='스트로마 (바깥)';
+  el('rect',{x:40,y:topY-10,width:680,height:10,fill:'#cdbb88'},g);
+  el('rect',{x:40,y:botY,width:680,height:10,fill:'#cdbb88'},g);
+  el('rect',{x:40,y:topY,width:680,height:botY-topY,fill:'#bfe0b6'},g);
+  el('text',{x:330,y:botY-12,'font-size':14,fill:'#3c6b34','font-weight':800},g).textContent='틸라코이드 내부 (루멘)';
+
+  phosComplex(g,170,topY,'광계 II');
+  el('ellipse',{cx:330,cy:topY-4,rx:32,ry:24,fill:'#f0dcb8',stroke:'#d9b878'},g);
+  el('text',{x:330,y:topY+38,'text-anchor':'middle','font-size':11,fill:'#7a5a1a','font-weight':700},g).textContent='전자 전달계';
+  phosComplex(g,490,topY,'광계 I');
+
+  // ATP 합성효소
+  const synX=640;
+  el('rect',{x:synX-14,y:topY-4,width:28,height:botY-topY+8,fill:'#efb3cc',stroke:'#c686a2'},g);
+  const rGroup=el('g',{transform:`rotate(${phosRotor},${synX},${topY-22})`},g);
+  el('circle',{cx:synX,cy:topY-22,r:24,fill:'#e06699',stroke:'#b23366','stroke-width':1.6},rGroup);
+  for(let a=0;a<360;a+=60){
+    const rad=a*Math.PI/180;
+    el('line',{x1:synX,y1:topY-22,x2:synX+Math.cos(rad)*24,y2:topY-22+Math.sin(rad)*24,stroke:'#fff','stroke-width':1.5},rGroup);
+  }
+  el('text',{x:synX,y:topY+40,'text-anchor':'middle','font-size':11,fill:'#8c264e','font-weight':700},g).textContent='ATP 합성효소';
+
+  // 정적 요소들 연결 화살표
+  pathArrow(g,196,topY-12,292,topY-12,'#cbd8c9');
+  pathArrow(g,368,topY-12,460,topY-12,'#cbd8c9');
+
+  // 물 분해 장소
+  const wX=140, wY=240;
+  el('text',{x:wX,y:wY,'text-anchor':'middle','font-size':13,fill:phosStep>0?'#9aa':cssVar('--blue-d'),'font-weight':800},g).textContent='H₂O';
+  if(phosStep===0){
+    phosHot(g,wX,wY-4,16,phosClickWater);
+    phosNarr.innerHTML='반짝이는 <b>물(H₂O)</b>을 클릭해 명반응의 첫 단추를 풀어보세요.';
+  }
+
+  // 루멘 내부 H+ 이온 풀(Pool) 표시
+  PH.hContainer=el('g',{},g);
+  for(let i=0;i<Math.min(phosHcount,16);i++){
+    const rx=220+(i%6)*50+(Math.sin(i)*10), ry=200+Math.floor(i/6)*28;
+    hToken(PH.hContainer,rx,ry);
+  }
+
+  // 활성화 조건
+  if(phosStep===1 && !phosBusy){
+    phosHot(g,170,topY-12,22,phosExcites2);
+    phosNarr.innerHTML='물이 채워준 전자가 대기 중입니다. <b>광계 II</b>를 클릭해 빛을 가해보세요.';
+  }
+  if(phosStep===2 && phosHcount>=3 && !phosBusy){
+    phosHot(g,synX,topY-22,26,phosSynthesize);
+    phosNarr.innerHTML='루멘 내부에 H⁺ 농도가 높아졌습니다! <b>ATP 합성효소</b>를 클릭해 화학 삼투로 ATP를 만드세요.';
+  }
+
+  document.getElementById('hInside').textContent=phosHcount;
+  document.getElementById('phosAtp').textContent=phosAtp;
+  document.getElementById('phosO2').textContent=phosO2;
+}
+function phosClickWater(){
+  if(phosBusy) return; phosBusy=true;
+  phosO2++; phosHcount+=2; phosStep=1;
+  const g=phosSvg.querySelector('g');
+  const e1=electronToken(g,140,240), e2=electronToken(g,152,240);
+  moveGroup(e1,140,240,162,138,700);
+  moveGroup(e2,152,240,178,138,700,()=>{ e1.remove();e2.remove();phosBusy=false;drawPhos(); });
+}
+function phosExcites2(){
+  if(phosBusy) return; phosBusy=true;
+  const g=phosSvg.querySelector('g');
+  const e=electronToken(g,170,138);
+  moveGroup(e,170,138,330,138,700,()=>{
+    pumpProtons(g,330,2,40,210);
+    setTimeout(()=>{
+      phosHcount+=2;
+      moveGroup(e,330,138,490,138,700,()=>{
+        const hStroma=hToken(g,530,40);
+        moveGroup(hStroma,530,40,545,138,600,()=>{
+          burst(g,510,100,'NADPH');
+          hStroma.remove(); e.remove(); phosBusy=false; phosStep=2; drawPhos();
+        });
+      });
+    },400);
+  });
+}
+function phosSynthesize(){
+  if(phosBusy||phosHcount<3) return; phosBusy=true;
+  const g=phosSvg.querySelector('g');
+  phosHcount-=3;
+  document.getElementById('hInside').textContent=phosHcount;
+  const hg=el('g',{},g);
+  const h1=hToken(hg,640,220), h2=hToken(hg,640,245), h3=hToken(hg,640,270);
+  let rCount=0;
+  function rot(){
+    phosRotor=(phosRotor+8)%360;
+    g.querySelector('g:nth-of-type(4)').setAttribute('transform',`rotate(${phosRotor},640,128)`);
+    if(++rCount<50) requestAnimationFrame(rot);
+  }
+  rot();
+
+  const adp=adpToken(g,580,45), pi=piToken(g,615,45);
+  moveGroup(adp,580,45,640,65,900);
+  moveGroup(pi,615,45,640,65,900);
+  moveGroup(hg,0,0,0,-180,1000,()=>{
+    adp.remove();pi.remove();hg.remove();
+    burst(g,640,65,'ATP');
+    phosAtp++; phosStep=1; phosBusy=false; drawPhos();
+  });
+}
+function phosReset(){ phosStep=0; phosHcount=0; phosAtp=0; phosO2=0; phosBusy=false; drawPhos(); }
+document.getElementById('phosReset').addEventListener('click',phosReset);
+
+/* ===== STAGE 3 : 캘빈 회로 ===== */
+const calvinSvg=document.getElementById('calvinSvg');
+const calvinNarr=document.getElementById('calvinNarr');
+let CC={}, cStep=0, cAtp=0, cNadph=0, cCo2=0, cGlu=0, cBusy=false;
+
+const NODE_INFO=[
+  {name:'6 CO₂', x:380, y:50, r:24, fill:'#eaeaea', stroke:'#adadad', c:0},
+  {name:'6 RuBP', x:180, y:140, r:28, fill:'#cfe6d4', stroke:cssVar('--green-d'), c:5},
+  {name:'12 3-PGA', x:580, y:140, r:30, fill:'#f3d9a6', stroke:'#cf7d22', c:3},
+  {name:'12 DPGA', x:580, y:320, r:30, fill:'#ffb347', stroke:'#cf7d22', c:3},
+  {name:'12 G3P', x:380, y:410, r:30, fill:'#dbe6f3', stroke:cssVar('--blue-d'), c:3},
+  {name:'2 G3P', x:380, y:300, r:24, fill:'#ede4f3', stroke:cssVar('--purple'), c:3}
+];
+
+function drawCalvinCircle(g,cx,cy,r,f,s,txt,hintOn){
+  el('circle',{cx:cx,cy:cy,r:r,fill:f,stroke:s,'stroke-width':2},g);
+  el('text',{x:cx,y:cy+4,'text-anchor':'middle','font-size':11,'font-weight':800,fill:cssVar('--ink')},g).textContent=txt;
+  if(hintOn){
+    el('circle',{cx:cx,cy:cy,r:r+4,fill:'none',stroke:cssVar('--green'),'stroke-width':3,class:'hint','pointer-events':'none'},g);
+    const h=el('circle',{cx:cx,cy:cy,r:r+6,fill:'#fff','fill-opacity':0.01,class:'hot','pointer-events':'all'},g);
+    h.addEventListener('click',calvinAdvance);
+    h.addEventListener('touchstart',function(ev){ev.preventDefault();calvinAdvance();},{passive:false});
+  }
+}
+function drawCalvin(){
+  clear(calvinSvg);
+  const g=el('g',{},calvinSvg);
+  el('rect',{x:0,y:0,width:760,height:480,fill:'#fbfdfa'},g);
+
+  // 흐름 화살표 가이드
+  pathArrow(g,380,78,380,105,'#e2eee0');
+  pathArrow(g,212,140,544,140,'#e2eee0');
+  pathArrow(g,580,174,580,284,'#e2eee0');
+  pathArrow(g,546,330,414,400,'#e2eee0');
+  pathArrow(g,350,400,196,172,'#e2eee0');
+  pathArrow(g,380,376,380,328,'#e2eee0');
+
+  // 각 단계 노드 그리기
+  drawCalvinCircle(g,380,50,24,'#eaeaea','#adadad','6 CO₂',cStep===0);
+  drawCalvinCircle(g,180,140,28,'#cfe6d4',cssVar('--green-d'),'6 RuBP',cStep===4);
+  drawCalvinCircle(g,580,140,30,'#f3d9a6','#cf7d22','12 3-PGA',cStep===1);
+  drawCalvinCircle(g,580,320,30,'#fecda3','#cf7d22','12 DPGA',cStep===2);
+  drawCalvinCircle(g,380,410,30,'#dbe6f3',cssVar('--blue-d'),'12 G3P',cStep===3);
+
+  if(cStep>=4 || cGlu>0){
+    drawCalvinCircle(g,380,290,22,'#ede4f3',cssVar('--purple'),'포도당 방출',false);
+  }
+
+  document.getElementById('cAtp').textContent=cAtp;
+  document.getElementById('cNadph').textContent=cNadph;
+  document.getElementById('cCo2').textContent=cCo2;
+  document.getElementById('cGlu').textContent=cGlu;
+}
+function calvinAdvance(){
+  if(cBusy) return; cBusy=true;
+  const g=calvinSvg.querySelector('g');
+
+  if(cStep===0){
+    cCo2+=6; cStep=1; cBusy=false;
+    calvinNarr.innerHTML='<b>① 탄소 고정:</b> Rubisco 효소에 의해 6개의 CO₂가 6개의 RuBP(C₅)와 결합하여 12개의 <b>3-PGA(C₃)</b>가 됩니다. 반짝이는 3-PGA를 누르세요.';
+    drawCalvin();
+  } else if(cStep===1){
+    let a=atpToken(g,670,100);
+    moveGroup(a,670,100,580,140,700,()=>{
+      a.remove(); burst(g,580,140,'12 ATP 소모');
+      cAtp+=12; cStep=2; cBusy=false;
+      calvinNarr.innerHTML='<b>② PGA의 인산화:</b> 12개의 ATP가 소모되면서 인산기가 붙어 12개의 <b>DPGA</b>가 생성됩니다. 반짝이는 DPGA를 클릭하세요.';
+      drawCalvin();
+    });
+  } else if(cStep===2){
+    let n=el('g',{},g);
+    el('rect',{x:650,y:260,width:52,height:22,rx:5,fill:'#cfe0f3',stroke:'#9bb6d8'},n);
+    el('text',{x:676,y:275,'text-anchor':'middle','font-size':10,fill:cssVar('--blue-d'),'font-weight':800},n).textContent='12NADPH';
+    moveGroup(n,0,0,-80,40,700,()=>{
+      n.remove(); burst(g,580,320,'12 NADPH 소모');
+      cNadph+=12; cStep=3; cBusy=false;
+      calvinNarr.innerHTML='<b>③ G3P의 생성 (환원):</b> NADPH의 전자를 받아 환원되면서 12개의 <b>G3P</b>가 됩니다. 이 중 2개는 포도당을 만들러 빠져나갑니다. G3P를 클릭하세요.';
+      drawCalvin();
+    });
+  } else if(cStep===3){
+    burst(g,380,350,'2 G3P 분리!');
+    cGlu++; cStep=4; cBusy=false;
+    calvinNarr.innerHTML='<b>④ RuBP 재생 단계:</b> 빠져나간 2개의 G3P(C₃)가 합쳐져 하나의 <b>포도당(C₆)</b>을 형성합니다. 남은 10개의 G3P는 다시 RuBP로 가야 합니다. 회로를 완성하기 위해 <b>RuBP</b>를 클릭하세요.';
+    drawCalvin();
+  } else if(cStep===4){
+    let a=atpToken(g,120,220);
+    moveGroup(a,120,220,180,140,700,()=>{
+      a.remove(); burst(g,180,140,'6 ATP 소모');
+      cAtp+=6; cStep=0; cBusy=false;
+      calvinNarr.innerHTML='<b>회로 완성!</b> 10개의 G3P가 6개의 ATP를 소모하면서 6개의 <b>RuBP</b>로 전환(재생)되었습니다. 이로써 포도당 1분자가 완결되었습니다. 처음부터 다시 고정할 수 있습니다.';
+      drawCalvin();
+    });
+  }
+}
+function calvinReset(){ cStep=0; cAtp=0; cNadph=0; cCo2=0; cGlu=0; cBusy=false; drawCalvin(); calvinNarr.innerHTML='반짝이는 <b>CO₂</b>를 클릭해 탄소 고정을 시작하세요.';}
+document.getElementById('calvinReset').addEventListener('click',calvinReset);
+
+/* ===== STAGE 4 : 전체 정리 ===== */
+const overSvg=document.getElementById('overSvg');
+function arrowOver(g,x1,y1,x2,y2,col){
+  const id='ao'+Math.random().toString(36).slice(2,5);
+  const m=el('marker',{id:id,markerWidth:6,markerHeight:6,refX:4,refY:3,orient:'auto'},el('defs',{},g));
+  el('path',{d:'M0,0 L6,3 L0,6 Z',fill:col},m);
+  el('line',{x1:x1,y1:y1,x2:x2,y2:y2,stroke:col,'stroke-width':4,'marker-end':`url(#${id})`},g);
+}
+function drawOver(){
+  clear(overSvg);
+  const g=el('g',{},overSvg);
+  el('rect',{x:0,y:0,width:760,height:360,fill:'#f7faf6'},g);
+
+  // 엽록체 외막 경계선 느낌
+  el('rect',{x:40,y:40,width:680,height:280,rx:30,fill:'none',stroke:cssVar('--line'),'stroke-width':2},g);
+
+  // 명반응 그라디언트 틸라코이드
+  el('rect',{x:120,y:100,width:190,height:170,rx:20,fill:'#e2f0d9',stroke:cssVar('--green'),'stroke-width':2},g);
+  el('text',{x:215,y:135,'text-anchor':'middle','font-size':15,fill:cssVar('--green-d'),'font-weight':800},g).textContent='명반응';
+  el('text',{x:215,y:155,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='(틸라코이드)';
+  el('text',{x:215,y:200,'text-anchor':'middle','font-size':11,fill:cssVar('--ink')},g).textContent='전자 흐름 · 광인산화';
+  el('text',{x:215,y:248,'text-anchor':'middle','font-size':11,fill:cssVar('--green-d'),'font-weight':700},g).textContent='O₂ 방출';
+
+  // 캘빈 회로 스트로마 영역
+  el('circle',{cx:545,cy:185,r:82,fill:'#ede4f3',stroke:'#c4afdd','stroke-width':2},g);
+  el('text',{x:545,y:130,'text-anchor':'middle','font-size':14,fill:'#6a4f95','font-weight':800},g).textContent='캘빈 회로';
+  el('text',{x:545,y:150,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='(스트로마)';
+  el('text',{x:545,y:185,'text-anchor':'middle','font-size':11,fill:cssVar('--ink')},g).textContent='CO₂ 고정';
+  el('text',{x:545,y:205,'text-anchor':'middle','font-size':11,fill:cssVar('--purple'),'font-weight':700},g).textContent='→ 포도당';
+
+  // 물질 상호 교환 화살표들
+  arrowOver(g,330,150,455,150,cssVar('--orange-d'));
+  el('text',{x:390,y:142,'text-anchor':'middle','font-size':11,fill:cssVar('--orange-d'),'font-weight':700},g).textContent='ATP';
+
+  arrowOver(g,330,195,455,195,cssVar('--blue-d'));
+  el('text',{x:390,y:188,'text-anchor':'middle','font-size':11,fill:cssVar('--blue-d'),'font-weight':700},g).textContent='NADPH';
+
+  // 반대 방향 (되돌아가는 무기물)
+  const p1=[[455,225],[330,225]], p2=[[455,270],[330,270]];
+  arrowOver(g,p1[0][0],p1[0][1],p1[1][0],p1[1][1],cssVar('--ink-soft'));
+  el('text',{x:390,y:238,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='ADP + Pi';
+
+  arrowOver(g,p2[0][0],p2[0][1],p2[1][0],p2[1][1],cssVar('--ink-soft'));
+  el('text',{x:390,y:283,'text-anchor':'middle','font-size':11,fill:cssVar('--ink-soft')},g).textContent='NADP⁺';
+
+  // 외부 출입 원료
+  arrowOver(g,215,35,215,92,cssVar('--blue'));
+  el('text',{x:215,y:28,'text-anchor':'middle','font-size':12,fill:cssVar('--blue-d'),'font-weight':700},g).textContent='H₂O 유입';
+
+  arrowOver(g,215,275,215,335,cssVar('--green'));
+  el('text',{x:215,y:348,'text-anchor':'middle','font-size':12,fill:cssVar('--green-d'),'font-weight':700},g).textContent='O₂ 유출';
+
+  arrowOver(g,545,35,545,96,cssVar('--ink'));
+  el('text',{x:545,y:26,'text-anchor':'middle','font-size':12,fill:cssVar('--ink'),'font-weight':700},g).textContent='CO₂ 공급';
+
+  arrowOver(g,545,272,545,335,cssVar('--purple'));
+  el('text',{x:545,y:348,'text-anchor':'middle','font-size':12,fill:cssVar('--purple'),'font-weight':700},g).textContent='포도당 합성';
+}
+
+// 초기화 구동
+window.addEventListener('DOMContentLoaded',()=>{
+  flowReset();
+});
+</script>
+</body>
+</html>

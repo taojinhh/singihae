@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>근육의 수축과 이완 · 활주설 학습기</title>
+<style>
+  :root{
+    --actin:#0d9488;      /* 액틴 - 선명한 청록 */
+    --actin-soft:#99f6e4;
+    --myosin:#7c3aed;     /* 마이오신 - 선명한 보라 */
+    --myosin-soft:#ddd6fe;
+    --zline:#1e293b;      /* Z선 - 진한 남색 */
+    --ink:#1e293b;
+    --iband:#fde68a;      /* I대(명대) 강조 파스텔 */
+    --hband:#fbcfe8;      /* H대 강조 파스텔 */
+    --aband:#bfdbfe;      /* A대(암대) 강조 파스텔 */
+    --shrink:#dc2626;
+    --same:#64748b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Malgun Gothic','맑은 고딕',system-ui,sans-serif;
+    color:var(--ink);
+    /* 파스텔톤 배경 */
+    background:
+      radial-gradient(1200px 600px at 12% 0%, #fce7f3 0%, transparent 55%),
+      radial-gradient(1200px 600px at 88% 10%, #dbeafe 0%, transparent 55%),
+      radial-gradient(1000px 700px at 50% 100%, #d1fae5 0%, transparent 60%),
+      linear-gradient(160deg,#fef9f5 0%,#f5f3ff 100%);
+    min-height:100vh;
+    padding:20px 14px 60px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+  header{text-align:center;margin-bottom:14px;}
+  header h1{
+    font-size:28px;margin:0 0 6px;letter-spacing:-.5px;
+    color:#0f172a;font-weight:800;
+    text-shadow:0 1px 0 #fff;
+  }
+  header p{margin:0;color:#475569;font-size:14.5px;}
+
+  .stage-bar{
+    display:flex;gap:8px;justify-content:center;flex-wrap:wrap;
+    margin:14px 0 10px;
+  }
+  .step-chip{
+    display:flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.7);
+    border:2px solid #e2e8f0;border-radius:999px;
+    padding:6px 14px;font-size:13.5px;font-weight:700;color:#94a3b8;
+    transition:.25s;
+  }
+  .step-chip .num{
+    width:22px;height:22px;border-radius:50%;
+    background:#e2e8f0;color:#fff;display:grid;place-items:center;
+    font-size:12px;
+  }
+  .step-chip.active{
+    border-color:var(--myosin);color:#0f172a;
+    background:#fff;box-shadow:0 4px 14px rgba(124,58,237,.18);
+  }
+  .step-chip.active .num{background:var(--myosin);}
+  .step-chip.done{color:#334155;border-color:var(--actin);}
+  .step-chip.done .num{background:var(--actin);}
+
+  /* 그림 카드 - 선명하게 */
+  .stage{
+    background:#ffffff;
+    border-radius:22px;
+    box-shadow:0 10px 40px rgba(30,41,59,.10);
+    padding:12px 12px 4px;
+    border:1px solid #eef2f7;
+    cursor:pointer;
+    position:relative;
+    user-select:none;
+  }
+  .stage:active{transform:translateY(1px);}
+  .tap-hint{
+    position:absolute;top:12px;right:16px;
+    font-size:12.5px;font-weight:700;color:var(--myosin);
+    background:#f5f3ff;border:1px solid #ddd6fe;border-radius:999px;
+    padding:4px 12px;animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:.55}50%{opacity:1}}
+  svg{display:block;width:100%;height:auto;}
+  .filament{stroke-linecap:round;}
+  .zline{stroke:var(--zline);stroke-width:9;stroke-linecap:round;}
+  text{font-family:inherit;}
+
+  /* 설명 + 측정 패널 */
+  .panels{display:grid;grid-template-columns:1.15fr 1fr;gap:14px;margin-top:14px;}
+  @media(max-width:760px){.panels{grid-template-columns:1fr;}}
+  .card{
+    background:rgba(255,255,255,.82);
+    border:1px solid #eef2f7;border-radius:18px;
+    padding:16px 18px;box-shadow:0 6px 22px rgba(30,41,59,.06);
+  }
+  .card h2{margin:0 0 10px;font-size:16px;color:#0f172a;display:flex;align-items:center;gap:8px;}
+  .card h2 .dot{width:10px;height:10px;border-radius:50%;background:var(--myosin);}
+  #narr-title{font-size:18px;font-weight:800;margin:0 0 6px;color:var(--myosin);}
+  #narr-body{margin:0;font-size:14.5px;line-height:1.7;color:#334155;}
+
+  .meas{display:flex;flex-direction:column;gap:11px;}
+  .meas-row{display:flex;align-items:center;gap:10px;}
+  .meas-label{width:96px;font-weight:800;font-size:13.5px;flex-shrink:0;}
+  .bar-track{flex:1;height:16px;background:#f1f5f9;border-radius:8px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:8px;transition:width .35s ease;}
+  .tag{font-size:11.5px;font-weight:800;padding:2px 9px;border-radius:999px;white-space:nowrap;flex-shrink:0;width:74px;text-align:center;}
+  .tag.shrink{background:#fee2e2;color:var(--shrink);}
+  .tag.same{background:#e2e8f0;color:var(--same);}
+
+  .controls{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap;}
+  button.ctrl{
+    font-family:inherit;font-weight:800;font-size:14.5px;cursor:pointer;
+    border:none;border-radius:12px;padding:12px 22px;transition:.18s;
+  }
+  .ctrl.prev{background:#fff;color:#475569;border:2px solid #cbd5e1;}
+  .ctrl.prev:hover{background:#f8fafc;}
+  .ctrl.next{background:linear-gradient(135deg,#7c3aed,#db2777);color:#fff;box-shadow:0 6px 18px rgba(124,58,237,.3);}
+  .ctrl.next:hover{filter:brightness(1.07);}
+  .ctrl.reset{background:#fff;color:#0d9488;border:2px solid #5eead4;}
+  .ctrl.reset:hover{background:#f0fdfa;}
+  button.ctrl:disabled{opacity:.4;cursor:not-allowed;}
+
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:14px 0 2px;font-size:13px;color:#475569;}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-weight:700;}
+  .swatch{width:16px;height:9px;border-radius:3px;display:inline-block;}
+
+  .facts{margin-top:16px;}
+  .facts details{background:rgba(255,255,255,.7);border:1px solid #eef2f7;border-radius:14px;margin-bottom:8px;overflow:hidden;}
+  .facts summary{cursor:pointer;padding:12px 16px;font-weight:800;font-size:14px;color:#0f172a;list-style:none;}
+  .facts summary::-webkit-details-marker{display:none;}
+  .facts summary::before{content:"＋ ";color:var(--myosin);}
+  .facts details[open] summary::before{content:"－ ";}
+  .facts .fc{padding:0 16px 14px;font-size:14px;line-height:1.7;color:#334155;}
+  .facts .fc b{color:var(--myosin);}
+  footer{text-align:center;margin-top:24px;font-size:12.5px;color:#94a3b8;line-height:1.6;}
+  footer .copyright{display:block;margin-top:4px;font-weight:700;color:#64748b;}
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<div class="wrap">
+  <header>
+    <h1>💪 근육의 수축과 이완</h1>
+    <p>골격근이 어떻게 짧아지고 늘어날까? 그림을 <b>클릭</b>하며 활주설을 단계별로 살펴보세요.</p>
+  </header>
+
+  <div class="stage-bar" id="stageBar"></div>
+
+  <div class="stage" id="stage" title="클릭하면 다음 단계로 넘어가요">
+    <div class="tap-hint">👆 클릭!</div>
+    <svg id="svg" viewBox="0 0 900 300" role="img" aria-label="근절 활주 모형">
+      <g id="bands"></g>
+      <g id="filaments"></g>
+      <g id="labels"></g>
+    </svg>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--actin)"></i>액틴 필라멘트(가늚)</span>
+      <span><i class="swatch" style="background:var(--myosin);height:13px"></i>마이오신 필라멘트(굵음)</span>
+      <span><i class="swatch" style="background:var(--zline)"></i>Z선</span>
+    </div>
+  </div>
+
+  <div class="panels">
+    <div class="card">
+      <h2><span class="dot"></span>지금 무슨 일이?</h2>
+      <p id="narr-title"></p>
+      <p id="narr-body"></p>
+    </div>
+    <div class="card">
+      <h2><span class="dot" style="background:var(--actin)"></span>길이 변화 측정</h2>
+      <div class="meas" id="meas"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="ctrl prev" id="btnPrev">◀ 이전(이완)</button>
+    <button class="ctrl reset" id="btnReset">↺ 처음으로</button>
+    <button class="ctrl next" id="btnNext">다음(수축) ▶</button>
+  </div>
+
+  <div class="facts">
+    <details open>
+      <summary>활주설이란? — 핵심 3줄 정리</summary>
+      <div class="fc">
+        ① 근육 수축은 <b>액틴 필라멘트가 마이오신 필라멘트 사이로 미끄러져 들어가며</b> 일어나요(활주).<br>
+        ② 활주가 일어나면 <b>명대(I대)·H대·근절 길이는 짧아지지만</b>, <b>암대(A대)와 필라멘트 자체 길이는 변하지 않아요.</b><br>
+        ③ 액틴이 미끄러져 들어갈 때 <b>ATP가 사용</b>돼요.
+      </div>
+    </details>
+    <details>
+      <summary>골격근의 구조 — 큰 것에서 작은 것으로</summary>
+      <div class="fc">
+        근육 → 근육 섬유 다발 → <b>근육 세포(근육 섬유)</b> → 근육 원섬유 → <b>근육 원섬유 마디(근절)</b><br>
+        · 근육 세포는 여러 세포가 융합돼 만들어져 <b>핵이 여러 개(다핵세포)</b>예요.<br>
+        · <b>근절</b>은 Z선과 Z선 사이 구간으로, <b>근육 수축의 기본 단위</b>랍니다.
+      </div>
+    </details>
+    <details>
+      <summary>띠(대) 이름의 뜻 &amp; 부위</summary>
+      <div class="fc">
+        · <b>명대(I대)</b> — 가는 액틴만 있어 밝게 보임(Isotropic).<br>
+        · <b>암대(A대)</b> — 굵은 마이오신이 있어 어둡게 보임(Anisotropic). 길이 안 변함!<br>
+        · <b>H대</b> — 암대 중 마이오신만 있는 부분(Helles=맑은).<br>
+        · <b>Z선</b> — 명대 중앙의 수직선(Zwischen=사이).
+      </div>
+    </details>
+    <details>
+      <summary>수축에 쓰이는 에너지, ATP</summary>
+      <div class="fc">
+        근육 세포엔 <b>약 3초</b> 수축할 ATP만 저장돼 있어요. 더 오래 수축하려면 ATP를 재생해야 해요.<br>
+        · <b>크레아틴 인산</b>: ADP에 인산기를 줘 ATP를 <b>빠르게</b> 재생(단시간).<br>
+        · <b>세포 호흡</b>: 산소가 충분하면 산소 호흡, 부족하면 <b>젖산 발효</b>로 ATP 합성(장시간).
+      </div>
+    </details>
+  </div>
+
+  <footer>
+    효양고 · 근육의 수축과 이완 학습기 &nbsp;|&nbsp; 활주설(sliding filament theory) 기반 인터랙티브 모형
+    <span class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const CX = 450, CY = 150;          // 다이어그램 중심
+  const M_HALF = 135;                // 마이오신(암대) 반폭 - 항상 일정
+  const ACTIN_LEN = 165;             // 액틴 길이 - 항상 일정
+  const Z_RELAX = 258, Z_CONTRACT = 176; // 중심~Z선 거리 (이완/수축)
+
+  // 단계 정의: t = 수축 정도(0=완전이완 ~ 1=완전수축)
+  const STAGES = [
+    {t:0.00, name:"이완", title:"이완 상태 🌿",
+     body:"근육이 풀려 있어요. Z선과 Z선 사이(근절)가 가장 넓고, 명대(I대)와 H대도 넓습니다. 액틴은 마이오신 사이로 조금만 겹쳐 있어요."},
+    {t:0.35, name:"활주 시작", title:"활주 시작! ⚡ (ATP 사용)",
+     body:"자극이 오면 ATP를 쓰며 마이오신 머리가 액틴을 끌어당겨요. 액틴 필라멘트가 마이오신 사이로 미끄러져 들어가기 시작합니다. Z선이 서로 가까워져요."},
+    {t:0.70, name:"수축 진행", title:"수축 진행 중 🔥",
+     body:"액틴이 더 깊이 미끄러져 들어갑니다. 겹치는 부위가 넓어지면서 명대(I대)와 H대가 눈에 띄게 좁아져요. 하지만 암대(A대)의 길이는 그대로!"},
+    {t:1.00, name:"수축 완료", title:"수축 완료 💪",
+     body:"근절이 가장 짧아졌어요. 명대·H대는 아주 좁아졌지만, 암대(A대)와 액틴·마이오신 필라멘트 자체 길이는 변하지 않았습니다. 이것이 활주설!"}
+  ];
+
+  // 측정 항목 (relaxed 대비 변화)
+  function metrics(t){
+    const z = lerp(Z_RELAX, Z_CONTRACT, t);
+    return {
+      sarco: 2*z,                 // 근절
+      iband: (z - M_HALF),        // 명대(I대) 한쪽
+      hband: 2*(z - ACTIN_LEN),   // H대
+      aband: 2*M_HALF             // 암대(A대) - 일정
+    };
+  }
+  const BASE = metrics(0);
+
+  function lerp(a,b,t){return a+(b-a)*t;}
+
+  const bandsG = document.getElementById('bands');
+  const filG   = document.getElementById('filaments');
+  const labG   = document.getElementById('labels');
+  const SVGNS  = "http://www.w3.org/2000/svg";
+
+  function el(tag, attrs){
+    const e=document.createElementNS(SVGNS,tag);
+    for(const k in attrs) e.setAttribute(k,attrs[k]);
+    return e;
+  }
+
+  // 정적으로 한 번만 만드는 요소들의 핸들
+  let refs={};
+  function build(){
+    // ---- 배경 밴드 (파스텔 강조) ----
+    refs.aBand = el('rect',{y:CY-70,height:140,fill:'var(--aband)',opacity:.55,rx:6});
+    refs.iBandL= el('rect',{y:CY-70,height:140,fill:'var(--iband)',opacity:.6,rx:6});
+    refs.iBandR= el('rect',{y:CY-70,height:140,fill:'var(--iband)',opacity:.6,rx:6});
+    refs.hBand = el('rect',{y:CY-70,height:140,fill:'var(--hband)',opacity:.75,rx:6});
+    bandsG.append(refs.aBand, refs.iBandL, refs.iBandR, refs.hBand);
+
+    // ---- 마이오신 (굵은 중앙 필라멘트 + 머리) ----
+    refs.myosinRods=[];
+    refs.myosinHeads=el('g',{});
+    [-26,26].forEach(dy=>{
+      const r=el('line',{class:'filament',stroke:'var(--myosin)','stroke-width':14,
+        x1:CX-M_HALF,y1:CY+dy,x2:CX+M_HALF,y2:CY+dy});
+      refs.myosinRods.push(r); filG.append(r);
+    });
+    filG.append(refs.myosinHeads);
+
+    // ---- 액틴 (가는 필라멘트, 좌/우 각각 위·아래 2줄) ----
+    refs.actin={L:[],R:[]};
+    [-46,-6,34].forEach(dy=>{ // 3줄로 촘촘하게 (위/중/아래)
+      const l=el('line',{class:'filament',stroke:'var(--actin)','stroke-width':6,y1:CY+dy,y2:CY+dy});
+      const r=el('line',{class:'filament',stroke:'var(--actin)','stroke-width':6,y1:CY+dy,y2:CY+dy});
+      refs.actin.L.push(l); refs.actin.R.push(r); filG.append(l,r);
+    });
+
+    // ---- Z선 ----
+    refs.zL=el('line',{class:'zline',y1:CY-78,y2:CY+78});
+    refs.zR=el('line',{class:'zline',y1:CY-78,y2:CY+78});
+    filG.append(refs.zL,refs.zR);
+    refs.zLtext=el('text',{y:CY-88,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'var(--zline)'});
+    refs.zRtext=el('text',{y:CY-88,'text-anchor':'middle','font-size':16,'font-weight':'800',fill:'var(--zline)'});
+    refs.zLtext.textContent="Z선"; refs.zRtext.textContent="Z선";
+    labG.append(refs.zLtext,refs.zRtext);
+
+    // ---- 아래쪽 밴드 라벨(브래킷) ----
+    function bracket(color){
+      const g=el('g',{});
+      const line=el('line',{stroke:color,'stroke-width':2.5});
+      const t=el('text',{'text-anchor':'middle','font-size':14,'font-weight':'800',fill:color});
+      g.append(line,t); labG.append(g);
+      return {g,line,t};
+    }
+    refs.brSarco=bracket('#0f172a');  refs.brSarco.t.textContent="근절";
+    refs.brA=bracket('#1d4ed8');      refs.brA.t.textContent="암대(A대)";
+    refs.brH=bracket('#db2777');      refs.brH.t.textContent="H대";
+    refs.brIL=bracket('#b45309');     refs.brIL.t.textContent="명대(I)";
+    refs.brIR=bracket('#b45309');     refs.brIR.t.textContent="명대(I)";
+  }
+
+  function setLine(o,x1,x2){o.setAttribute('x1',x1);o.setAttribute('x2',x2);}
+  function setRect(o,x,w){o.setAttribute('x',x);o.setAttribute('width',Math.max(0,w));}
+
+  function render(t){
+    const z = lerp(Z_RELAX, Z_CONTRACT, t);
+    const zLx=CX-z, zRx=CX+z;
+    const mL=CX-M_HALF, mR=CX+M_HALF;
+    const hHalf = z-ACTIN_LEN;            // H대 반폭
+    const actinTipL=CX-hHalf, actinTipR=CX+hHalf;
+
+    // 밴드
+    setRect(refs.aBand, mL, 2*M_HALF);
+    setRect(refs.iBandL, zLx, mL-zLx);
+    setRect(refs.iBandR, mR, zRx-mR);
+    setRect(refs.hBand, CX-hHalf, 2*hHalf);
+
+    // 마이오신 고정
+    // (rods 이미 고정, 머리만 다시 그림)
+    refs.myosinHeads.innerHTML="";
+    for(let x=mL+16; x<=mR-8; x+=26){
+      [-26,26].forEach(dy=>{
+        [-1,1].forEach(sgn=>{
+          const h=el('line',{stroke:'var(--myosin)','stroke-width':4,'stroke-linecap':'round',
+            x1:x,y1:CY+dy, x2:x+8*sgn, y2:CY+dy+ (dy<0?-9:9)});
+          refs.myosinHeads.append(h);
+        });
+      });
+    }
+
+    // 액틴: 좌측은 Z선(zLx)에서 안쪽 actinTipL 까지, 우측은 zRx에서 actinTipR 까지
+    refs.actin.L.forEach(l=>setLine(l, zLx, actinTipL));
+    refs.actin.R.forEach(r=>setLine(r, actinTipR, zRx));
+
+    // Z선
+    refs.zL.setAttribute('x1',zLx);refs.zL.setAttribute('x2',zLx);
+    refs.zR.setAttribute('x1',zRx);refs.zR.setAttribute('x2',zRx);
+    refs.zLtext.setAttribute('x',zLx);refs.zRtext.setAttribute('x',zRx);
+
+    // 아래 브래킷들
+    const yB1=CY+96, yB2=CY+124; // 두 줄
+    placeBracket(refs.brSarco, zLx, zRx, yB2+18, true);
+    placeBracket(refs.brA, mL, mR, yB1);
+    placeBracket(refs.brH, CX-hHalf, CX+hHalf, yB1-30);
+    placeBracket(refs.brIL, zLx, mL, yB1);
+    placeBracket(refs.brIR, mR, zRx, yB1);
+
+    updateMeas(t);
+  }
+
+  function placeBracket(br,x1,x2,y,strong){
+    const mid=(x1+x2)/2;
+    br.line.setAttribute('x1',x1);br.line.setAttribute('x2',x2);
+    br.line.setAttribute('y1',y);br.line.setAttribute('y2',y);
+    br.line.setAttribute('stroke-width',strong?3.5:2.5);
+    br.t.setAttribute('x',mid);br.t.setAttribute('y',y+ (strong?20:17));
+    const show=(x2-x1)>26;
+    br.t.setAttribute('opacity',show?1:0);
+  }
+
+  // ---------- 측정 패널 ----------
+  const measRows=[
+    {key:'sarco',label:'근절',color:'#0f172a',changes:true},
+    {key:'iband',label:'명대(I대)',color:'#b45309',changes:true},
+    {key:'hband',label:'H대',color:'#db2777',changes:true},
+    {key:'aband',label:'암대(A대)',color:'#1d4ed8',changes:false}
+  ];
+  function buildMeas(){
+    const box=document.getElementById('meas'); box.innerHTML="";
+    measRows.forEach(r=>{
+      const row=document.createElement('div');row.className='meas-row';
+      row.innerHTML=`
+        <div class="meas-label" style="color:${r.color}">${r.label}</div>
+        <div class="bar-track"><div class="bar-fill" id="bar-${r.key}" style="background:${r.color}"></div></div>
+        <div class="tag ${r.changes?'shrink':'same'}" id="tag-${r.key}">${r.changes?'짧아짐 ↓':'변화 없음'}</div>`;
+      box.append(row);
+    });
+  }
+  function updateMeas(t){
+    const m=metrics(t);
+    measRows.forEach(r=>{
+      const pct = BASE[r.key]>0 ? (m[r.key]/BASE[r.key])*100 : 100;
+      const bar=document.getElementById('bar-'+r.key);
+      bar.style.width=Math.max(3,pct)+'%';
+      const tag=document.getElementById('tag-'+r.key);
+      if(r.changes){
+        if(t<=0.001){tag.textContent='기준 길이';tag.className='tag same';}
+        else{tag.textContent='짧아짐 ↓';tag.className='tag shrink';}
+      }
+    });
+  }
+
+  // ---------- 단계 진행 ----------
+  let idx=0, curT=0, targetT=0, raf=null;
+  function animateTo(tt){
+    targetT=tt;
+    if(raf) cancelAnimationFrame(raf);
+    const step=()=>{
+      const d=targetT-curT;
+      if(Math.abs(d)<0.002){curT=targetT;render(curT);return;}
+      curT+=d*0.18; render(curT);
+      raf=requestAnimationFrame(step);
+    };
+    step();
+  }
+  function goto(i){
+    idx=(i+STAGES.length)%STAGES.length;
+    const s=STAGES[idx];
+    animateTo(s.t);
+    document.getElementById('narr-title').textContent=s.title;
+    document.getElementById('narr-body').textContent=s.body;
+    // stage chips
+    document.querySelectorAll('.step-chip').forEach((c,k)=>{
+      c.classList.toggle('active',k===idx);
+      c.classList.toggle('done',k<idx);
+    });
+    document.getElementById('btnPrev').disabled=(idx===0);
+    document.getElementById('btnNext').textContent = idx===STAGES.length-1 ? '처음으로 ↺' : '다음(수축) ▶';
+  }
+
+  // stage bar 만들기
+  function buildStageBar(){
+    const bar=document.getElementById('stageBar');
+    STAGES.forEach((s,k)=>{
+      const c=document.createElement('div');c.className='step-chip';
+      c.innerHTML=`<span class="num">${k+1}</span>${s.name}`;
+      c.onclick=(e)=>{e.stopPropagation();goto(k);};
+      bar.append(c);
+    });
+  }
+
+  // 이벤트
+  document.getElementById('stage').addEventListener('click',()=>goto(idx+1));
+  document.getElementById('btnNext').addEventListener('click',(e)=>{e.stopPropagation();goto(idx+1);});
+  document.getElementById('btnPrev').addEventListener('click',(e)=>{e.stopPropagation();goto(idx-1);});
+  document.getElementById('btnReset').addEventListener('click',(e)=>{e.stopPropagation();goto(0);});
+
+  // 초기화
+  build(); buildMeas(); buildStageBar();
+  render(0); goto(0);
+})();
+</script>
+</body>
+</html>

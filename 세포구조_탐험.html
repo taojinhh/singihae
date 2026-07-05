@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>세포의 구조 탐험 · 식물세포와 동물세포</title>
+<style>
+  :root{
+    --ink:#2b2440;
+    --ink-soft:#5c5470;
+    --card:#ffffff;
+    --line:#e7e1f2;
+    --accent:#7c5cff;
+    --c-nucleus:#a855c7;
+    --c-nucleolus:#6b2d85;
+    --c-ribosome:#e0821a;
+    --c-rer:#ec7b3f;
+    --c-ser:#f2a068;
+    --c-golgi:#7c6fd0;
+    --c-mito:#ef7a54;
+    --c-chloro:#3ca24a;
+    --c-vacuole:#5bb6e8;
+    --c-membrane:#e8895f;
+    --c-wall:#7cb342;
+    --c-lyso:#22a3b5;
+    --c-centro:#e0a92e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:"Pretendard","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 12% 8%, #ffe6f0 0%, rgba(255,230,240,0) 55%),
+      radial-gradient(1100px 800px at 88% 12%, #e3f0ff 0%, rgba(227,240,255,0) 55%),
+      radial-gradient(1000px 900px at 50% 100%, #e6fbef 0%, rgba(230,251,239,0) 60%),
+      linear-gradient(160deg,#fbf6ff 0%, #f3f7ff 50%, #f2fbf5 100%);
+    min-height:100vh;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 20px 60px;}
+  header.top{text-align:center;margin-bottom:18px;}
+  header.top h1{margin:0;font-size:30px;letter-spacing:-.5px;color:var(--ink);text-shadow:0 2px 0 #fff;}
+  header.top p{margin:8px 0 0;color:var(--ink-soft);font-size:15px;}
+
+  .tabs{display:flex;justify-content:center;gap:12px;margin:18px 0 22px;}
+  .tab{
+    border:2px solid transparent;background:#ffffffcc;color:var(--ink-soft);
+    font-size:17px;font-weight:700;padding:12px 30px;border-radius:999px;cursor:pointer;
+    box-shadow:0 6px 18px rgba(120,100,200,.10);transition:.18s;display:flex;align-items:center;gap:9px;
+  }
+  .tab .dot{width:12px;height:12px;border-radius:50%;}
+  .tab[data-cell="plant"] .dot{background:var(--c-wall);}
+  .tab[data-cell="animal"] .dot{background:var(--c-membrane);}
+  .tab:hover{transform:translateY(-2px);}
+  .tab.active{color:#fff;transform:translateY(-2px);}
+  .tab.active[data-cell="plant"]{background:linear-gradient(135deg,#8bc34a,#5a9e2f);border-color:#4e8c28;}
+  .tab.active[data-cell="animal"]{background:linear-gradient(135deg,#f6a56a,#ec7a4f);border-color:#dc6a3f;}
+  .tab.active .dot{background:#fff;}
+
+  .stage{display:grid;grid-template-columns:1.15fr .85fr;gap:22px;align-items:start;}
+  @media(max-width:900px){.stage{grid-template-columns:1fr;}}
+
+  .cellcard{background:var(--card);border-radius:22px;padding:14px;
+    box-shadow:0 14px 40px rgba(90,70,160,.14);border:1px solid #f0ecff;}
+  .cellcard .caption{text-align:center;font-weight:700;color:var(--ink-soft);font-size:14px;margin:2px 0 8px;}
+  svg.cell{width:100%;height:auto;display:block;border-radius:16px;}
+
+  .organelle{cursor:pointer;transition:opacity .2s;transform-box:fill-box;transform-origin:center;}
+  .organelle:hover{opacity:1;}
+  svg.cell.has-sel .organelle{opacity:.25;}
+  svg.cell.has-sel .organelle.active{opacity:1;animation:pop .38s ease;}
+  @keyframes pop{0%{transform:scale(1);}55%{transform:scale(1.2);}100%{transform:scale(1.13);}}
+  .organelle.active{transform:scale(1.13);}
+  .halo{pointer-events:none;opacity:0;transition:opacity .2s;}
+  .organelle.active .halo{opacity:1;}
+
+  .info{background:var(--card);border-radius:22px;padding:22px 22px 24px;
+    box-shadow:0 14px 40px rgba(90,70,160,.14);border:1px solid #f0ecff;min-height:440px;position:sticky;top:16px;}
+  .info .placeholder{color:var(--ink-soft);text-align:center;padding-top:60px;}
+  .info .placeholder .big{font-size:46px;margin-bottom:10px;}
+  .info-head{display:flex;align-items:center;gap:14px;margin-bottom:6px;}
+  .info-icon{width:96px;height:96px;flex:0 0 96px;border-radius:18px;
+    background:radial-gradient(circle at 40% 35%,#ffffff,#f4f0ff);border:1px solid #eee;
+    display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(120,100,200,.08);}
+  .info-icon svg{width:84px;height:84px;}
+  .info-title h2{margin:0;font-size:24px;color:var(--ink);}
+  .info-title .en{color:var(--ink-soft);font-size:13px;letter-spacing:.3px;}
+  .badge{display:inline-block;margin-top:6px;font-size:12px;font-weight:700;color:#fff;padding:3px 12px;border-radius:999px;}
+  .role{margin:16px 0 12px;font-size:16px;line-height:1.7;color:var(--ink);
+    background:#f7f4ff;border-radius:14px;padding:14px 16px;border-left:5px solid var(--accent);}
+  ul.facts{margin:0;padding:0;list-style:none;}
+  ul.facts li{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px;line-height:1.55;}
+  ul.facts li:last-child{border-bottom:0;}
+  ul.facts li .k{color:var(--accent);font-weight:800;flex:0 0 auto;}
+
+  .legend{margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{display:flex;align-items:center;gap:7px;background:#fff;border:1.5px solid var(--line);
+    padding:7px 13px;border-radius:999px;font-size:13.5px;font-weight:600;color:var(--ink);cursor:pointer;transition:.15s;}
+  .chip:hover{border-color:var(--accent);transform:translateY(-1px);}
+  .chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .chip .sw{width:13px;height:13px;border-radius:4px;flex:0 0 auto;}
+  .hint{text-align:center;color:var(--ink-soft);font-size:13.5px;margin:14px 0 0;}
+  footer{text-align:center;color:#9a92ad;font-size:12.5px;margin-top:26px;line-height:1.6;}
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<div class="wrap">
+  <header class="top">
+    <h1>🔬 세포의 구조 탐험</h1>
+    <p>식물세포와 동물세포의 세포소기관을 <b>클릭</b>하면, 크게 부각되면서 하는 일이 나타나요.</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-cell="plant"><span class="dot"></span>🌱 식물세포</button>
+    <button class="tab" data-cell="animal"><span class="dot"></span>🐾 동물세포</button>
+  </div>
+
+  <div class="stage">
+    <div class="cellcard">
+      <div class="caption" id="cellCaption">그림 · 식물세포의 구조</div>
+      <div id="cellHolder"></div>
+      <p class="hint">💡 그림 속 소기관 또는 아래 이름표를 눌러 보세요.</p>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="info" id="info"></div>
+  </div>
+
+  <footer>
+    세포의 특성 · 학습용 인터랙티브 자료 &nbsp;|&nbsp; 효양고등학교<br/>
+    <b>All Rights Reserved (무단 전재 및 재배포 금지)</b>
+  </footer>
+</div>
+
+<script>
+/* ================= 소기관 설명 데이터 ================= */
+const DATA = {
+  nucleus:{ name:"핵", en:"Nucleus", color:"var(--c-nucleus)",
+    role:"세포의 생명 활동을 조절하는 <b>중심(사령탑)</b>이에요. 유전정보인 DNA를 저장합니다.",
+    facts:[["구조","2중막(핵막)과 핵공으로 둘러싸여 있어요."],["기능","DNA에 담긴 정보로 단백질 합성 등을 지시해요."],["특징","대부분의 세포에 1개 있어요."]] },
+  nucleolus:{ name:"인", en:"Nucleolus", color:"var(--c-nucleolus)",
+    role:"핵 속에 있는 진한 부분으로, <b>리보솜을 만드는 rRNA</b>를 합성해요.",
+    facts:[["위치","핵 안에 있어요."],["기능","리보솜의 재료(rRNA)를 만들어요."]] },
+  ribosome:{ name:"리보솜", en:"Ribosome", color:"var(--c-ribosome)",
+    role:"RNA와 단백질로 된 작은 알갱이로, <b>단백질을 합성</b>하는 공장이에요.",
+    facts:[["구조","크고 작은 2개의 소단위체로 이루어져요."],["위치","세포질에 흩어져 있거나 소포체 표면에 붙어 있어요."]] },
+  rer:{ name:"거친면 소포체", en:"Rough ER", color:"var(--c-rer)",
+    role:"표면에 <b>리보솜이 붙어</b> 있어 오돌토돌해요. 만들어진 단백질을 운반·이동시켜요.",
+    facts:[["표면","리보솜이 붙어 있어 '거친면'이에요."],["기능","단백질을 골지체 등으로 보내요."]] },
+  ser:{ name:"매끈면 소포체", en:"Smooth ER", color:"var(--c-ser)",
+    role:"리보솜이 없어 표면이 매끈해요. <b>지질(기름) 성분을 합성</b>하고 해독 작용을 해요.",
+    facts:[["표면","리보솜이 없어 '매끈면'이에요."],["기능","지질 합성, 해독, 칼슘 저장 등을 해요."]] },
+  golgi:{ name:"골지체", en:"Golgi apparatus", color:"var(--c-golgi)",
+    role:"납작한 주머니가 쌓인 모양이에요. 단백질을 <b>저장·변형·포장하여 분비</b>해요.",
+    facts:[["모양","납작한 주머니(시스터나)가 여러 겹 쌓여 있어요."],["기능","소포체에서 온 물질을 다듬어 세포 밖으로 내보내요."]] },
+  mito:{ name:"미토콘드리아", en:"Mitochondria", color:"var(--c-mito)",
+    role:"<b>세포호흡</b>이 일어나 생명 활동에 필요한 에너지(ATP)를 만드는 <b>발전소</b>예요.",
+    facts:[["구조","2중막이며 안쪽 막이 접힌 크리스타 구조예요."],["특징","자체 DNA가 있어 스스로 증식할 수 있어요."]] },
+  chloro:{ name:"엽록체", en:"Chloroplast", color:"var(--c-chloro)",
+    role:"<b>광합성</b>이 일어나는 곳! 빛에너지를 화학에너지(양분)로 바꿔요. 식물세포에만 있어요.",
+    facts:[["구조","틸라코이드가 쌓인 그라나와 스트로마로 되어 있어요."],["색","엽록소 때문에 초록색을 띠어요."],["특징","자체 DNA가 있어요."]], only:"plant" },
+  vacuole:{ name:"액포", en:"Vacuole", color:"var(--c-vacuole)",
+    role:"물, 색소, 노폐물 등을 <b>저장하는 창고</b>예요. 식물세포에서 특히 크게 발달해요.",
+    facts:[["기능","물질 저장과 세포의 형태(팽압) 유지를 도와요."],["특징","자란 식물세포에서는 매우 커져요."]], only:"plant" },
+  membrane:{ name:"세포막", en:"Cell membrane", color:"var(--c-membrane)",
+    role:"세포를 감싸는 <b>인지질 2중층</b> 막. 물질의 출입을 <b>선택적으로 조절</b>해요.",
+    facts:[["구조","인지질 2중층에 단백질이 박혀 있어요."],["기능","필요한 물질만 골라 드나들게 해요(선택적 투과)."]] },
+  wall:{ name:"세포벽", en:"Cell wall", color:"var(--c-wall)",
+    role:"세포막 바깥을 감싼 <b>단단한 벽</b>. 세포를 보호하고 일정한 모양을 유지해요. 식물세포에만 있어요.",
+    facts:[["성분","주로 셀룰로스로 이루어져 있어요."],["기능","세포를 지지·보호하고 모양을 유지해요."]], only:"plant" },
+  lyso:{ name:"리소좀", en:"Lysosome", color:"var(--c-lyso)",
+    role:"가수분해 효소를 담은 주머니로, 세포 안의 <b>물질이나 노폐물을 분해·청소</b>해요.",
+    facts:[["기능","오래된 소기관이나 세균 등을 분해해요."],["특징","주로 동물세포에서 볼 수 있어요."]], only:"animal" },
+  centro:{ name:"중심체", en:"Centrosome", color:"var(--c-centro)",
+    role:"두 개의 중심립으로 된 구조. <b>세포분열 때 방추사를 형성</b>해요. 동물세포에 있어요.",
+    facts:[["구조","서로 수직인 2개의 중심립으로 이루어져요."],["기능","세포분열 시 염색체를 나누는 방추사를 만들어요."]], only:"animal" },
+};
+const ORDER = {
+  plant:["wall","membrane","nucleus","nucleolus","ribosome","rer","ser","golgi","mito","chloro","vacuole"],
+  animal:["membrane","nucleus","nucleolus","ribosome","rer","ser","golgi","mito","lyso","centro"],
+};
+
+/* ================= 그라데이션/필터 정의 ================= */
+function DEF(p){return `<defs>
+  <radialGradient id="${p}_gNuc" cx="38%" cy="33%" r="75%">
+    <stop offset="0" stop-color="#e6b6f2"/><stop offset="52%" stop-color="#bf6ed6"/><stop offset="100%" stop-color="#883ba3"/>
+  </radialGradient>
+  <radialGradient id="${p}_gNuo" cx="40%" cy="35%" r="72%">
+    <stop offset="0" stop-color="#8a49a6"/><stop offset="100%" stop-color="#4c1d63"/>
+  </radialGradient>
+  <radialGradient id="${p}_gVac" cx="35%" cy="28%" r="82%">
+    <stop offset="0" stop-color="#f6fcff"/><stop offset="42%" stop-color="#d2eefb"/><stop offset="78%" stop-color="#a2d9f1"/><stop offset="100%" stop-color="#7cc3e6"/>
+  </radialGradient>
+  <linearGradient id="${p}_gMito" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f8b078"/><stop offset="100%" stop-color="#e6753f"/>
+  </linearGradient>
+  <radialGradient id="${p}_gChl" cx="40%" cy="35%" r="75%">
+    <stop offset="0" stop-color="#8dd275"/><stop offset="55%" stop-color="#4aa653"/><stop offset="100%" stop-color="#2c7a37"/>
+  </radialGradient>
+  <linearGradient id="${p}_gGolgi" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#c6b9f2"/><stop offset="100%" stop-color="#6d5fc6"/>
+  </linearGradient>
+  <linearGradient id="${p}_gRER" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#f4a862"/><stop offset="100%" stop-color="#e0743a"/>
+  </linearGradient>
+  <linearGradient id="${p}_gSER" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#fbcfa2"/><stop offset="100%" stop-color="#f0a066"/>
+  </linearGradient>
+  <radialGradient id="${p}_gLyso" cx="38%" cy="34%" r="72%">
+    <stop offset="0" stop-color="#8fe4ef"/><stop offset="55%" stop-color="#33b3c4"/><stop offset="100%" stop-color="#178190"/>
+  </radialGradient>
+  <linearGradient id="${p}_gCentro" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f8d474"/><stop offset="100%" stop-color="#d59a22"/>
+  </linearGradient>
+  <linearGradient id="${p}_gCyto" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#f8f5d2"/><stop offset="100%" stop-color="#e9edb2"/>
+  </linearGradient>
+  <linearGradient id="${p}_gWallF" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#aadb63"/><stop offset="100%" stop-color="#6cae34"/>
+  </linearGradient>
+  <linearGradient id="${p}_gWallTop" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#c6ea86"/><stop offset="100%" stop-color="#9cd257"/>
+  </linearGradient>
+  <radialGradient id="${p}_gBody" cx="42%" cy="36%" r="72%">
+    <stop offset="0" stop-color="#fef1e3"/><stop offset="62%" stop-color="#f7dcc1"/><stop offset="100%" stop-color="#eabf97"/>
+  </radialGradient>
+  <filter id="${p}_soft" x="-30%" y="-30%" width="160%" height="160%">
+    <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#4a3a1a" flood-opacity="0.20"/>
+  </filter>
+</defs>`;}
+
+/* ================= 소기관 그림 생성기 (원점 중심) ================= */
+const GEN = {
+  nucleus:(p)=>`<g>
+      <circle r="82" fill="url(#${p}_gNuc)"/>
+      <g opacity="0.38" fill="#7d3a97">
+        <ellipse cx="-30" cy="-22" rx="17" ry="11"/><ellipse cx="22" cy="-34" rx="12" ry="9"/>
+        <ellipse cx="36" cy="16" rx="15" ry="10"/><ellipse cx="-16" cy="30" rx="14" ry="9"/>
+        <ellipse cx="-42" cy="12" rx="10" ry="7"/><ellipse cx="10" cy="4" rx="12" ry="8"/>
+        <ellipse cx="30" cy="-14" rx="9" ry="6"/></g>
+      <circle r="82" fill="none" stroke="#7d3a97" stroke-width="5"/>
+      <circle r="74" fill="none" stroke="#f0d6f7" stroke-width="2.5" stroke-dasharray="2 7"/>
+    </g>`,
+  nucleolus:(p)=>`<circle r="26" fill="url(#${p}_gNuo)"/>
+      <g fill="#38124e" opacity="0.5"><circle cx="-6" cy="-5" r="4.5"/><circle cx="7" cy="4" r="5.5"/><circle cx="-3" cy="9" r="3.5"/></g>`,
+  vacuole:(p)=>`<g>
+      <ellipse rx="110" ry="125" fill="url(#${p}_gVac)" stroke="#5aa8cf" stroke-width="3.5"/>
+      <ellipse cx="-40" cy="-50" rx="30" ry="48" fill="#ffffff" opacity="0.5"/>
+      <ellipse cx="38" cy="46" rx="52" ry="56" fill="#8fcbe8" opacity="0.25"/>
+    </g>`,
+  mito:(p)=>{
+    const M=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+    const rx=37, ry=18, waves=11, amp=3.9, amp2=1.4, phase=0.5;
+    const N=waves*3, pts=[];
+    for(let i=0;i<N;i++){
+      const t=i/N*Math.PI*2;
+      const disp=amp*Math.sin(waves*t+phase)+amp2*Math.sin(2*waves*t+phase*1.7);
+      pts.push([rx*Math.cos(t)+disp*Math.cos(t), ry*Math.sin(t)+disp*Math.sin(t)]);
+    }
+    let d=`M ${M(pts[N-1],pts[0]).map(v=>v.toFixed(1)).join(' ')} `;
+    for(let i=0;i<N;i++){const cur=pts[i],nx=pts[(i+1)%N],mid=M(cur,nx);
+      d+=`Q ${cur[0].toFixed(1)} ${cur[1].toFixed(1)} ${mid[0].toFixed(1)} ${mid[1].toFixed(1)} `;}
+    d+='Z';
+    return `<g>
+      <ellipse rx="48" ry="28" fill="url(#${p}_gMito)" stroke="#c9542e" stroke-width="3"/>
+      <path d="${d}" fill="#fde7d2" stroke="#cf5f31" stroke-width="2.2"/>
+    </g>`;
+  },
+  chloro:(p)=>{
+    const rx=57, ry=32;
+    const stacks=[{x:-32,n:5},{x:-11,n:6},{x:12,n:5},{x:34,n:4}];
+    let grana='';
+    stacks.forEach(s=>{
+      const dh=4.6, w=19;
+      let discs='';
+      for(let i=0;i<s.n;i++){
+        const yy=(i-(s.n-1)/2)*dh;
+        discs+=`<rect x="${-w/2}" y="${(yy-dh/2+0.3).toFixed(1)}" width="${w}" height="${(dh-0.6).toFixed(1)}" rx="${((dh-0.6)/2).toFixed(1)}" fill="#1f6f2c" stroke="#0d461a" stroke-width="0.9"/>`;
+      }
+      grana+=`<g transform="translate(${s.x} 0)">${discs}</g>`;
+    });
+    const lam=`<g stroke="#256b30" stroke-width="2.2" opacity="0.75" stroke-linecap="round">
+      <line x1="-30" y1="-3" x2="12" y2="4"/><line x1="-11" y1="7" x2="34" y2="-2"/><line x1="-32" y1="6" x2="12" y2="9"/></g>`;
+    return `<g>
+      <ellipse rx="${rx}" ry="${ry}" fill="url(#${p}_gChl)" stroke="#2c7a37" stroke-width="3"/>
+      <ellipse rx="${rx-4}" ry="${ry-4}" fill="none" stroke="#c3e8b4" stroke-width="1.4" opacity="0.5"/>
+      ${lam}
+      ${grana}
+    </g>`;
+  },
+  rer:(p)=>{
+    const ys=[-42,-28,-14,0,14,28,42];
+    let bands='', dots='';
+    ys.forEach((y,i)=>{
+      const w=92-Math.abs(i-3)*7;
+      bands+=`<path d="M${-w} ${y} q ${w*0.5} -13 ${w} 0 q ${w*0.5} 13 ${w} 0" fill="none" stroke="url(#${p}_gRER)" stroke-width="7" stroke-linecap="round"/>`;
+      for(let x=-w+6;x<=w-6;x+=15){
+        const yy=y + (Math.round((x)/15)%2? -6 : 6);
+        dots+=`<circle cx="${x.toFixed(0)}" cy="${(y-8).toFixed(0)}" r="2.6" fill="#b85e24"/>`;
+      }
+    });
+    return `<g>${bands}<g>${dots}</g></g>`;
+  },
+  ser:(p)=>`<g fill="none" stroke="url(#${p}_gSER)" stroke-width="8" stroke-linecap="round">
+      <path d="M-42 -30 q42 8 30 42 q-10 28 34 32"/>
+      <path d="M-30 8 q34 -10 46 20"/>
+      <path d="M-4 -34 q22 22 42 8"/>
+    </g>`,
+  golgi:(p)=>{
+    let s='';
+    [[-32,66],[-18,80],[-4,92],[10,84],[24,70]].forEach(([y,w])=>{
+      s+=`<path d="M${-w/2} ${y} q ${w/2} -22 ${w} 0" fill="none" stroke="url(#${p}_gGolgi)" stroke-width="9" stroke-linecap="round"/>`;
+    });
+    s+=`<g fill="#f3c34a" stroke="#d79a24" stroke-width="1.5"><circle cx="-50" cy="40" r="7"/><circle cx="-2" cy="49" r="8"/><circle cx="48" cy="41" r="7"/></g>`;
+    return `<g>${s}</g>`;
+  },
+  lyso:(p)=>`<g>
+      <circle r="26" fill="url(#${p}_gLyso)" stroke="#178190" stroke-width="3"/>
+      <g fill="#0d5b68" opacity="0.85"><circle cx="-7" cy="-6" r="4"/><circle cx="8" cy="-5" r="4"/><circle cx="0" cy="8" r="4"/><circle cx="-9" cy="7" r="3"/><circle cx="10" cy="9" r="3"/></g>
+    </g>`,
+  centro:(p)=>{
+    const barrel=(stripes)=>{let st='';for(let i=-2;i<=2;i++)st+=`<line x1="${i*7}" y1="-11" x2="${i*7}" y2="11" stroke="#c9901f" stroke-width="2.4"/>`;return st;};
+    return `<g>
+      <g transform="translate(-8 6)"><rect x="-26" y="-11" width="52" height="22" rx="6" fill="url(#${p}_gCentro)" stroke="#c9901f" stroke-width="2"/>${barrel()}</g>
+      <g transform="translate(16 -10) rotate(90)"><rect x="-26" y="-11" width="52" height="22" rx="6" fill="url(#${p}_gCentro)" stroke="#c9901f" stroke-width="2"/>${barrel()}</g>
+    </g>`;
+  },
+};
+
+/* ================= 세포막 · 세포벽 · 리보솜 아이콘(패널용) ================= */
+function membraneIcon(){
+  let top='',bot='',tails='';
+  for(let i=0;i<6;i++){const x=16+i*13.6;
+    top+=`<circle cx="${x}" cy="30" r="6" fill="#f0a06a"/>`;
+    bot+=`<circle cx="${x}" cy="70" r="6" fill="#f0a06a"/>`;
+    tails+=`<line x1="${x}" y1="35" x2="${x}" y2="50" stroke="#e8895f" stroke-width="2.6"/><line x1="${x}" y1="65" x2="${x}" y2="50" stroke="#e8895f" stroke-width="2.6"/>`;
+  }
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    ${tails}<g>${top}${bot}</g>
+    <rect x="40" y="24" width="18" height="52" rx="8" fill="#9b8ce0" opacity="0.9"/>
+  </svg>`;
+}
+function wallIcon(){
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="14" y="14" width="72" height="72" rx="10" fill="#eaf6d8" stroke="#6cae34" stroke-width="10"/>
+    <g stroke="#8fc84e" stroke-width="4" opacity="0.85">
+      <line x1="24" y1="36" x2="76" y2="36"/><line x1="24" y1="50" x2="76" y2="50"/><line x1="24" y1="64" x2="76" y2="64"/></g>
+    <g stroke="#7cb342" stroke-width="4" opacity="0.7">
+      <line x1="40" y1="28" x2="40" y2="44"/><line x1="60" y1="42" x2="60" y2="58"/><line x1="40" y1="56" x2="40" y2="72"/></g>
+  </svg>`;
+}
+function ribosomeIcon(){
+  const one=(x,y)=>`<g transform="translate(${x} ${y})"><circle r="12" fill="#e0821a"/><circle cx="7" cy="-8" r="7.5" fill="#f2a44a"/></g>`;
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${one(34,40)}${one(64,36)}${one(50,66)}</svg>`;
+}
+const ICON_SCALE={nucleus:0.44,nucleolus:1.35,rer:0.42,ser:0.78,golgi:0.6,mito:0.78,chloro:0.68,vacuole:0.34,lyso:1.3,centro:0.82};
+function icon(key){
+  if(key==="membrane") return membraneIcon();
+  if(key==="wall") return wallIcon();
+  if(key==="ribosome") return ribosomeIcon();
+  const p="ic", sc=ICON_SCALE[key]||1;
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${DEF(p)}<g transform="translate(50 50) scale(${sc})">${GEN[key](p)}</g></svg>`;
+}
+
+/* ================= 클릭 가능한 소기관 래퍼 ================= */
+function place(gen, x, y, rot=0, s=1){
+  return `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">${gen}</g>`;
+}
+function org(key, inner){
+  return `<g class="organelle" data-key="${key}"><title>${DATA[key].name}</title>${inner}</g>`;
+}
+function rib(x,y,s=1){
+  return `<g transform="translate(${x} ${y}) scale(${s})"><circle r="5.5" fill="#e0821a"/><circle cx="3.4" cy="-3.4" r="3.2" fill="#f2a44a"/></g>`;
+}
+
+/* ================= 식물세포 ================= */
+function plantSVG(){
+  const p="p";
+  const wallPath="M40 100 Q40 68 72 68 L648 68 Q680 68 680 100 L680 498 Q680 530 648 530 L72 530 Q40 530 40 498 Z";
+  const ribs=[[300,180],[470,150],[540,410],[315,255],[600,175],[430,470],[335,300],[520,470],[250,180],[600,300]].map(([x,y])=>rib(x,y)).join("");
+  return `<svg class="cell" viewBox="0 0 720 600" xmlns="http://www.w3.org/2000/svg">
+    ${DEF(p)}
+    ${org("wall", `
+      <path d="${wallPath}" fill="url(#${p}_gWallF)"/>
+      <path d="M40 100 Q40 68 72 68 L648 68 Q680 68 680 100 L680 128 L40 128 Z" fill="url(#${p}_gWallTop)" opacity="0.9"/>
+      <path d="${wallPath}" fill="none" stroke="#5a9e2f" stroke-width="3"/>`)}
+    <rect x="80" y="110" width="560" height="380" rx="24" fill="url(#${p}_gCyto)"/>
+    <rect x="80" y="110" width="560" height="380" rx="24" fill="none" stroke="#c7ce8a" stroke-width="2" opacity="0.6"/>
+    <g stroke="#dcae6e" stroke-width="2.4" opacity="0.4" stroke-linecap="round" pointer-events="none">
+      <line x1="120" y1="165" x2="440" y2="300"/><line x1="500" y1="140" x2="255" y2="440"/>
+      <line x1="150" y1="430" x2="560" y2="200"/><line x1="300" y1="130" x2="600" y2="420"/>
+      <line x1="110" y1="300" x2="420" y2="470"/></g>
+    ${org("membrane", `<rect x="80" y="110" width="560" height="380" rx="24" fill="none" stroke="#e8895f" stroke-width="6"/>`)}
+
+    ${org("vacuole", `<circle class="halo" r="132" cx="0" cy="0" transform="translate(212 272)" fill="none" stroke="#7c5cff" stroke-width="4" stroke-dasharray="6 8"/>`+place(GEN.vacuole(p),212,272))}
+    ${org("chloro", place(GEN.chloro(p),185,452,-15)+place(GEN.chloro(p),272,470,12,0.82)+place(GEN.chloro(p),120,458,32,0.62))}
+    ${org("mito", place(GEN.mito(p),340,152,-18)+place(GEN.mito(p),575,175,22,0.9)+place(GEN.mito(p),300,420,-30,0.82))}
+    ${org("ser", place(GEN.ser(p),602,292,10,0.85))}
+    ${org("rer", place(GEN.rer(p),468,360,0,0.92))}
+    ${org("golgi", place(GEN.golgi(p),368,438,0,0.92))}
+    ${org("ribosome", ribs)}
+    ${org("nucleus", `<circle class="halo" r="94" cx="0" cy="0" transform="translate(474 236)" fill="none" stroke="#7c5cff" stroke-width="4" stroke-dasharray="6 8"/>`+place(GEN.nucleus(p),474,236))}
+    ${org("nucleolus", place(GEN.nucleolus(p),490,251))}
+  </svg>`;
+}
+
+/* ================= 동물세포 ================= */
+function animalSVG(){
+  const p="a";
+  const body="M112 262 Q92 152 202 122 Q302 96 384 126 Q472 86 560 132 Q662 172 640 282 Q682 382 590 442 Q560 522 430 506 Q320 552 220 490 Q100 470 96 360 Q80 300 112 262 Z";
+  const ribs=[[250,235],[180,300],[150,215],[300,175],[520,300],[380,150],[210,405],[330,470],[600,270],[470,150]].map(([x,y])=>rib(x,y)).join("");
+  return `<svg class="cell" viewBox="0 0 720 600" xmlns="http://www.w3.org/2000/svg">
+    ${DEF(p)}
+    <path d="${body}" fill="url(#${p}_gBody)"/>
+    <g stroke="#e0b88a" stroke-width="2.4" opacity="0.4" stroke-linecap="round" pointer-events="none">
+      <line x1="170" y1="200" x2="470" y2="330"/><line x1="520" y1="180" x2="260" y2="440"/>
+      <line x1="200" y1="440" x2="580" y2="240"/><line x1="330" y1="150" x2="600" y2="400"/>
+      <line x1="150" y1="330" x2="430" y2="470"/></g>
+    <ellipse cx="255" cy="250" rx="18" ry="20" fill="#f5cf6a" stroke="#d9a92e" stroke-width="2" opacity="0.9" pointer-events="none"/>
+    ${org("membrane", `<path d="${body}" fill="none" stroke="#e8895f" stroke-width="7"/>`)}
+
+    ${org("mito", place(GEN.mito(p),215,175,-18)+place(GEN.mito(p),535,180,20,0.92)+place(GEN.mito(p),590,335,58,0.8))}
+    ${org("ser", place(GEN.ser(p),560,222,-10,0.85)+place(GEN.ser(p),575,370,20,0.7))}
+    ${org("rer", place(GEN.rer(p),402,368,0,1))}
+    ${org("golgi", place(GEN.golgi(p),248,405,0,0.92))}
+    ${org("lyso", place(GEN.lyso(p),478,400))}
+    ${org("centro", place(GEN.centro(p),508,300,0,0.9))}
+    ${org("ribosome", ribs)}
+    ${org("nucleus", `<circle class="halo" r="100" cx="0" cy="0" transform="translate(340 256)" fill="none" stroke="#7c5cff" stroke-width="4" stroke-dasharray="6 8"/>`+place(GEN.nucleus(p),340,256,0,1.05))}
+    ${org("nucleolus", place(GEN.nucleolus(p),358,272,0,1.05))}
+  </svg>`;
+}
+
+/* ================= 렌더링/상호작용 ================= */
+const holder=document.getElementById("cellHolder");
+const legend=document.getElementById("legend");
+const info=document.getElementById("info");
+const caption=document.getElementById("cellCaption");
+let currentCell="plant";
+let selectedKey=null;
+
+function cssColor(v){
+  const m=v.match(/--[\w-]+/);
+  return m ? getComputedStyle(document.documentElement).getPropertyValue(m[0]).trim() : v;
+}
+function placeholderHTML(){
+  return `<div class="placeholder"><div class="big">👆</div><b>소기관을 클릭해 보세요</b><br/>선택한 소기관이 크게 부각되고<br/>이곳에 자세한 역할이 나타납니다.</div>`;
+}
+function renderLegend(){
+  legend.innerHTML="";
+  ORDER[currentCell].forEach(key=>{
+    const d=DATA[key];
+    const chip=document.createElement("div");
+    chip.className="chip"+(key===selectedKey?" active":"");
+    chip.innerHTML=`<span class="sw" style="background:${cssColor(d.color)}"></span>${d.name}`;
+    chip.onclick=()=>select(key);
+    legend.appendChild(chip);
+  });
+}
+function renderInfo(key){
+  const d=DATA[key], col=cssColor(d.color);
+  const badge = d.only
+    ? `<span class="badge" style="background:${d.only==='plant'?'#5a9e2f':'#ec7a4f'}">${d.only==='plant'?'🌱 식물세포에만':'🐾 동물세포에만'}</span>`
+    : `<span class="badge" style="background:#8a7fd0">공통 소기관</span>`;
+  info.innerHTML=`
+    <div class="info-head">
+      <div class="info-icon">${icon(key)}</div>
+      <div class="info-title"><h2>${d.name}</h2><div class="en">${d.en}</div>${badge}</div>
+    </div>
+    <div class="role" style="border-left-color:${col}">${d.role}</div>
+    <ul class="facts">${d.facts.map(f=>`<li><span class="k">${f[0]}</span><span>${f[1]}</span></li>`).join("")}</ul>`;
+}
+function select(key){
+  selectedKey=key;
+  const svg=holder.querySelector("svg.cell");
+  svg.classList.add("has-sel");
+  svg.querySelectorAll(".organelle").forEach(g=>g.classList.toggle("active", g.dataset.key===key));
+  renderInfo(key);
+  renderLegend();
+}
+function renderCell(){
+  holder.innerHTML = currentCell==="plant" ? plantSVG() : animalSVG();
+  caption.textContent = "그림 · "+(currentCell==="plant"?"식물세포의 구조":"동물세포의 구조");
+  holder.querySelectorAll(".organelle").forEach(g=>g.addEventListener("click",()=>select(g.dataset.key)));
+  selectedKey=null;
+  info.innerHTML=placeholderHTML();
+  renderLegend();
+}
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    currentCell=t.dataset.cell;
+    renderCell();
+  });
+});
+renderCell();
+</script>
+</body>
+</html>

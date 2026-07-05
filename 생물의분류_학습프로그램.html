@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>생물의 분류 학습 프로그램</title>
+<style>
+  :root{
+    --green:#2e7d5b; --green-d:#1f5a41; --green-l:#e6f4ee;
+    --teal:#0f766e; --amber:#d97706; --amber-l:#fef3e2;
+    --blue:#2563eb; --red:#dc2626; --red-l:#fdecec;
+    --ok:#16a34a; --ok-l:#e7f7ec;
+    --ink:#1f2937; --muted:#6b7280; --line:#dbe5e0; --bg:#f4f8f6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Segoe UI','Malgun Gothic','맑은 고딕',sans-serif;
+       background:var(--bg);color:var(--ink);line-height:1.55}
+  header.app{background:linear-gradient(120deg,var(--green),var(--teal));color:#fff;
+       padding:22px 20px 16px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  header.app h1{margin:0;font-size:24px;letter-spacing:-.5px}
+  header.app p{margin:6px 0 0;opacity:.92;font-size:14px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;max-width:1080px;margin:14px auto 0;padding:0 12px}
+  .tab-btn{flex:1 1 200px;min-width:160px;border:none;cursor:pointer;padding:12px 10px;
+       border-radius:12px 12px 0 0;background:rgba(255,255,255,.18);color:#eafcf4;
+       font-size:14.5px;font-weight:700;transition:.15s}
+  .tab-btn small{display:block;font-weight:400;opacity:.85;font-size:11.5px;margin-top:2px}
+  .tab-btn:hover{background:rgba(255,255,255,.30)}
+  .tab-btn.active{background:var(--bg);color:var(--green-d)}
+  main{max-width:1080px;margin:0 auto;padding:20px 14px 60px}
+  .panel{display:none;animation:fade .25s}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;
+       margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .card h2{margin:0 0 4px;font-size:19px;color:var(--green-d)}
+  .card h3{margin:14px 0 8px;font-size:15.5px;color:var(--teal)}
+  .lead{color:var(--muted);font-size:13.5px;margin:2px 0 12px}
+  .btn{border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;
+       cursor:pointer;background:var(--green);color:#fff;transition:.15s}
+  .btn:hover{background:var(--green-d)}
+  .btn.ghost{background:#eef3f1;color:var(--green-d)}
+  .btn.ghost:hover{background:#dfeae5}
+  .btn.amber{background:var(--amber)} .btn.amber:hover{background:#b45c04}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{display:inline-block;background:var(--green-l);color:var(--green-d);border-radius:999px;
+       padding:3px 12px;font-size:12.5px;font-weight:700;margin:2px}
+  .muted{color:var(--muted)}
+  .hint{background:var(--amber-l);border-left:4px solid var(--amber);border-radius:8px;
+       padding:10px 12px;font-size:13.5px;margin:10px 0}
+  .good{color:var(--ok);font-weight:700}
+  .bad{color:var(--red);font-weight:700}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+  th{background:var(--green-l);color:var(--green-d)}
+  .emoji{font-size:1.15em}
+
+  /* ---- Tab1 hierarchy ---- */
+  .org-choose{display:flex;gap:10px;flex-wrap:wrap}
+  .org-choose button{border:2px solid var(--line);background:#fff;border-radius:14px;
+       padding:12px 14px;cursor:pointer;font-size:14px;font-weight:700;min-width:110px;transition:.15s}
+  .org-choose button:hover{border-color:var(--green);background:var(--green-l)}
+  .org-choose button.sel{border-color:var(--green);background:var(--green);color:#fff}
+  .org-choose .em{display:block;font-size:30px;margin-bottom:2px}
+  .funnel{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:6px}
+  .rankstep{width:100%;max-width:640px}
+  .rankstep .lbl{display:flex;justify-content:space-between;align-items:baseline;margin:0 auto}
+  .rankstep .lbl b{color:var(--teal)}
+  .opts{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 4px}
+  .opts button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:8px 14px;
+       cursor:pointer;font-size:13.5px;font-weight:600;transition:.12s}
+  .opts button:hover{border-color:var(--green)}
+  .opts button.correct{border-color:var(--ok);background:var(--ok-l);color:var(--green-d)}
+  .opts button.wrong{border-color:var(--red);background:var(--red-l);color:var(--red)}
+  .opts button:disabled{cursor:default}
+  .path{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .path .prow{display:flex;align-items:center;gap:8px;background:var(--green-l);
+       border-radius:8px;padding:6px 10px;font-size:13.5px}
+  .path .prow .rk{width:34px;font-weight:800;color:var(--teal)}
+  .binom{font-style:italic;font-weight:800;color:var(--green-d)}
+
+  /* ---- Tab2 & Tab4 sorting ---- */
+  .pool{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px;min-height:20px}
+  .chip{border:2px solid var(--line);background:#fff;border-radius:12px;padding:7px 11px;
+       cursor:pointer;font-size:13px;font-weight:700;user-select:none;transition:.12s;
+       display:inline-flex;align-items:center;gap:5px}
+  .chip:hover{border-color:var(--green);background:var(--green-l)}
+  .chip.sel{border-color:var(--amber);background:var(--amber-l);box-shadow:0 0 0 3px rgba(217,119,6,.18)}
+  .chip.correct{border-color:var(--ok);background:var(--ok-l)}
+  .chip.wrong{border-color:var(--red);background:var(--red-l)}
+  .bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:6px}
+  .bin{border:2px dashed var(--line);border-radius:12px;padding:8px;min-height:96px;background:#fbfdfc}
+  .bin.hot{border-color:var(--amber);background:var(--amber-l)}
+  .bin h4{margin:0 0 2px;font-size:13.5px;color:var(--green-d)}
+  .bin .sub{font-size:11px;color:var(--muted);margin-bottom:6px;min-height:14px}
+  .bin .drop{display:flex;flex-wrap:wrap;gap:6px}
+  .dom-band{font-size:11.5px;font-weight:800;color:#fff;border-radius:8px;padding:2px 10px;display:inline-block;margin:10px 0 2px}
+  .scorebar{font-size:14px;font-weight:700}
+
+  /* ---- Tab3 ladder ---- */
+  .slotwrap{display:flex;flex-direction:column-reverse;gap:6px;max-width:520px;margin:6px 0}
+  .slot{display:flex;align-items:center;gap:10px;border:2px dashed var(--line);border-radius:12px;
+       padding:8px 12px;min-height:52px;background:#fbfdfc;cursor:pointer;transition:.12s}
+  .slot:hover{border-color:var(--green)}
+  .slot .idx{font-size:11px;font-weight:800;color:var(--muted);width:118px;flex:none}
+  .slot.filled{border-style:solid;background:#fff}
+  .slot.correct{border-color:var(--ok);background:var(--ok-l)}
+  .slot.wrong{border-color:var(--red);background:var(--red-l)}
+  .slot .card-mini{font-weight:700}
+  svg{max-width:100%;height:auto}
+  .study-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .study-card{border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:#fff;transition:.12s}
+  .study-card:hover{border-color:var(--green);box-shadow:0 2px 8px rgba(46,125,91,.14)}
+  .study-card .em{font-size:26px}
+  .study-card h4{margin:4px 0 2px;font-size:14px;color:var(--green-d)}
+  .study-card .ex{font-size:11.5px;color:var(--muted)}
+  .traitline{font-size:12px;margin-top:6px;display:none}
+  .study-card.open .traitline{display:block}
+  .tag{display:inline-block;background:#eef3f1;border-radius:6px;padding:1px 7px;font-size:11px;margin:2px 3px 0 0}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+  footer p{margin:4px 0 0}
+
+  /* ---- 도구모음 (이름/저장/인쇄) ---- */
+  .toolbar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 16px;
+       margin-bottom:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;
+       box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .toolbar label{font-size:13px;font-weight:700;color:var(--green-d)}
+  .toolbar input{border:2px solid var(--line);border-radius:9px;padding:7px 11px;font-size:14px;width:150px}
+  .toolbar input:focus{outline:none;border-color:var(--green)}
+  .toolbar .status{font-size:12.5px;color:var(--muted);margin-left:auto}
+  .toolbar .status b{color:var(--green-d)}
+  .btn.blue{background:var(--blue)} .btn.blue:hover{background:#1d4ed8}
+  .btn.small{padding:7px 12px;font-size:13px}
+
+  /* ---- 기록 모달 ---- */
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:50;
+       align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto}
+  .modal-bg.open{display:flex}
+  .modal{background:#fff;border-radius:16px;max-width:640px;width:100%;padding:20px}
+  .modal h2{margin:0 0 10px;color:var(--green-d);font-size:19px}
+  .rec-table{font-size:13px}
+  .rec-empty{color:var(--muted);padding:14px 0;text-align:center}
+  .setpick{display:inline-flex;gap:6px;margin-left:8px}
+  .setpick button{border:2px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;
+       font-size:12.5px;font-weight:700;cursor:pointer}
+  .setpick button.on{border-color:var(--green);background:var(--green);color:#fff}
+
+  /* ---- 인쇄 영역 ---- */
+  #printarea{display:none}
+  @media print{
+    header.app,.tabs,.toolbar,footer,.modal-bg,.btn,.org-choose,.pool,.bins,.slotwrap,
+    #t1-play,#t3-tree,#t4-tree,.study-grid,.hint,.scorebar{display:none !important}
+    body{background:#fff}
+    main{max-width:none;padding:0}
+    .panel{display:none !important}
+    #printarea{display:block !important}
+    .ws-head{display:flex;justify-content:space-between;border-bottom:2px solid #333;padding-bottom:6px;margin-bottom:12px}
+    .ws-head h1{font-size:18px;margin:0}
+    .ws-head .who{font-size:13px;text-align:right}
+    .ws-sec{margin:0 0 18px;page-break-inside:avoid}
+    .ws-sec h2{font-size:15px;background:#eee;padding:4px 8px;border-radius:4px;margin:0 0 6px}
+    .ws-sec p{font-size:12px;margin:2px 0 6px;color:#333}
+    #printarea table{width:100%;font-size:12px}
+    #printarea th,#printarea td{border:1px solid #999;padding:5px 6px}
+    .blankcell{height:26px}
+    .ws-score{font-size:12.5px;border:1px solid #999;border-radius:6px;padding:8px 10px;margin-bottom:12px}
+  }
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<header class="app">
+  <h1>🔬 생물의 분류 학습 프로그램</h1>
+  <p>클릭하며 익히는 <b>종속과목강문계</b> · <b>3역 6계</b> · <b>식물·동물 계통수</b></p>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="t1">① 종속과목강문계<small>분류군 찾아가기</small></button>
+    <button class="tab-btn" data-tab="t2">② 3역 6계 분류<small>생물을 계로 나누기</small></button>
+    <button class="tab-btn" data-tab="t3">③ 식물계 계통수<small>문 수준 계통 만들기</small></button>
+    <button class="tab-btn" data-tab="t4">④ 동물계 계통수<small>문 수준 계통 만들기</small></button>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <label for="stu-name">👤 이름</label>
+    <input id="stu-name" type="text" placeholder="이름을 입력" maxlength="20" autocomplete="off">
+    <button class="btn blue small" id="btn-records">📋 내 점수 기록</button>
+    <button class="btn amber small" id="btn-print">🖨️ 활동지 인쇄</button>
+    <span class="status" id="save-status">채점을 하면 점수가 자동 저장됩니다.</span>
+  </div>
+
+  <section class="panel active" id="t1">
+    <div class="card">
+      <h2>① 종속과목강문계 개념 익히기</h2>
+      <p class="lead">생물 하나를 고르고, <b>역 → 계 → 문 → 강 → 목 → 과 → 속 → 종</b> 순서로 좁혀 가며 그 생물이 속한 분류군을 찾아보세요. 위로 갈수록 범위가 넓고(포함하는 종이 많고), 아래로 갈수록 좁아집니다.</p>
+      <h3>🐾 탐구할 생물 고르기</h3>
+      <div class="org-choose" id="t1-orgs"></div>
+    </div>
+
+    <div class="card" id="t1-play" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <h2 id="t1-title" style="margin:0"></h2>
+        <button class="btn ghost" id="t1-reset">처음부터</button>
+      </div>
+      <p class="lead">각 단계에서 알맞은 분류군을 클릭하세요.</p>
+      <div class="funnel" id="t1-steps"></div>
+      <div id="t1-done" style="display:none">
+        <div class="hint" style="border-color:var(--ok);background:var(--ok-l)">
+          🎉 <b>완성!</b> 이 생물이 속한 분류 단계를 모두 찾았어요. 아래는 <b>이명법</b>으로 나타낸 학명입니다.
+        </div>
+        <p style="font-size:16px">학명(이명법): <span class="binom" id="t1-binom"></span>
+          <span class="muted" style="font-size:12.5px"> ← 속명(대문자 시작)+종소명(소문자), 이탤릭체로 표기</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t2">
+    <div class="card">
+      <h2>② 3역 6계로 생물 분류하기</h2>
+      <p class="lead">생물의 특징(핵막 유무·세포 수·영양 방식·서식지 등)을 보고 알맞은 <b>계</b>에 넣어 보세요.
+        생물 카드를 클릭 → 넣을 계 상자를 클릭하면 이동합니다. 다 넣은 뒤 <b>채점하기</b>를 누르세요.</p>
+      <div class="hint" id="t2-hint">💡 카드를 클릭하면 그 생물의 특징이 여기에 나타납니다.</div>
+      <h3>🧫 분류할 생물 <span class="muted" id="t2-left"></span></h3>
+      <div class="pool" id="t2-pool"></div>
+
+      <div class="dom-band" style="background:#6b7280">세균역</div>
+      <div class="bins" id="t2-bins-bac"></div>
+      <div class="dom-band" style="background:#b45c04">고세균역</div>
+      <div class="bins" id="t2-bins-arc"></div>
+      <div class="dom-band" style="background:var(--green)">진핵생물역</div>
+      <div class="bins" id="t2-bins-euk"></div>
+
+      <div class="row" style="margin-top:14px">
+        <button class="btn amber" id="t2-check">채점하기</button>
+        <button class="btn ghost" id="t2-answer">정답 보기</button>
+        <button class="btn ghost" id="t2-reset">다시하기</button>
+        <span class="scorebar" id="t2-score"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="t3">
+    <div class="card">
+      <h2>③ 식물계 계통수 만들기 (문 수준)</h2>
+      <p class="lead">먼저 각 식물의 특징을 공부한 뒤, <b>원시형 형질을 많이 가진 생물부터</b> 순서대로 배열해 계통수를 완성해 보세요.
+        <span class="setpick" id="t3-setpick">문제 세트:
+          <button data-set="A" class="on">세트 A</button>
+          <button data-set="B">세트 B</button>
+        </span></p>
+      <h3>📖 1단계 · 식물 특징 공부하기 <span class="muted">(카드를 클릭하면 형질이 열립니다)</span></h3>
+      <div class="study-grid" id="t3-study"></div>
+      <h3>🧾 형질 특성표</h3>
+      <div style="overflow-x:auto"><table id="t3-table"></table></div>
+      <p class="muted" style="font-size:12px">※ 0 = 원시형, 1 = 파생형. 파생형 형질을 적게 가진(0이 많은) 생물일수록 계통수 아래쪽에서 먼저 갈라져 나옵니다.</p>
+    </div>
+    <div class="card">
+      <h3>🌱 2단계 · 계통수 순서 정하기</h3>
+      <p class="lead">아래 생물 카드를 클릭하면 <b>가장 아래 칸(먼저 갈라짐)부터</b> 차례로 채워집니다. 순서를 정한 뒤 <b>계통수 확인</b>을 누르세요.</p>
+      <div class="pool" id="t3-pool"></div>
+      <div class="slotwrap" id="t3-slots"></div>
+      <div class="row">
+        <button class="btn amber" id="t3-check">계통수 확인</button>
+        <button class="btn ghost" id="t3-reset">다시하기</button>
+        <span class="scorebar" id="t3-msg"></span>
+      </div>
+      <div id="t3-tree" style="margin-top:14px;display:none"></div>
+    </div>
+  </section>
+
+  <section class="panel" id="t4">
+    <div class="card">
+      <h2>④ 동물계 계통수 만들기 (문 수준)</h2>
+      <p class="lead">동물 9개 문의 특징을 공부한 뒤, 공통으로 가지는 형질에 따라 <b>다섯 무리</b>로 분류하면 계통수가 완성됩니다.</p>
+      <h3>📖 1단계 · 동물 문 특징 공부하기 <span class="muted">(카드를 클릭하면 형질이 열립니다)</span></h3>
+      <div class="study-grid" id="t4-study"></div>
+    </div>
+    <div class="card">
+      <h3>🐙 2단계 · 무리로 분류하기</h3>
+      <p class="lead">문 카드를 클릭 → 알맞은 무리 상자를 클릭해 넣으세요. 각 무리의 <b>결정적 형질</b>을 참고하세요.</p>
+      <div class="hint" id="t4-hint">💡 카드를 클릭하면 그 동물의 특징이 여기에 나타납니다.</div>
+      <div class="pool" id="t4-pool"></div>
+      <div class="bins" id="t4-bins"></div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn amber" id="t4-check">채점하기</button>
+        <button class="btn ghost" id="t4-answer">정답 보기</button>
+        <button class="btn ghost" id="t4-reset">다시하기</button>
+        <span class="scorebar" id="t4-score"></span>
+      </div>
+      <div id="t4-tree" style="margin-top:16px;display:none"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <p>생물의 분류 · 클릭 학습 프로그램</p>
+  <p>All Rights Reserved (무단 전재 및 재배포 금지)</p>
+</footer>
+
+<div class="modal-bg" id="rec-modal">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0">📋 <span id="rec-name"></span> 점수 기록</h2>
+      <button class="btn ghost small" id="rec-close">닫기</button>
+    </div>
+    <div id="rec-body"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="btn amber small" id="rec-print">🖨️ 이 기록 인쇄</button>
+      <button class="btn ghost small" id="rec-clear">이 학생 기록 삭제</button>
+    </div>
+  </div>
+</div>
+
+<div id="printarea"></div>
+
+<script>
+/* =========================================================
+   공통 유틸
+========================================================= */
+const $=(s,el=document)=>el.querySelector(s);
+const $$=(s,el=document)=>[...el.querySelectorAll(s)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* 탭 전환 */
+$$('.tab-btn').forEach(b=>b.addEventListener('click',()=>{
+  $$('.tab-btn').forEach(x=>x.classList.remove('active'));
+  $$('.panel').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  $('#'+b.dataset.tab).classList.add('active');
+}));
+
+/* =========================================================
+   TAB 1 : 종속과목강문계 찾아가기
+========================================================= */
+const RANKS=['역','계','문','강','목','과','속','종'];
+const T1=[
+ {name:'사람',em:'🧑',binom:'Homo sapiens',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['동물계','식물계','균계','원생생물계'],
+   문:['척삭동물문','절지동물문','연체동물문'],
+   강:['포유강','조강','파충강'],
+   목:['영장목','식육목','설치목'],
+   과:['사람과','긴팔원숭이과','성성이과'],
+   속:['사람속(Homo)','침팬지속','고릴라속'],
+   종:['사람','네안데르탈인','침팬지']}},
+ {name:'호랑이',em:'🐯',binom:'Panthera tigris',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['동물계','식물계','원생생물계'],
+   문:['척삭동물문','절지동물문','극피동물문'],
+   강:['포유강','파충강','양서강'],
+   목:['식육목','영장목','우제목'],
+   과:['고양이과','개과','곰과'],
+   속:['표범속(Panthera)','고양이속','스라소니속'],
+   종:['호랑이','사자','표범']}},
+ {name:'장미',em:'🌹',binom:'Rosa hybrida',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['식물계','동물계','균계'],
+   문:['속씨식물문','겉씨식물문','양치식물문'],
+   강:['쌍떡잎식물강','외떡잎식물강'],
+   목:['장미목','국화목','벼목'],
+   과:['장미과','콩과','국화과'],
+   속:['장미속(Rosa)','딸기속','벚나무속'],
+   종:['장미','찔레꽃','해당화']}},
+ {name:'호랑나비',em:'🦋',binom:'Papilio xuthus',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['동물계','식물계','원생생물계'],
+   문:['절지동물문','척삭동물문','환형동물문'],
+   강:['곤충강','갑각강','거미강'],
+   목:['나비목','딱정벌레목','벌목'],
+   과:['호랑나비과','흰나비과','부전나비과'],
+   속:['호랑나비속(Papilio)','제비나비속','산호랑나비속'],
+   종:['호랑나비','제비나비','배추흰나비']}},
+ {name:'소나무',em:'🌲',binom:'Pinus densiflora',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['식물계','동물계','균계'],
+   문:['겉씨식물문','속씨식물문','양치식물문'],
+   강:['소나무강(구과식물강)','은행나무강','소철강'],
+   목:['소나무목','측백나무목','주목목'],
+   과:['소나무과','측백나무과','낙우송과'],
+   속:['소나무속(Pinus)','가문비나무속','전나무속'],
+   종:['소나무','곰솔','잣나무']}},
+ {name:'개',em:'🐕',binom:'Canis familiaris',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['동물계','식물계','균계'],
+   문:['척삭동물문','절지동물문','연체동물문'],
+   강:['포유강','조강','파충강'],
+   목:['식육목','영장목','설치목'],
+   과:['개과','고양이과','곰과'],
+   속:['개속(Canis)','여우속','너구리속'],
+   종:['개','늑대','여우']}},
+ {name:'벼',em:'🌾',binom:'Oryza sativa',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['식물계','동물계','균계'],
+   문:['속씨식물문','겉씨식물문','양치식물문'],
+   강:['외떡잎식물강','쌍떡잎식물강'],
+   목:['벼목','장미목','국화목'],
+   과:['벼과','콩과','국화과'],
+   속:['벼속(Oryza)','밀속','보리속'],
+   종:['벼','밀','보리']}},
+ {name:'꿀벌',em:'🐝',binom:'Apis mellifera',ranks:{
+   역:['진핵생물역','세균역','고세균역'],
+   계:['동물계','식물계','원생생물계'],
+   문:['절지동물문','척삭동물문','환형동물문'],
+   강:['곤충강','갑각강','거미강'],
+   목:['벌목','나비목','딱정벌레목'],
+   과:['꿀벌과','말벌과','개미과'],
+   속:['꿀벌속(Apis)','뒤영벌속','어리호박벌속'],
+   종:['꿀벌','호박벌','말벌']}},
+];
+let t1cur=null, t1step=0, t1correctFirst=0;
+function t1init(){
+  const box=$('#t1-orgs'); box.innerHTML='';
+  T1.forEach((o,i)=>{
+    const b=document.createElement('button');
+    b.innerHTML=`<span class="em">${o.em}</span>${o.name}`;
+    b.onclick=()=>{ $$('#t1-orgs button').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); t1start(i); };
+    box.appendChild(b);
+  });
+}
+function t1start(i){
+  t1cur=T1[i]; t1step=0; t1correctFirst=0;
+  $('#t1-play').style.display='block';
+  $('#t1-done').style.display='none';
+  $('#t1-title').innerHTML=`${t1cur.em} <b>${t1cur.name}</b> 의 분류군 찾아가기`;
+  $('#t1-steps').innerHTML='';
+  t1renderStep();
+  $('#t1-play').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function t1renderStep(){
+  if(t1step>=RANKS.length){ t1finish(); return; }
+  const rk=RANKS[t1step];
+  const opts=shuffle(t1cur.ranks[rk]);
+  const correct=t1cur.ranks[rk][0];
+  const wrap=document.createElement('div');
+  wrap.className='rankstep';
+  const scope=['(가장 넓음 · 모든 생물 포함)','','','','','','','(가장 좁음 · 종 = 분류 기본 단위)'][t1step];
+  wrap.innerHTML=`<div class="lbl"><span><b>${rk}</b> 단계 <span class="muted" style="font-size:11.5px">${scope}</span></span>
+                    <span class="opt-msg" style="font-size:12.5px;font-weight:700"></span></div>
+                  <div class="opts"></div>`;
+  const ob=$('.opts',wrap);
+  const msg=$('.opt-msg',wrap);
+  let missed=false, wrongCount=0;
+  opts.forEach(op=>{
+    const b=document.createElement('button');
+    b.textContent=op;
+    b.onclick=()=>{
+      if(op===correct){
+        b.classList.add('correct');
+        msg.innerHTML='<span class="good">✅ 정답!</span>';
+        $$('.opts button',wrap).forEach(x=>x.disabled=true);
+        if(!missed) t1correctFirst++;
+        t1step++;
+        setTimeout(t1renderStep,350);
+      }else{
+        b.classList.add('wrong'); b.disabled=true; missed=true; wrongCount++;
+        if(wrongCount>=2){
+          msg.innerHTML='<span class="bad">❌ 아니에요.</span> <span class="muted">힌트: '+
+            correct.replace(/\(.*\)/,'')+' 을(를) 클릭해 보세요.</span>';
+        }else{
+          msg.innerHTML='<span class="bad">❌ 아니에요. 남은 분류군 중에서 다시 골라 보세요.</span>';
+        }
+      }
+    };
+    ob.appendChild(b);
+  });
+  $('#t1-steps').appendChild(wrap);
+  if(t1step>0) wrap.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function t1finish(){
+  // build path summary from chosen (correct is index0)
+  let html='<div class="path">';
+  RANKS.forEach(rk=>{ html+=`<div class="prow"><span class="rk">${rk}</span>${t1cur.ranks[rk][0]}</div>`; });
+  html+='</div>';
+  const p=document.createElement('div'); p.innerHTML=html;
+  $('#t1-steps').appendChild(p);
+  $('#t1-done').style.display='block';
+  $('#t1-binom').textContent=t1cur.binom;
+  saveScore('① 종속과목강문계 · '+t1cur.name, t1correctFirst, RANKS.length);
+}
+$('#t1-reset').onclick=()=>{ if(t1cur){ const i=T1.indexOf(t1cur); t1start(i);} };
+t1init();
+
+/* =========================================================
+   TAB 2 : 3역 6계 분류
+========================================================= */
+const KINGDOMS=[
+ {id:'진정세균계',dom:'bac',sub:'세균역 · 원핵'},
+ {id:'고세균계',dom:'arc',sub:'고세균역 · 원핵'},
+ {id:'원생생물계',dom:'euk',sub:'진핵 · 대부분 단세포'},
+ {id:'식물계',dom:'euk',sub:'진핵 · 광합성'},
+ {id:'균계',dom:'euk',sub:'진핵 · 흡수영양'},
+ {id:'동물계',dom:'euk',sub:'진핵 · 종속영양'},
+];
+const T2=[
+ {n:'대장균',em:'🦠',k:'진정세균계',t:'핵막 없음(원핵), 펩티도글리칸 세포벽, 사람 장 속에 삶'},
+ {n:'젖산균',em:'🥛',k:'진정세균계',t:'핵막 없음, 단세포, 발효로 젖산을 만듦'},
+ {n:'남세균',em:'🟢',k:'진정세균계',t:'핵막 없음, 광합성을 하는 세균(엽록소 있음)'},
+ {n:'극호열균',em:'🌋',k:'고세균계',t:'핵막 없음, 고온의 화산 온천·심해 열수구에 삶'},
+ {n:'극호염균',em:'🧂',k:'고세균계',t:'핵막 없음, 염분 농도가 매우 높은 곳에 삶'},
+ {n:'메테인생성균',em:'💨',k:'고세균계',t:'핵막 없음, 산소 없는 습지·소화관에서 메테인 생성'},
+ {n:'아메바',em:'🫧',k:'원생생물계',t:'핵막 있음, 단세포, 위족으로 이동'},
+ {n:'짚신벌레',em:'🩰',k:'원생생물계',t:'핵막 있음, 단세포, 섬모로 이동'},
+ {n:'유글레나',em:'🟩',k:'원생생물계',t:'핵막 있음, 단세포, 광합성도 하고 운동도 함'},
+ {n:'다시마',em:'🌿',k:'원생생물계',t:'핵막 있음, 갈조류 — 식물계가 아닌 원생생물'},
+ {n:'소나무',em:'🌲',k:'식물계',t:'핵막 있음, 다세포, 광합성하는 독립영양 생물'},
+ {n:'우산이끼',em:'🍃',k:'식물계',t:'핵막 있음, 다세포, 광합성, 포자로 번식'},
+ {n:'고사리',em:'🌱',k:'식물계',t:'핵막 있음, 다세포, 관다발 있음, 포자로 번식'},
+ {n:'사람',em:'🧑',k:'동물계',t:'핵막 있음, 다세포, 종속영양, 운동성 있음'},
+ {n:'지렁이',em:'🪱',k:'동물계',t:'핵막 있음, 다세포, 종속영양, 세포벽 없음'},
+ {n:'불가사리',em:'⭐',k:'동물계',t:'핵막 있음, 다세포, 종속영양'},
+ {n:'표고버섯',em:'🍄',k:'균계',t:'핵막 있음, 균사로 이루어짐, 유기물 흡수(종속영양)'},
+ {n:'푸른곰팡이',em:'🫐',k:'균계',t:'핵막 있음, 포자로 번식, 종속영양(흡수)'},
+ {n:'효모',em:'🍞',k:'균계',t:'핵막 있음, 단세포 균류, 발효를 함'},
+ {n:'포도상구균',em:'🦠',k:'진정세균계',t:'핵막 없음(원핵), 포도송이 모양 세균, 식중독 원인'},
+ {n:'볼복스',em:'🟢',k:'원생생물계',t:'핵막 있음, 녹조류 군체, 물속에 삶(식물계 아님)'},
+ {n:'김',em:'🟥',k:'원생생물계',t:'핵막 있음, 홍조류 — 식물계가 아닌 원생생물'},
+ {n:'옥수수',em:'🌽',k:'식물계',t:'핵막 있음, 다세포, 광합성 독립영양(외떡잎식물)'},
+ {n:'해파리',em:'🪼',k:'동물계',t:'핵막 있음, 다세포, 종속영양(자포동물)'},
+ {n:'광대버섯',em:'🍄',k:'균계',t:'핵막 있음, 균사로 이루어짐, 포자로 번식(종속영양)'},
+];
+let t2sel=null;
+function t2bins(dom){ return KINGDOMS.filter(k=>k.dom===dom); }
+function t2buildBins(container,dom){
+  container.innerHTML='';
+  t2bins(dom).forEach(k=>{
+    const d=document.createElement('div'); d.className='bin'; d.dataset.k=k.id;
+    d.innerHTML=`<h4>${k.id}</h4><div class="sub">${k.sub}</div><div class="drop"></div>`;
+    d.onclick=()=>t2place(k.id,d);
+    container.appendChild(d);
+  });
+}
+function t2init(){
+  t2sel=null;
+  $('#t2-score').textContent='';
+  $('#t2-hint').innerHTML='💡 카드를 클릭하면 그 생물의 특징이 여기에 나타납니다.';
+  t2buildBins($('#t2-bins-bac'),'bac');
+  t2buildBins($('#t2-bins-arc'),'arc');
+  t2buildBins($('#t2-bins-euk'),'euk');
+  const pool=$('#t2-pool'); pool.innerHTML='';
+  shuffle(T2).forEach(o=>{
+    const c=document.createElement('div'); c.className='chip'; c.dataset.n=o.n;
+    c.innerHTML=`<span class="emoji">${o.em}</span>${o.n}`;
+    c._org=o;
+    c.onclick=(e)=>{ e.stopPropagation(); t2select(c); };
+    pool.appendChild(c);
+  });
+  t2updateLeft();
+}
+function t2select(c){
+  if(t2sel===c){ c.classList.remove('sel'); t2sel=null; return; }
+  if(t2sel) t2sel.classList.remove('sel');
+  t2sel=c; c.classList.add('sel');
+  $('#t2-hint').innerHTML=`<b>${c._org.em} ${c._org.n}</b> — ${c._org.t}`;
+}
+function t2place(kid,binEl){
+  if(!t2sel) return;
+  binEl.querySelector('.drop').appendChild(t2sel);
+  t2sel.classList.remove('sel','correct','wrong');
+  t2sel=null;
+  t2updateLeft();
+}
+function t2updateLeft(){
+  const left=$$('#t2-pool .chip').length;
+  $('#t2-left').textContent=`(남은 카드 ${left}개)`;
+}
+$('#t2-check').onclick=()=>{
+  let correct=0,total=T2.length,placed=0;
+  $$('#t2 .bin').forEach(b=>{
+    $$('.chip',b).forEach(c=>{
+      placed++;
+      const ok=c._org.k===b.dataset.k;
+      c.classList.toggle('correct',ok); c.classList.toggle('wrong',!ok);
+      if(ok) correct++;
+    });
+  });
+  const inpool=$$('#t2-pool .chip').length;
+  $('#t2-score').innerHTML=`맞음 <span class="good">${correct}</span> / ${total}` +
+    (inpool? ` <span class="muted">(아직 안 넣은 카드 ${inpool}개)</span>`:'') +
+    (correct===total?' 🎉 완벽해요!':'');
+  if(inpool===0) saveScore('② 3역 6계 분류', correct, total);
+};
+$('#t2-answer').onclick=()=>{
+  // 정답 위치로 모든 카드를 이동 (Tab 2 범위로 한정)
+  $$('#t2 .chip').forEach(c=>{
+    const bin=$$('#t2 .bin').find(b=>b.dataset.k===c._org.k);
+    if(bin) bin.querySelector('.drop').appendChild(c);
+    c.classList.remove('wrong','sel'); c.classList.add('correct');
+  });
+  t2sel=null; t2updateLeft();
+  $('#t2-score').innerHTML='정답을 표시했어요. 각 계의 특징을 다시 확인해 보세요.';
+};
+$('#t2-reset').onclick=t2init;
+t2init();
+
+/* =========================================================
+   TAB 3 : 식물 계통수
+========================================================= */
+const T3SETS={
+ A:[
+ {n:'능이버섯',em:'🍄',grp:'(균계·바깥무리)',order:0,
+   traits:{엽록소:0,관다발:0,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'식물이 아닌 균계 — 비교 기준(바깥무리)'},
+ {n:'우산이끼',em:'🍃',grp:'선태식물(비관다발)',order:1,
+   traits:{엽록소:1,관다발:0,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'헛뿌리, 관다발 없음, 포자로 번식, 습한 곳'},
+ {n:'고사리',em:'🌿',grp:'양치식물(비종자 관다발)',order:2,
+   traits:{엽록소:1,관다발:1,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'뿌리·줄기·잎 뚜렷, 관다발 있음, 포자로 번식'},
+ {n:'은행나무',em:'🌰',grp:'겉씨식물(종자식물)',order:3,
+   traits:{엽록소:1,관다발:1,'번식(종자)':1,씨방:0,꽃:0},
+   ex:'종자로 번식하나 씨방이 없어 밑씨가 드러남'},
+ {n:'호박',em:'🎃',grp:'속씨식물(종자식물)',order:4,
+   traits:{엽록소:1,관다발:1,'번식(종자)':1,씨방:1,꽃:1},
+   ex:'씨방 속에 밑씨, 꽃이 발달 — 육상 적응 최고'},
+ ],
+ B:[
+ {n:'표고버섯',em:'🍄',grp:'(균계·바깥무리)',order:0,
+   traits:{엽록소:0,관다발:0,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'식물이 아닌 균계 — 비교 기준(바깥무리)'},
+ {n:'뿔이끼',em:'🌱',grp:'선태식물(비관다발)',order:1,
+   traits:{엽록소:1,관다발:0,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'관다발 없음, 헛뿌리, 포자로 번식'},
+ {n:'산개고사리',em:'🌿',grp:'양치식물(비종자 관다발)',order:2,
+   traits:{엽록소:1,관다발:1,'번식(종자)':0,씨방:0,꽃:0},
+   ex:'뿌리·줄기·잎 구분됨, 관다발 있음, 포자로 번식'},
+ {n:'소나무',em:'🌲',grp:'겉씨식물(종자식물)',order:3,
+   traits:{엽록소:1,관다발:1,'번식(종자)':1,씨방:0,꽃:0},
+   ex:'종자로 번식, 씨방이 없어 밑씨가 겉으로 드러남'},
+ {n:'살구나무',em:'🌸',grp:'속씨식물(종자식물)',order:4,
+   traits:{엽록소:1,관다발:1,'번식(종자)':1,씨방:1,꽃:1},
+   ex:'밑씨가 씨방 속에 있고 꽃이 발달함'},
+ ]
+};
+let t3set='A';
+let T3=T3SETS[t3set];
+const T3TRAITS=['엽록소','관다발','번식(종자)','씨방','꽃'];
+function t3init(){
+  // study cards
+  const sg=$('#t3-study'); sg.innerHTML='';
+  T3.forEach(o=>{
+    const c=document.createElement('div'); c.className='study-card';
+    c.innerHTML=`<div class="em">${o.em}</div><h4>${o.n}</h4><div class="ex">${o.grp}</div>
+      <div class="traitline">${o.ex}<br>${T3TRAITS.map(t=>`<span class="tag">${t}: ${o.traits[t]?'있음(1)':'없음(0)'}</span>`).join('')}</div>`;
+    c.onclick=()=>c.classList.toggle('open');
+    sg.appendChild(c);
+  });
+  // table
+  let th='<tr><th>형질</th>'+T3.map(o=>`<th>${o.em}<br>${o.n}</th>`).join('')+'</tr>';
+  let rows=T3TRAITS.map(t=>`<tr><th>${t}</th>`+T3.map(o=>`<td>${o.traits[t]}</td>`).join('')+'</tr>').join('');
+  $('#t3-table').innerHTML=th+rows;
+  // pool + slots
+  t3build();
+}
+let t3order=[]; // filled organism names bottom->top
+function t3build(){
+  t3order=[];
+  $('#t3-msg').textContent='';
+  $('#t3-tree').style.display='none';
+  const pool=$('#t3-pool'); pool.innerHTML='';
+  shuffle(T3).forEach(o=>{
+    const c=document.createElement('div'); c.className='chip'; c._org=o; c.dataset.n=o.n;
+    c.innerHTML=`<span class="emoji">${o.em}</span>${o.n}`;
+    c.onclick=()=>t3add(o,c);
+    pool.appendChild(c);
+  });
+  const sw=$('#t3-slots'); sw.innerHTML='';
+  const labels=['① 가장 먼저 갈라짐','②','③','④','⑤ 가장 최근'];
+  for(let i=0;i<T3.length;i++){
+    const s=document.createElement('div'); s.className='slot'; s.dataset.i=i;
+    s.innerHTML=`<span class="idx">${labels[i]}</span><span class="card-mini muted">비어 있음</span>`;
+    s.onclick=()=>t3remove(i);
+    sw.appendChild(s);
+  }
+}
+function t3add(o,chip){
+  if(t3order.length>=T3.length) return;
+  t3order.push(o); chip.remove();
+  t3paint();
+}
+function t3remove(i){
+  if(i>=t3order.length) return;
+  // remove this and everything above (simpler: just remove the one, shift)
+  const o=t3order.splice(i,1)[0];
+  const pool=$('#t3-pool');
+  const c=document.createElement('div'); c.className='chip'; c._org=o; c.dataset.n=o.n;
+  c.innerHTML=`<span class="emoji">${o.em}</span>${o.n}`;
+  c.onclick=()=>t3add(o,c);
+  pool.appendChild(c);
+  t3paint();
+}
+function t3paint(){
+  $$('#t3-slots .slot').forEach((s,i)=>{
+    s.classList.remove('filled','correct','wrong');
+    if(i<t3order.length){
+      const o=t3order[i];
+      s.classList.add('filled');
+      s.querySelector('.card-mini').innerHTML=`<span class="emoji">${o.em}</span> ${o.n} <span class="muted" style="font-size:11px">${o.grp}</span>`;
+      s.querySelector('.card-mini').classList.remove('muted');
+    }else{
+      s.querySelector('.card-mini').className='card-mini muted';
+      s.querySelector('.card-mini').textContent='비어 있음';
+    }
+  });
+}
+$('#t3-check').onclick=()=>{
+  if(t3order.length<T3.length){ $('#t3-msg').innerHTML='<span class="bad">아직 배열하지 않은 카드가 있어요.</span>'; return; }
+  let ok=true, right=0;
+  $$('#t3-slots .slot').forEach((s,i)=>{
+    const good=t3order[i].order===i;
+    s.classList.add(good?'correct':'wrong');
+    if(good) right++; else ok=false;
+  });
+  if(ok){ $('#t3-msg').innerHTML='<span class="good">정답! 🎉 파생형 형질을 하나씩 얻으며 진화한 순서예요.</span>'; t3drawTree(); }
+  else{ $('#t3-msg').innerHTML='<span class="bad">순서가 달라요.</span> 파생형 형질(1)이 적은 생물일수록 아래쪽에 와야 해요.'; }
+  saveScore('③ 식물계 계통수 · 세트 '+t3set, right, T3.length);
+};
+$('#t3-reset').onclick=t3build;
+$$('#t3-setpick button').forEach(b=>b.onclick=()=>{
+  $$('#t3-setpick button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+  t3set=b.dataset.set; T3=T3SETS[t3set]; t3init();
+});
+function t3drawTree(){
+  // ladder cladogram bottom(base)=order0 ... top=order4
+  const gains=['','엽록소 획득','관다발 획득','종자 획득','씨방·꽃 획득'];
+  const N=T3.length, H=70, top=30, baseX=70, tipX=430;
+  const totalH=top+ (N-1)*H +40;
+  let svg=`<svg viewBox="0 0 760 ${totalH}" xmlns="http://www.w3.org/2000/svg">`;
+  // spine from bottom to top
+  const yOf=i=> totalH-40 - i*H;
+  svg+=`<line x1="${baseX}" y1="${yOf(0)}" x2="${baseX}" y2="${yOf(N-1)-30}" stroke="#2e7d5b" stroke-width="3"/>`;
+  for(let i=0;i<N;i++){
+    const o=T3[i]; const y=yOf(i);
+    const nodeY = i===0? y : y+H/2; // branch point below the tip
+    // branch line from spine to tip
+    const by = i===N-1? yOf(i) : yOf(i)+H/2;
+    svg+=`<line x1="${baseX}" y1="${yOf(i)+ (i<N-1?H/2:0)}" x2="${baseX}" y2="${yOf(i)}" stroke="#2e7d5b" stroke-width="3"/>`;
+    svg+=`<line x1="${baseX}" y1="${yOf(i)}" x2="${tipX}" y2="${yOf(i)}" stroke="#2e7d5b" stroke-width="3"/>`;
+    svg+=`<text x="${tipX+8}" y="${yOf(i)+5}" font-size="15" font-weight="700" fill="#1f5a41">${o.em} ${o.n} <tspan fill="#6b7280" font-size="11">${o.grp}</tspan></text>`;
+    if(gains[i]) svg+=`<rect x="${baseX-6}" y="${yOf(i)+H/2-11}" width="112" height="18" rx="6" fill="#fef3e2" stroke="#d97706"/><text x="${baseX}" y="${yOf(i)+H/2+2}" font-size="10.5" fill="#b45c04">▲ ${gains[i]}</text>`;
+  }
+  svg+=`<text x="${baseX-40}" y="${yOf(0)+5}" font-size="11" fill="#6b7280">공통조상</text>`;
+  svg+='</svg>';
+  const box=$('#t3-tree'); box.style.display='block';
+  box.innerHTML='<h3>🌳 완성된 식물 계통수</h3>'+svg+'<p class="muted" style="font-size:12px">아래에서 위로 갈수록 파생형 형질을 더 많이 얻으며(관다발→종자→씨방·꽃) 육상 환경에 더 잘 적응했습니다.</p>';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+t3init();
+
+/* =========================================================
+   TAB 4 : 동물 계통수
+========================================================= */
+const T4=[
+ {n:'해면동물',em:'🧽',clade:'sponge',ex:'주황해변해면 — 배엽 형성 안 함, 조직 미발달, 고착생활'},
+ {n:'자포동물',em:'🪼',clade:'radial',ex:'해파리·말미잘 — 방사대칭, 2배엽성, 자세포(촉수)'},
+ {n:'편형동물',em:'🟤',clade:'lopho',ex:'플라나리아 — 좌우대칭·3배엽, 선구동물, 항문 없음, 납작'},
+ {n:'연체동물',em:'🐌',clade:'lopho',ex:'달팽이·오징어 — 선구동물(촉수담륜), 외투막·패각'},
+ {n:'환형동물',em:'🪱',clade:'lopho',ex:'지렁이 — 선구동물(촉수담륜), 고리 모양 체절'},
+ {n:'선형동물',em:'🧵',clade:'ecdy',ex:'회충·예쁜꼬마선충 — 선구동물, 원통형, 큐티클·탈피'},
+ {n:'절지동물',em:'🦋',clade:'ecdy',ex:'곤충·게·거미 — 선구동물, 외골격·마디다리·탈피, 종 수 최다'},
+ {n:'극피동물',em:'⭐',clade:'deuter',ex:'불가사리·성게 — 후구동물, 수관계·관족, 성체 방사대칭'},
+ {n:'척삭동물',em:'🐟',clade:'deuter',ex:'창고기·사람 — 후구동물, 척삭·등쪽 신경관'},
+];
+const T4CLADES=[
+ {id:'sponge',name:'배엽을 형성하지 않음',sub:'해면동물 무리'},
+ {id:'radial',name:'방사대칭 · 2배엽성',sub:'자포동물 무리'},
+ {id:'lopho',name:'촉수담륜동물 (선구·촉수/담륜자)',sub:'좌우대칭·3배엽·선구동물'},
+ {id:'ecdy',name:'탈피동물 (선구·탈피)',sub:'좌우대칭·3배엽·선구동물'},
+ {id:'deuter',name:'후구동물',sub:'좌우대칭·3배엽·원구→항문'},
+];
+let t4sel=null;
+function t4init(){
+  t4sel=null; $('#t4-score').textContent='';
+  $('#t4-tree').style.display='none';
+  $('#t4-hint').innerHTML='💡 카드를 클릭하면 그 동물의 특징이 여기에 나타납니다.';
+  // study cards
+  const sg=$('#t4-study'); sg.innerHTML='';
+  T4.forEach(o=>{
+    const c=document.createElement('div'); c.className='study-card';
+    c.innerHTML=`<div class="em">${o.em}</div><h4>${o.n}문</h4><div class="traitline">${o.ex}</div>`;
+    c.onclick=()=>c.classList.toggle('open');
+    sg.appendChild(c);
+  });
+  // bins
+  const bins=$('#t4-bins'); bins.innerHTML='';
+  T4CLADES.forEach(cl=>{
+    const d=document.createElement('div'); d.className='bin'; d.dataset.c=cl.id;
+    d.innerHTML=`<h4>${cl.name}</h4><div class="sub">${cl.sub}</div><div class="drop"></div>`;
+    d.onclick=()=>t4place(cl.id,d);
+    bins.appendChild(d);
+  });
+  // pool
+  const pool=$('#t4-pool'); pool.innerHTML='';
+  shuffle(T4).forEach(o=>{
+    const c=document.createElement('div'); c.className='chip'; c._org=o; c.dataset.n=o.n;
+    c.innerHTML=`<span class="emoji">${o.em}</span>${o.n}`;
+    c.onclick=(e)=>{ e.stopPropagation(); t4select(c); };
+    pool.appendChild(c);
+  });
+}
+function t4select(c){
+  if(t4sel===c){ c.classList.remove('sel'); t4sel=null; return; }
+  if(t4sel) t4sel.classList.remove('sel');
+  t4sel=c; c.classList.add('sel');
+  $('#t4-hint').innerHTML=`<b>${c._org.em} ${c._org.n}문</b> — ${c._org.ex}`;
+}
+function t4place(cid,binEl){
+  if(!t4sel) return;
+  binEl.querySelector('.drop').appendChild(t4sel);
+  t4sel.classList.remove('sel','correct','wrong'); t4sel=null;
+}
+$('#t4-check').onclick=()=>{
+  let correct=0,total=T4.length;
+  $$('#t4-bins .bin').forEach(b=>{
+    $$('.chip',b).forEach(c=>{
+      const ok=c._org.clade===b.dataset.c;
+      c.classList.toggle('correct',ok); c.classList.toggle('wrong',!ok);
+      if(ok) correct++;
+    });
+  });
+  const inpool=$$('#t4-pool .chip').length;
+  $('#t4-score').innerHTML=`맞음 <span class="good">${correct}</span> / ${total}`+
+    (inpool?` <span class="muted">(안 넣은 카드 ${inpool}개)</span>`:'');
+  if(correct===total){ $('#t4-score').innerHTML+=' 🎉'; t4drawTree(); }
+  if(inpool===0) saveScore('④ 동물계 계통수', correct, total);
+};
+$('#t4-answer').onclick=()=>{
+  $$('#t4-pool .chip, #t4-bins .chip').forEach(c=>{
+    const bin=[...$$('#t4-bins .bin')].find(b=>b.dataset.c===c._org.clade);
+    bin.querySelector('.drop').appendChild(c);
+    c.classList.remove('wrong','sel'); c.classList.add('correct');
+  });
+  t4sel=null;
+  $('#t4-score').innerHTML='정답을 표시했어요.'; t4drawTree();
+};
+$('#t4-reset').onclick=t4init;
+function t4drawTree(){
+  const leaves=['해면동물','자포동물','편형동물','연체동물','환형동물','선형동물','절지동물','극피동물','척삭동물'];
+  const emOf={}; T4.forEach(o=>emOf[o.n]=o.em);
+  const W=760, xL=40, xTip=560, gap=46, topY=40;
+  const H=topY+leaves.length*gap+20;
+  const yOf=i=>topY+i*gap;
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  // tips
+  leaves.forEach((nm,i)=>{
+    s+=`<line x1="${xTip}" y1="${yOf(i)}" x2="${xTip+18}" y2="${yOf(i)}" stroke="#2e7d5b" stroke-width="2.5"/>`;
+    s+=`<text x="${xTip+24}" y="${yOf(i)+5}" font-size="14.5" font-weight="700" fill="#1f5a41">${emOf[nm]} ${nm}문</text>`;
+  });
+  const vline=(x,y1,y2)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#2e7d5b" stroke-width="2.5"/>`;
+  const hline=(x1,x2,y)=>`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#2e7d5b" stroke-width="2.5"/>`;
+  const lab=(x,y,t)=>`<rect x="${x-4}" y="${y-11}" width="${t.length*7+14}" height="17" rx="6" fill="#fef3e2" stroke="#d97706"/><text x="${x+3}" y="${y+1}" font-size="10.5" fill="#b45c04">${t}</text>`;
+  // clade join points
+  const lophoY=(yOf(2)+yOf(4))/2;    // 편형,연체,환형
+  const ecdyY=(yOf(5)+yOf(6))/2;     // 선형,절지
+  const protoY=(lophoY+ecdyY)/2;     // 선구동물
+  const deuterY=(yOf(7)+yOf(8))/2;   // 극피,척삭
+  const bilatY=(protoY+deuterY)/2;   // 좌우대칭 3배엽
+  const eumetaY=(yOf(1)+bilatY)/2;   // 배엽형성
+  const rootY=(yOf(0)+eumetaY)/2;    // 공통조상
+  const x1=500,x2=430,x3=340,x4=250,x5=170,x6=95;
+  // lopho cluster (편형 연체 환형 join)
+  s+=hline(x1,xTip,yOf(2))+hline(x1,xTip,yOf(3))+hline(x1,xTip,yOf(4));
+  s+=vline(x1,yOf(2),yOf(4));
+  // ecdy cluster
+  s+=hline(x1,xTip,yOf(5))+hline(x1,xTip,yOf(6));
+  s+=vline(x1,yOf(5),yOf(6));
+  // proto node join lopho+ecdy at x2
+  s+=hline(x2,x1,lophoY)+hline(x2,x1,ecdyY);
+  s+=vline(x2,lophoY,ecdyY);
+  // deuter cluster (극피 척삭)
+  s+=hline(x2,xTip,yOf(7))+hline(x2,xTip,yOf(8));
+  s+=vline(x2,yOf(7),yOf(8));
+  // bilateria: proto (x2 at protoY) + deuter (x2 at deuterY) -> x3
+  s+=hline(x3,x2,protoY)+hline(x3,x2,deuterY);
+  s+=vline(x3,protoY,deuterY);
+  // eumetazoa: bilat(x3 at bilatY) + 자포(tip yOf1) -> x4
+  s+=hline(x4,xTip,yOf(1));       // 자포 tip line
+  s+=hline(x4,x3,bilatY);
+  s+=vline(x4,yOf(1),bilatY);
+  // root: eumeta(x4 at eumetaY) + 해면(tip yOf0) -> x6
+  s+=hline(x6,xTip,yOf(0));       // 해면 tip
+  s+=hline(x6,x4,eumetaY);
+  s+=vline(x6,yOf(0),eumetaY);
+  // root stub
+  s+=hline(20,x6,rootY);
+  s+=`<text x="8" y="${rootY-6}" font-size="11" fill="#6b7280">공통조상</text>`;
+  // trait labels at nodes
+  s+=lab(x6+6,(yOf(0)+eumetaY)/2,'배엽 형성함 ▲');
+  s+=lab(x4+6,(yOf(1)+bilatY)/2,'좌우대칭·3배엽 ▲');
+  s+=lab(x3+6,(protoY+deuterY)/2,'후구/선구 갈라짐');
+  s+=lab(x2+6,(lophoY+ecdyY)/2,'선구동물');
+  s+=lab(x1+6,(yOf(5)+yOf(6))/2,'탈피');
+  s+='</svg>';
+  const box=$('#t4-tree'); box.style.display='block';
+  box.innerHTML='<h3>🌳 완성된 동물 계통수</h3>'+s+
+    '<p class="muted" style="font-size:12px">공통조상에서 갈라지며 <b>배엽 형성 → 좌우대칭·3배엽 → 선구/후구 → 탈피 여부</b> 순으로 형질이 나타납니다.</p>';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+t4init();
+
+/* =========================================================
+   이름 · 점수 저장 · 기록 · 인쇄
+========================================================= */
+const LS_NAME='bio_student_name', LS_SCORE='bio_scores';
+/* localStorage 안전 래퍼 (file:// 등에서 차단돼도 앱이 멈추지 않도록 메모리로 대체) */
+const memStore={};
+function lsGet(k){ try{ const v=localStorage.getItem(k); return v!==null? v : (memStore[k]??null); }catch(e){ return memStore[k]??null; } }
+function lsSet(k,v){ memStore[k]=v; try{ localStorage.setItem(k,v); }catch(e){} }
+const nameInput=$('#stu-name');
+nameInput.value=lsGet(LS_NAME)||'';
+nameInput.addEventListener('input',()=>lsSet(LS_NAME,nameInput.value.trim()));
+function curName(){ return (nameInput.value.trim())||'이름없음'; }
+function loadScores(){ try{ return JSON.parse(lsGet(LS_SCORE)||'[]'); }catch(e){ return []; } }
+function saveScores(a){ lsSet(LS_SCORE,JSON.stringify(a)); }
+function saveScore(activity, correct, total){
+  const name=curName();
+  const rec={name, activity, correct, total,
+    date:new Date().toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})};
+  const all=loadScores(); all.push(rec); saveScores(all);
+  const st=$('#save-status');
+  st.innerHTML=`✅ <b>${name}</b> 님 · ${activity} · <b>${correct}/${total}점</b> 저장됨`;
+}
+/* 기록 모달 */
+function openRecords(){
+  const name=curName();
+  $('#rec-name').textContent=name;
+  const recs=loadScores().filter(r=>r.name===name);
+  const body=$('#rec-body');
+  if(!recs.length){ body.innerHTML='<div class="rec-empty">아직 저장된 점수가 없습니다. 각 활동에서 채점을 해 보세요.</div>'; }
+  else{
+    let rows=recs.map(r=>`<tr><td>${r.date}</td><td style="text-align:left">${r.activity}</td><td><b>${r.correct}/${r.total}</b></td></tr>`).join('');
+    const sum=recs.reduce((a,r)=>{a.c+=r.correct;a.t+=r.total;return a;},{c:0,t:0});
+    body.innerHTML=`<div style="overflow-x:auto"><table class="rec-table">
+      <tr><th>일시</th><th>활동</th><th>점수</th></tr>${rows}
+      <tr><th colspan="2">합계</th><th>${sum.c}/${sum.t}</th></tr></table></div>`;
+  }
+  $('#rec-modal').classList.add('open');
+}
+$('#btn-records').onclick=openRecords;
+$('#rec-close').onclick=()=>$('#rec-modal').classList.remove('open');
+$('#rec-modal').onclick=(e)=>{ if(e.target===$('#rec-modal')) $('#rec-modal').classList.remove('open'); };
+$('#rec-clear').onclick=()=>{
+  const name=curName();
+  if(!confirm(name+' 님의 저장된 점수를 모두 삭제할까요?')) return;
+  saveScores(loadScores().filter(r=>r.name!==name));
+  openRecords();
+};
+$('#rec-print').onclick=()=>{ buildWorksheet(true); window.print(); };
+
+/* 활동지/결과 인쇄 */
+function buildWorksheet(scoreOnly){
+  const name=curName();
+  const today=new Date().toLocaleDateString('ko-KR');
+  const recs=loadScores().filter(r=>r.name===name);
+  let scoreBlock='';
+  if(recs.length){
+    const sum=recs.reduce((a,r)=>{a.c+=r.correct;a.t+=r.total;return a;},{c:0,t:0});
+    scoreBlock=`<div class="ws-score"><b>▣ 저장된 점수</b><br>`+
+      recs.map(r=>`· ${r.activity} : ${r.correct}/${r.total} (${r.date})`).join('<br>')+
+      `<br><b>합계 : ${sum.c}/${sum.t}</b></div>`;
+  }else{
+    scoreBlock=`<div class="ws-score">저장된 점수가 없습니다. (프로그램에서 채점하면 여기에 기록됩니다.)</div>`;
+  }
+  let html=`<div class="ws-head">
+      <h1>🔬 생물의 분류 활동지</h1>
+      <div class="who">학년·반·번호 : ____________<br>이름 : <b>${name}</b> &nbsp; 날짜 : ${today}</div>
+    </div>${scoreBlock}`;
+
+  if(!scoreOnly){
+    // 활동1: 종속과목강문계
+    let t1rows=T1.map(o=>`<tr><td style="text-align:left">${o.name}</td>`+
+      RANKS.map(()=>`<td class="blankcell"></td>`).join('')+`</tr>`).join('');
+    html+=`<div class="ws-sec"><h2>활동 ① 종속과목강문계 — 아래 생물이 속한 각 분류군을 적어 보자</h2>
+      <table><tr><th>생물</th>${RANKS.map(r=>`<th>${r}</th>`).join('')}</tr>${t1rows}</table></div>`;
+
+    // 활동2: 3역 6계
+    let t2rows=T2.map(o=>`<tr><td style="text-align:left">${o.n}</td><td style="text-align:left;font-size:11px">${o.t}</td><td class="blankcell"></td></tr>`).join('');
+    html+=`<div class="ws-sec"><h2>활동 ② 3역 6계 분류 — 각 생물이 속한 계를 적어 보자</h2>
+      <p>세균역: 진정세균계 / 고세균역: 고세균계 / 진핵생물역: 원생생물계·식물계·균계·동물계</p>
+      <table><tr><th>생물</th><th>특징</th><th>속하는 계</th></tr>${t2rows}</table></div>`;
+
+    // 활동3: 식물 계통수 (형질표 + 순서 빈칸)
+    ['A','B'].forEach(setKey=>{
+      const set=T3SETS[setKey];
+      let head='<tr><th>형질</th>'+set.map(o=>`<th>${o.n}</th>`).join('')+'</tr>';
+      let trows=T3TRAITS.map(t=>`<tr><th>${t}</th>`+set.map(o=>`<td>${o.traits[t]}</td>`).join('')+'</tr>').join('');
+      html+=`<div class="ws-sec"><h2>활동 ③ 식물계 계통수 — 세트 ${setKey}</h2>
+        <p>형질표(0=원시형, 1=파생형)를 보고, 먼저 갈라져 나온 순서(①→⑤)로 생물 이름을 적어 보자.</p>
+        <table>${head}${trows}</table>
+        <p style="margin-top:8px">① 가장 먼저 : __________ → ② __________ → ③ __________ → ④ __________ → ⑤ 가장 최근 : __________</p></div>`;
+    });
+
+    // 활동4: 동물 계통수 — 무리 분류
+    let t4rows=T4.map(o=>`<tr><td style="text-align:left">${o.n}문</td><td style="text-align:left;font-size:11px">${o.ex}</td><td class="blankcell"></td></tr>`).join('');
+    html+=`<div class="ws-sec"><h2>활동 ④ 동물계 계통수 — 각 문이 속하는 무리를 적어 보자</h2>
+      <p>무리 : 배엽 없음 / 방사대칭·2배엽 / 촉수담륜동물 / 탈피동물 / 후구동물</p>
+      <table><tr><th>동물 문</th><th>특징</th><th>속하는 무리</th></tr>${t4rows}</table></div>`;
+  }
+  $('#printarea').innerHTML=html;
+}
+$('#btn-print').onclick=()=>{ buildWorksheet(false); window.print(); };
+</script>
+</body>
+</html>

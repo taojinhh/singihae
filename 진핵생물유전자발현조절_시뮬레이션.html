@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>진핵생물의 유전자발현 조절 시뮬레이션</title>
+<style>
+  :root{
+    --bg:#eef2fb; --panel:#ffffff; --ink:#20304a; --muted:#6b7a94;
+    --purple:#6c4bd6; --purple-d:#4b2fb0; --blue:#2f7fe0; --green:#25a56a;
+    --red:#e0473a; --yellow:#f4c430; --line:#d9e0ef;
+    --shadow:0 6px 22px rgba(40,55,90,.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Malgun Gothic","맑은 고딕",Apple SD Gothic Neo,sans-serif;
+    background:linear-gradient(160deg,#eef2fb,#e4ecfa); color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    text-align:center; padding:22px 16px 10px;
+  }
+  header.top h1{
+    margin:0; font-size:26px; letter-spacing:-.5px;
+    color:var(--purple-d);
+    text-shadow:0 1px 0 #fff;
+  }
+  header.top p{margin:6px 0 0; color:var(--muted); font-size:14px}
+
+  nav.tabs{
+    display:flex; flex-wrap:wrap; gap:8px; justify-content:center;
+    padding:14px 12px 6px; max-width:1000px; margin:0 auto;
+  }
+  nav.tabs button{
+    border:1px solid var(--line); background:#fff; color:var(--ink);
+    padding:9px 14px; border-radius:999px; font-size:13.5px; cursor:pointer;
+    font-weight:700; transition:.18s; box-shadow:0 2px 6px rgba(40,55,90,.06);
+    display:flex; align-items:center; gap:7px;
+  }
+  nav.tabs button .num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%; background:#eceffb; color:var(--purple);
+    font-size:12px;
+  }
+  nav.tabs button:hover{border-color:var(--purple); color:var(--purple-d)}
+  nav.tabs button.active{
+    background:linear-gradient(180deg,var(--purple),var(--purple-d)); color:#fff; border-color:transparent;
+    box-shadow:0 6px 16px rgba(108,75,214,.35);
+  }
+  nav.tabs button.active .num{background:rgba(255,255,255,.25); color:#fff}
+
+  main{max-width:1000px; margin:0 auto; padding:8px 16px 60px}
+  .module{display:none; animation:fade .35s ease}
+  .module.active{display:block}
+  @keyframes fade{from{opacity:0; transform:translateY(8px)}to{opacity:1; transform:none}}
+
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    box-shadow:var(--shadow); padding:20px; margin-top:14px;
+  }
+  .card h2{margin:0 0 4px; font-size:20px; color:var(--purple-d)}
+  .card .sub{color:var(--muted); font-size:13.5px; margin:0 0 14px}
+
+  .stage{
+    position:relative; background:#f7f9ff; border:1px solid var(--line);
+    border-radius:14px; overflow:hidden;
+  }
+  svg{display:block; width:100%; height:auto}
+
+  .controls{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:center}
+  .btn{
+    border:none; border-radius:10px; padding:11px 16px; font-size:14px; font-weight:800;
+    cursor:pointer; color:#fff; background:var(--purple); transition:.16s;
+    box-shadow:0 4px 12px rgba(108,75,214,.28);
+  }
+  .btn:hover{filter:brightness(1.06); transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn.ghost{background:#fff; color:var(--purple-d); border:1.5px solid var(--purple)}
+  .btn.grey{background:#8090ad; box-shadow:none}
+  .btn:disabled{opacity:.45; cursor:not-allowed; transform:none; filter:none}
+
+  .explain{
+    margin-top:14px; background:linear-gradient(180deg,#fbfcff,#f2f5ff);
+    border:1px solid var(--line); border-left:5px solid var(--purple);
+    border-radius:12px; padding:14px 16px; font-size:14.5px; line-height:1.7; min-height:52px;
+  }
+  .explain b{color:var(--purple-d)}
+  .tag{display:inline-block; padding:2px 9px; border-radius:6px; font-size:12.5px; font-weight:800; color:#fff}
+
+  .chips{display:flex; flex-wrap:wrap; gap:9px; margin:4px 0}
+  .chip{
+    border:2px solid var(--line); background:#fff; border-radius:10px; padding:8px 13px;
+    font-weight:800; cursor:pointer; transition:.15s; user-select:none; font-size:14px;
+  }
+  .chip:hover{transform:translateY(-2px)}
+  .chip.disabled{opacity:.3; cursor:not-allowed; transform:none}
+  .chip.bound{background:#eafaf1; border-color:var(--green); color:var(--green)}
+
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin-top:12px; font-size:12.5px; color:var(--muted)}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .swatch{width:14px; height:14px; border-radius:4px; display:inline-block}
+
+  .result-badge{
+    display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px;
+    font-weight:800; font-size:14px; margin-top:4px;
+  }
+  .ok{background:#eafaf1; color:var(--green); border:1.5px solid #bfe9d2}
+  .no{background:#fdeceb; color:var(--red); border:1.5px solid #f6c9c5}
+
+  .steps{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px}
+  .steps .dot{
+    flex:1; min-width:70px; text-align:center; font-size:12px; font-weight:700; color:var(--muted);
+    padding:8px 6px; border-radius:10px; background:#f1f4fb; border:1px solid var(--line);
+  }
+  .steps .dot.on{background:var(--purple); color:#fff; border-color:transparent}
+  .steps .dot.done{background:#eafaf1; color:var(--green); border-color:#bfe9d2}
+
+  .cellpick{display:flex; gap:10px; flex-wrap:wrap}
+  .cellpick button{
+    flex:1; min-width:150px; border:2px solid var(--line); background:#fff; border-radius:14px;
+    padding:14px; cursor:pointer; text-align:left; transition:.15s;
+  }
+  .cellpick button:hover{border-color:var(--purple)}
+  .cellpick button.sel{border-color:var(--purple); background:#f4f0ff; box-shadow:var(--shadow)}
+  .cellpick button b{display:block; font-size:15px; color:var(--purple-d); margin-bottom:3px}
+  .cellpick button small{color:var(--muted); font-size:12.5px}
+
+  .genebox{margin-top:10px}
+  .gene{
+    background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:10px;
+    transition:.25s;
+  }
+  .gene.expressed{border-color:var(--green); box-shadow:0 0 0 3px rgba(37,165,106,.15)}
+  .gene .ghead{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
+  .gene .ghead b{font-size:15px}
+  .slots{display:flex; align-items:flex-end; gap:5px; flex-wrap:wrap}
+  .slot{
+    width:44px; height:46px; border-radius:8px 8px 0 0; border:2px dashed #c7d0e6;
+    background:#f7f9ff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:#aab6d0; position:relative; transition:.2s;
+  }
+  .slot.filled{border-style:solid; color:#fff}
+  .slot .fac{position:absolute; top:-16px; font-size:12px; background:var(--purple); color:#fff;
+    padding:1px 7px; border-radius:6px; box-shadow:0 3px 8px rgba(0,0,0,.15); animation:drop .3s}
+  @keyframes drop{from{transform:translateY(-10px); opacity:0}to{transform:none; opacity:1}}
+  .promoter{width:70px; height:34px; border-radius:8px; background:#c9d3ea; color:#5b6a88;
+    display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; margin-left:4px}
+  .genebody{flex:1; min-width:90px; height:34px; border-radius:8px; display:flex; align-items:center;
+    justify-content:center; color:#fff; font-weight:800; font-size:13px}
+
+  .note{font-size:12.5px; color:var(--muted); margin-top:8px}
+  .foot{text-align:center; color:var(--muted); font-size:12px; margin-top:26px; line-height:1.7}
+  .hl{background:#fff6cf; padding:0 4px; border-radius:4px}
+  .clickable{cursor:pointer}
+</style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+
+<header class="top">
+  <h1>🧬 진핵생물의 유전자발현 조절</h1>
+  <p>클릭하며 단계별로 배우는 인터랙티브 시뮬레이션 · 고등학교 생명과학Ⅱ</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-go="0" class="active"><span class="num">0</span>한눈에 보기</button>
+  <button data-go="1"><span class="num">1</span>염색질 응축·탈응축</button>
+  <button data-go="2"><span class="num">2</span>전사 개시</button>
+  <button data-go="3"><span class="num">3</span>유전자의 선택적 발현</button>
+  <button data-go="4"><span class="num">4</span>RNA 스플라이싱</button>
+  <button data-go="5"><span class="num">5</span>5′cap · 3′tail</button>
+</nav>
+
+<main>
+
+<section class="module active" data-module="0">
+  <div class="card">
+    <h2>유전자발현은 4단계에서 조절돼요</h2>
+    <p class="sub">세포핵 속 DNA가 단백질이 되기까지, 아래 <b>조절 지점</b>을 눌러 보세요.</p>
+    <div class="stage">
+      <svg viewBox="0 0 720 420" id="ovSvg">
+        <ellipse cx="360" cy="210" rx="350" ry="200" fill="#f0f5ff" stroke="#c9b7f0" stroke-width="2"/>
+        <text x="600" y="60" font-size="13" fill="#8a94ad">세포질</text>
+        <ellipse cx="300" cy="150" rx="185" ry="120" fill="#efe9fb" stroke="#7d5fd6" stroke-width="2"/>
+        <text x="300" y="46" font-size="13" fill="#7d5fd6" text-anchor="middle" font-weight="bold">핵</text>
+
+        <g id="ov-dna"><rect x="205" y="78" width="190" height="14" rx="7" fill="#8a6be0"/>
+          <text x="300" y="72" font-size="12" text-anchor="middle" fill="#4b2fb0" font-weight="bold">DNA</text></g>
+        <g class="ovArrow"><path d="M300 96 L300 118" stroke="#e0473a" stroke-width="7" marker-end="url(#ah)"/></g>
+        <rect x="222" y="126" width="156" height="12" rx="6" fill="#f0b840"/>
+        <text x="405" y="136" font-size="11.5" fill="#7a6a2a">가공 전 mRNA</text>
+        <g class="ovArrow"><path d="M300 142 L300 164" stroke="#e0473a" stroke-width="7" marker-end="url(#ah)"/></g>
+        <rect x="230" y="172" width="140" height="12" rx="6" fill="#25a56a"/>
+        <text x="300" y="200" font-size="11.5" text-anchor="middle" fill="#1c7d50">성숙한 mRNA</text>
+
+        <path d="M300 210 C300 250 360 250 400 270" stroke="#9aa6c4" stroke-width="3" fill="none" stroke-dasharray="5 5"/>
+        <ellipse cx="430" cy="285" rx="34" ry="26" fill="#a07ce6"/>
+        <rect x="360" y="281" width="150" height="9" rx="4" fill="#25a56a"/>
+        <text x="430" y="330" font-size="11.5" text-anchor="middle" fill="#5b3ea8">리보솜(번역)</text>
+        <g class="ovArrow"><path d="M470 300 L520 320" stroke="#e0473a" stroke-width="6" marker-end="url(#ah)"/></g>
+        <path id="ov-prot" d="M545 315 q15 -18 30 0 q15 18 30 0" stroke="#2f7fe0" stroke-width="6" fill="none"/>
+        <circle cx="600" cy="350" r="16" fill="#2f7fe0" opacity=".85"/>
+        <text x="600" y="385" font-size="11.5" text-anchor="middle" fill="#245ba8">완성된 단백질</text>
+
+        <g class="hot" data-reg="0"><rect x="470" y="60" width="128" height="30" rx="8" fill="#6c4bd6"/>
+          <text x="534" y="80" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">① 전사 조절</text></g>
+        <g class="hot" data-reg="1"><rect x="470" y="118" width="150" height="30" rx="8" fill="#2f7fe0"/>
+          <text x="545" y="138" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">② 전사 후 조절</text></g>
+        <g class="hot" data-reg="2"><rect x="150" y="300" width="120" height="30" rx="8" fill="#25a56a"/>
+          <text x="210" y="320" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">③ 번역 조절</text></g>
+        <g class="hot" data-reg="3"><rect x="520" y="255" width="150" height="30" rx="8" fill="#e0473a"/>
+          <text x="595" y="275" font-size="13" fill="#fff" text-anchor="middle" font-weight="bold">④ 번역 후 조절</text></g>
+
+        <defs>
+          <marker id="ah" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+            <path d="M0 0 L8 4 L0 8 z" fill="#e0473a"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    <div class="explain" id="ovExplain">
+      위 다이어그램의 <b>①~④ 조절 지점</b>을 클릭하면 각 단계에서 어떻게 유전자발현이 조절되는지 설명이 나타납니다.
+    </div>
+    <div class="controls">
+      <button class="btn ghost" onclick="ovStep()">▶ 순서대로 흐름 보기</button>
+    </div>
+  </div>
+</section>
+
+<section class="module" data-module="1">
+  <div class="card">
+    <h2>염색질 응축 · 탈응축</h2>
+    <p class="sub">RNA 중합효소가 붙으려면 <b>염색질이 느슨하게 풀려야</b> 해요. 염색질을 클릭해 보세요.</p>
+    <div class="stage">
+      <svg viewBox="0 0 720 300" id="chSvg">
+        <text x="180" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#5b3ea8" id="chLabelL">응축된 염색질</text>
+        <text x="540" y="30" text-anchor="middle" font-size="14" font-weight="bold" fill="#1c7d50" id="chLabelR">풀어진 염색질(뉴클레오솜)</text>
+        <path id="chThread" d="M60 150 H660" stroke="#b8c2dc" stroke-width="3" fill="none"/>
+        <g id="chBeads"></g>
+        <text x="360" y="285" text-anchor="middle" font-size="13" fill="#8a94ad" id="chState">🔒 전사 불가능 — 클릭하여 풀기</text>
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="btn" id="chBtn" onclick="chToggle()">🔓 염색질 풀기</button>
+      <button class="btn grey" onclick="chReset()">↺ 되돌리기</button>
+    </div>
+    <div class="explain" id="chExplain">
+      <b>응축된 염색질</b>은 히스톤 단백질에 DNA가 꽉 감겨 있어 RNA 중합효소가 접근할 수 없어 <b>전사가 불가능</b>합니다.
+      버튼을 눌러 염색질을 풀어 보세요.
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:#8a6be0"></i>뉴클레오솜(히스톤+DNA)</span>
+      <span><i class="swatch" style="background:#b8c2dc"></i>DNA 가닥</span>
+    </div>
+  </div>
+</section>
+
+<section class="module" data-module="2">
+  <div class="card">
+    <h2>전사 개시 — 전사 복합체 조립</h2>
+    <p class="sub">프로모터에 여러 단백질이 순서대로 모여야 전사가 시작돼요. 버튼을 순서대로 눌러 조립하세요.</p>
+    <div class="steps" id="tiSteps">
+      <div class="dot on">1. 전사인자 결합</div>
+      <div class="dot">2. 매개 단백질</div>
+      <div class="dot">3. RNA 중합효소</div>
+      <div class="dot">4. 전사 시작</div>
+    </div>
+    <div class="stage">
+      <svg viewBox="0 0 720 320" id="tiSvg">
+        <rect x="40" y="235" width="640" height="16" rx="8" fill="#3a4a66"/>
+        <rect x="250" y="231" width="90" height="24" rx="6" fill="#e0473a"/>
+        <text x="295" y="248" font-size="12" fill="#fff" text-anchor="middle" font-weight="bold">프로모터</text>
+        <text x="500" y="248" font-size="12" fill="#cdd6ea" text-anchor="middle" font-weight="bold">유전자(전사 부위)</text>
+        <rect x="70" y="231" width="46" height="24" rx="6" fill="#f4c430"/>
+        <text x="93" y="225" font-size="11" fill="#8a6a10" text-anchor="middle">조절요소</text>
+
+        <g id="ti-tf" opacity="0">
+          <ellipse cx="295" cy="205" rx="26" ry="18" fill="#2f7fe0"/>
+          <text x="295" y="209" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">전사인자</text>
+          <ellipse cx="93" cy="200" rx="22" ry="15" fill="#f0a020"/>
+        </g>
+        <g id="ti-med" opacity="0">
+          <ellipse cx="230" cy="170" rx="70" ry="34" fill="#a07ce6"/>
+          <text x="230" y="175" font-size="12" fill="#fff" text-anchor="middle" font-weight="bold">매개 단백질</text>
+          <path d="M120 210 Q175 150 210 175" stroke="#8a6bd6" stroke-width="3" fill="none" stroke-dasharray="4 3"/>
+        </g>
+        <g id="ti-pol" opacity="0">
+          <ellipse cx="340" cy="212" rx="40" ry="30" fill="#25a56a"/>
+          <text x="340" y="210" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">RNA</text>
+          <text x="340" y="223" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">중합효소</text>
+        </g>
+        <g id="ti-rna" opacity="0">
+          <path id="tiRnaPath" d="M375 220 H375" stroke="#f0b840" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <text x="560" y="150" font-size="12" fill="#c08a10" id="tiRnaLabel"></text>
+        </g>
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="btn" id="tiBtn" onclick="tiNext()">전사인자 결합 ▶</button>
+      <button class="btn grey" onclick="tiReset()">↺ 처음부터</button>
+    </div>
+    <div class="explain" id="tiExplain">
+      <b>전사인자</b>는 DNA의 프로모터·조절요소에 결합하여 전사를 조절하는 단백질입니다.
+      먼저 전사인자를 결합시켜 보세요.
+    </div>
+  </div>
+</section>
+
+<section class="module" data-module="3">
+  <div class="card">
+    <h2>유전자의 선택적 발현 <span style="font-size:13px;color:var(--muted)">〈탐구〉</span></h2>
+    <p class="sub">같은 유전체라도 <b>세포마다 있는 전사촉진인자가 달라</b> 서로 다른 유전자가 발현돼요.
+      세포를 고르고, 전사촉진인자를 클릭해 조절요소에 결합시켜 보세요.</p>
+
+    <div class="cellpick" id="cellpick">
+      <button data-cell="liver" class="sel">
+        <b>🫀 간세포</b><small>전사촉진인자 <b>A · B · C</b> 를 가짐</small>
+      </button>
+      <button data-cell="lens">
+        <b>👁️ 수정체 세포</b><small>전사촉진인자 <b>B · D · E</b> 를 가짐</small>
+      </button>
+    </div>
+
+    <p class="note">이 세포가 가진 전사촉진인자 (클릭하면 짝이 맞는 조절요소에 결합)</p>
+    <div class="chips" id="factorChips"></div>
+
+    <div class="genebox" id="genebox"></div>
+
+    <div class="controls">
+      <button class="btn grey" onclick="geReset()">↺ 결합 초기화</button>
+      <button class="btn ghost" onclick="geAuto()">✨ 자동으로 결합해 보기</button>
+    </div>
+    <div class="explain" id="geExplain">
+      전사촉진인자는 알파벳이 짝이 맞는 <b>조절요소</b>(A→a, B→b …)에 결합합니다.
+      한 유전자의 <b>모든 조절요소가 채워지면</b> RNA 중합효소가 작동해 그 유전자가 발현돼요.
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:#e0473a"></i>알부민 유전자 (조절요소 a·b·c)</span>
+      <span><i class="swatch" style="background:#2f7fe0"></i>크리스탈린 유전자 (조절요소 b·d·e)</span>
+    </div>
+  </div>
+</section>
+
+<section class="module" data-module="4">
+  <div class="card">
+    <h2>RNA 스플라이싱 &amp; 대체 스플라이싱</h2>
+    <p class="sub">가공 전 mRNA에서 <b>인트론이 제거</b>되고 엑손만 이어져요. 이어붙이는 방식에 따라 <b>다른 단백질</b>이 만들어집니다.</p>
+    <div class="stage">
+      <svg viewBox="0 0 720 260" id="spSvg">
+        <text x="30" y="40" font-size="13" fill="#5b3ea8" font-weight="bold" id="spTitle">가공 전 mRNA (엑손 + 인트론)</text>
+        <g id="spPre"></g>
+        <g id="spOut" opacity="0"></g>
+        <text x="360" y="240" text-anchor="middle" font-size="13" fill="#8a94ad" id="spState">‘인트론 제거’ 버튼을 눌러 스플라이싱을 시작하세요.</text>
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="btn" id="spBtn1" onclick="spSplice()">✂ 인트론 제거</button>
+      <button class="btn ghost" id="spBtnA" onclick="spPattern('A')" disabled>패턴 A → 엑손 1·2·4</button>
+      <button class="btn ghost" id="spBtnB" onclick="spPattern('B')" disabled>패턴 B → 엑손 1·3·4</button>
+      <button class="btn grey" onclick="spReset()">↺ 처음부터</button>
+    </div>
+    <div class="explain" id="spExplain">
+      가공 전 mRNA는 단백질 정보를 담은 <b>엑손</b>과 담지 않은 <b>인트론</b>으로 이루어져 있습니다.
+      먼저 인트론을 제거해 보세요.
+    </div>
+    <div class="legend" id="spLegend">
+      <span><i class="swatch" style="background:#e0473a"></i>엑손1</span>
+      <span><i class="swatch" style="background:#f4c430"></i>엑손2</span>
+      <span><i class="swatch" style="background:#25a56a"></i>엑손3</span>
+      <span><i class="swatch" style="background:#2f7fe0"></i>엑손4</span>
+      <span><i class="swatch" style="background:#2b2b2b"></i>인트론</span>
+    </div>
+  </div>
+</section>
+
+<section class="module" data-module="5">
+  <div class="card">
+    <h2>5′ cap 과 3′ poly-A tail (RNA 가공)</h2>
+    <p class="sub">성숙한 mRNA는 양 끝이 특별하게 가공돼요. 각 부위를 클릭해 붙여 보세요.</p>
+    <div class="stage">
+      <svg viewBox="0 0 720 240" id="ctSvg">
+        <rect x="180" y="110" width="360" height="20" rx="10" fill="#c9d3ea" id="ctBody"/>
+        <text x="360" y="150" text-anchor="middle" font-size="12" fill="#8a94ad">mRNA</text>
+        <g id="ctCap" class="clickable" opacity=".35">
+          <rect x="120" y="102" width="56" height="36" rx="9" fill="#f4c430"/>
+          <text x="148" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#7a5a00">G-cap</text>
+          <text x="148" y="95" text-anchor="middle" font-size="11" fill="#8a94ad">5′</text>
+        </g>
+        <g id="ctTail" class="clickable" opacity=".35">
+          <rect x="544" y="106" width="120" height="28" rx="8" fill="#e0473a"/>
+          <text x="604" y="125" text-anchor="middle" font-size="12" font-weight="bold" fill="#fff">AAAA…A</text>
+          <text x="604" y="98" text-anchor="middle" font-size="11" fill="#8a94ad">3′ poly-A</text>
+        </g>
+        <g id="ctRibo" opacity="0">
+          <ellipse cx="200" cy="180" rx="34" ry="24" fill="#a07ce6"/>
+          <text x="200" y="184" font-size="11" fill="#fff" text-anchor="middle" font-weight="bold">리보솜</text>
+        </g>
+      </svg>
+    </div>
+    <div class="controls">
+      <button class="btn" id="ctCapBtn" onclick="ctAdd('cap')">🧢 5′ cap 붙이기</button>
+      <button class="btn" id="ctTailBtn" onclick="ctAdd('tail')">🎀 3′ poly-A tail 붙이기</button>
+      <button class="btn grey" onclick="ctReset()">↺ 되돌리기</button>
+    </div>
+    <div class="explain" id="ctExplain">
+      성숙한 mRNA의 <b>5′ cap</b>과 <b>3′ poly-A tail</b>은 mRNA가 핵 밖으로 나가도록 돕고,
+      분해효소로부터 보호하며, 리보솜이 인식해 번역을 시작하게 합니다. 양 끝을 붙여 보세요.
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  📚 자료 출처: 첨부 학습자료 「진핵생물의 유전자발현 조절」 · 고등학교 생명과학Ⅱ<br>
+  수업용으로 자유롭게 사용하세요 — 화면을 클릭·터치하며 단계별 변화를 관찰합니다.<br><br>
+  <span style="font-weight: bold; color: var(--muted);">All Rights Reserved (무단 전재 및 재배포 금지)</span>
+</div>
+</main>
+
+<script>
+/* ---------------- Tab navigation ---------------- */
+const tabs=document.getElementById('tabs');
+tabs.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  const i=b.dataset.go;
+  document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.toggle('active',x===b));
+  document.querySelectorAll('.module').forEach(m=>m.classList.toggle('active',m.dataset.module===i));
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+
+/* ================= MODULE 0 : overview ================= */
+const ovInfo=[
+  {c:'#6c4bd6',t:'① 전사 조절 (DNA → mRNA)',d:'염색질을 풀고, 프로모터에 전사인자·RNA 중합효소를 모아 전사를 시작할지 결정합니다. 진핵생물 유전자발현 조절에서 <b>가장 중요한 단계</b>예요.'},
+  {c:'#2f7fe0',t:'② 전사 후 조절 (mRNA 가공)',d:'가공 전 mRNA에서 <b>인트론을 제거</b>하고, 5′ cap·3′ poly-A tail을 붙이며, 대체 스플라이싱으로 하나의 유전자에서 <b>여러 단백질</b>을 만들 수 있습니다.'},
+  {c:'#25a56a',t:'③ 번역 조절',d:'mRNA가 리보솜과 결합해 단백질로 번역되는 <b>양과 속도</b>를 조절합니다. mRNA의 수명이나 번역 개시 인자로 조절돼요.'},
+  {c:'#e0473a',t:'④ 번역 후 조절',d:'완성된 단백질을 <b>접거나(folding), 자르거나, 화학적으로 변형</b>하여 활성을 조절하고, 필요 없으면 분해합니다.'}
+];
+document.querySelectorAll('#ovSvg .hot').forEach(g=>{
+  g.style.cursor='pointer';
+  g.addEventListener('click',()=>{
+    document.querySelectorAll('#ovSvg .hot rect').forEach(r=>r.setAttribute('opacity','1'));
+    document.querySelectorAll('#ovSvg .hot').forEach(x=>x.querySelector('rect').setAttribute('stroke','none'));
+    g.querySelector('rect').setAttribute('stroke','#20304a');
+    g.querySelector('rect').setAttribute('stroke-width','2.5');
+    const info=ovInfo[+g.dataset.reg];
+    document.getElementById('ovExplain').innerHTML=
+      '<span class="tag" style="background:'+info.c+'">'+info.t+'</span><br><br>'+info.d;
+  });
+});
+let ovIdx=0;
+function ovStep(){
+  const g=document.querySelectorAll('#ovSvg .hot')[ovIdx%4];
+  g.dispatchEvent(new Event('click'));
+  ovIdx++;
+}
+
+/* ================= MODULE 1 : chromatin ================= */
+const chBeads=document.getElementById('chBeads');
+let chLoose=false;
+function chBuild(){
+  chBeads.innerHTML='';
+  // condensed: clustered blob on left ; loose: spread beads on right
+  const N=10;
+  for(let i=0;i<N;i++){
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r','14');
+    c.setAttribute('fill','#8a6be0');
+    c.setAttribute('stroke','#5b3ea8'); c.setAttribute('stroke-width','1.5');
+    c.dataset.i=i;
+    // condensed position (packed cluster)
+    const cx=140+ (i%5)*24 + (i>=5?12:0);
+    const cy=120+ (i<5?0:34);
+    c.setAttribute('cx',cx); c.setAttribute('cy',cy);
+    c.style.transition='all .8s cubic-bezier(.4,1.3,.5,1)';
+    chBeads.appendChild(c);
+  }
+}
+function chLayout(loose){
+  const circles=chBeads.querySelectorAll('circle');
+  circles.forEach((c,i)=>{
+    if(loose){
+      c.setAttribute('cx', 90 + i*55);
+      c.setAttribute('cy', 150 + (i%2?14:-14));
+    }else{
+      const cx=140+ (i%5)*24 + (i>=5?12:0);
+      const cy=120+ (i<5?0:34);
+      c.setAttribute('cx',cx); c.setAttribute('cy',cy);
+    }
+  });
+  const thread=document.getElementById('chThread');
+  thread.style.opacity=loose?1:0;
+}
+function chToggle(){
+  chLoose=!chLoose;
+  chLayout(chLoose);
+  document.getElementById('chBtn').textContent=chLoose?'🔒 다시 응축':'🔓 염색질 풀기';
+  document.getElementById('chState').textContent=chLoose?'🔓 전사 가능 — RNA 중합효소가 접근할 수 있음':'🔒 전사 불가능 — 클릭하여 풀기';
+  document.getElementById('chLabelL').style.opacity=chLoose?.3:1;
+  document.getElementById('chLabelR').style.opacity=chLoose?1:.3;
+  document.getElementById('chExplain').innerHTML=chLoose
+    ? '<b>풀어진 염색질</b>: DNA가 히스톤에서 느슨해져 구슬이 실에 꿰인 모양(뉴클레오솜)이 됩니다. 이제 RNA 중합효소가 결합할 수 있어 <b>전사가 가능</b>합니다.'
+    : '<b>응축된 염색질</b>은 히스톤에 DNA가 꽉 감겨 있어 RNA 중합효소가 접근할 수 없어 <b>전사가 불가능</b>합니다. 버튼을 눌러 풀어 보세요.';
+}
+function chReset(){ chLoose=false; chLayout(false);
+  document.getElementById('chBtn').textContent='🔓 염색질 풀기';
+  document.getElementById('chLabelL').style.opacity=1; document.getElementById('chLabelR').style.opacity=.3;
+  document.getElementById('chState').textContent='🔒 전사 불가능 — 클릭하여 풀기';
+}
+chBuild(); chLayout(false);
+document.getElementById('chLabelR').style.opacity=.3;
+// clicking the SVG toggles too
+document.getElementById('chSvg').style.cursor='pointer';
+document.getElementById('chSvg').addEventListener('click',e=>{ if(e.target.tagName==='circle'||e.target.tagName==='svg'||e.target.tagName==='path'){} chToggle(); });
+
+/* ================= MODULE 2 : transcription initiation ================= */
+let tiStep=0;
+const tiCfg=[
+  {btn:'전사인자 결합 ▶', el:'ti-tf', dots:0,
+   ex:'<b>전사인자</b>가 프로모터와 조절요소에 결합했습니다. 이 단백질들이 전사를 조절하는 열쇠예요.'},
+  {btn:'매개 단백질 결합 ▶', el:'ti-med', dots:1,
+   ex:'<b>매개 단백질</b>이 멀리 떨어진 조절요소의 전사인자와 프로모터를 연결(DNA가 고리처럼 구부러짐)합니다.'},
+  {btn:'RNA 중합효소 결합 ▶', el:'ti-pol', dots:2,
+   ex:'<b>RNA 중합효소</b>가 프로모터에 자리를 잡았습니다. 전사 복합체가 완성되었어요.'},
+  {btn:'✔ 전사 시작!', el:'ti-rna', dots:3,
+   ex:'전사가 시작되어 <b>mRNA가 합성</b>됩니다! 전사인자의 조합에 따라 전사가 켜지고 꺼져요.'}
+];
+function tiSetDots(){
+  document.querySelectorAll('#tiSteps .dot').forEach((d,i)=>{
+    d.classList.remove('on','done');
+    if(i<tiStep) d.classList.add('done');
+    else if(i===tiStep) d.classList.add('on');
+  });
+}
+function tiNext(){
+  if(tiStep>=tiCfg.length) return;
+  const c=tiCfg[tiStep];
+  const el=document.getElementById(c.el);
+  el.style.transition='opacity .6s'; el.setAttribute('opacity','1');
+  document.getElementById('tiExplain').innerHTML=c.ex;
+  if(c.el==='ti-rna'){ // animate mRNA growth
+    const path=document.getElementById('tiRnaPath');
+    let w=375; const iv=setInterval(()=>{ w+=6; path.setAttribute('d','M375 220 H'+w+' Q'+(w+20)+' 200 '+(w+10)+' 175');
+      if(w>=620){clearInterval(iv); document.getElementById('tiRnaLabel').textContent='mRNA';} },20);
+  }
+  tiStep++;
+  tiSetDots();
+  const btn=document.getElementById('tiBtn');
+  if(tiStep<tiCfg.length){ btn.textContent=tiCfg[tiStep].btn; }
+  else { btn.textContent='✅ 완료'; btn.disabled=true; }
+}
+function tiReset(){
+  tiStep=0; ['ti-tf','ti-med','ti-pol','ti-rna'].forEach(id=>document.getElementById(id).setAttribute('opacity','0'));
+  document.getElementById('tiRnaPath').setAttribute('d','M375 220 H375');
+  document.getElementById('tiRnaLabel').textContent='';
+  const btn=document.getElementById('tiBtn'); btn.disabled=false; btn.textContent=tiCfg[0].btn;
+  document.getElementById('tiExplain').innerHTML='<b>전사인자</b>는 DNA의 프로모터·조절요소에 결합하여 전사를 조절하는 단백질입니다. 먼저 전사인자를 결합시켜 보세요.';
+  tiSetDots();
+}
+
+/* ================= MODULE 3 : selective gene expression ================= */
+const geGenes={
+  albumin:{name:'알부민 유전자', color:'#e0473a', elems:['a','b','c']},
+  crystallin:{name:'크리스탈린 유전자', color:'#2f7fe0', elems:['b','d','e']}
+};
+const geCells={
+  liver:{name:'간세포', factors:['A','B','C']},
+  lens:{name:'수정체 세포', factors:['B','D','E']}
+};
+let geCell='liver';
+let geBound={}; // lowercase letter -> true
+
+function geRenderGenes(){
+  const box=document.getElementById('genebox'); box.innerHTML='';
+  for(const key in geGenes){
+    const g=geGenes[key];
+    const allFilled=g.elems.every(l=>geBound[l]);
+    const div=document.createElement('div');
+    div.className='gene'+(allFilled?' expressed':'');
+    let slots='';
+    g.elems.forEach(l=>{
+      const filled=geBound[l];
+      slots+='<div class="slot'+(filled?' filled':'')+'" style="'+(filled?'background:'+g.color+';border-color:'+g.color:'')+'">'
+        + (filled?'<span class="fac">'+l.toUpperCase()+'</span>':'') + l + '</div>';
+    });
+    div.innerHTML=
+      '<div class="ghead"><b style="color:'+g.color+'">'+g.name+'</b>'
+      + (allFilled?'<span class="result-badge ok">✅ 발현됨 → '+g.name.replace(' 유전자','')+' 단백질 생성</span>'
+                  :'<span class="result-badge no">⛔ 발현 안 됨</span>')+'</div>'
+      +'<div class="slots">'+slots
+      +'<div class="promoter">프로모터</div>'
+      +'<div class="genebody" style="background:'+(allFilled?g.color:'#c9d3ea')+'">'+g.name.replace(' 유전자','')+'</div>'
+      +'</div>';
+    box.appendChild(div);
+  }
+}
+function geRenderChips(){
+  const wrap=document.getElementById('factorChips'); wrap.innerHTML='';
+  geCells[geCell].factors.forEach(F=>{
+    const l=F.toLowerCase();
+    const bound=geBound[l];
+    // does any gene have this element?
+    const usable=Object.values(geGenes).some(g=>g.elems.includes(l));
+    const chip=document.createElement('div');
+    chip.className='chip'+(bound?' bound':'')+(!usable?' disabled':'');
+    chip.textContent='전사촉진인자 '+F+(bound?' ✓':'');
+    chip.title=usable?('조절요소 '+l+' 에 결합'):('짝이 되는 조절요소가 없음');
+    if(usable && !bound){
+      chip.onclick=()=>{ geBound[l]=true; geRenderChips(); geRenderGenes(); geUpdateExplain(); };
+    }
+    wrap.appendChild(chip);
+  });
+}
+function geUpdateExplain(){
+  const exprs=[];
+  for(const key in geGenes){ if(geGenes[key].elems.every(l=>geBound[l])) exprs.push(geGenes[key].name.replace(' 유전자','')); }
+  const cellName=geCells[geCell].name;
+  let msg='<b>'+cellName+'</b>는 전사촉진인자 <b>'+geCells[geCell].factors.join(', ')+'</b>를 가지고 있어요. ';
+  if(exprs.length) msg+='현재 <span class="hl">'+exprs.join(', ')+'</span> 유전자가 발현됩니다. ';
+  else msg+='아직 발현된 유전자가 없습니다. 전사촉진인자를 클릭해 조절요소를 모두 채워 보세요. ';
+  msg+='<br><small style="color:#6b7a94">→ 같은 유전체라도 세포가 가진 전사인자 조합이 달라 서로 다른 유전자가 켜집니다.</small>';
+  document.getElementById('geExplain').innerHTML=msg;
+}
+function geSetCell(cell){
+  geCell=cell; geBound={};
+  document.querySelectorAll('#cellpick button').forEach(b=>b.classList.toggle('sel',b.dataset.cell===cell));
+  geRenderChips(); geRenderGenes(); geUpdateExplain();
+}
+function geReset(){ geBound={}; geRenderChips(); geRenderGenes(); geUpdateExplain(); }
+function geAuto(){
+  const facs=geCells[geCell].factors.map(f=>f.toLowerCase());
+  let i=0;
+  const iv=setInterval(()=>{
+    if(i>=facs.length){clearInterval(iv);return;}
+    const l=facs[i];
+    if(Object.values(geGenes).some(g=>g.elems.includes(l))) geBound[l]=true;
+    geRenderChips(); geRenderGenes(); geUpdateExplain();
+    i++;
+  },500);
+}
+document.getElementById('cellpick').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(b) geSetCell(b.dataset.cell);
+});
+geSetCell('liver');
+
+/* ================= MODULE 4 : splicing ================= */
+const spColors={1:'#e0473a',2:'#f4c430',3:'#25a56a',4:'#2f7fe0'};
+// segments: exon1 intron exon2 intron exon3 intron exon4
+function spBuildPre(){
+  const g=document.getElementById('spPre'); g.innerHTML='';
+  const layout=[
+    {type:'ex',n:1,w:90},{type:'in',w:44},{type:'ex',n:2,w:70},{type:'in',w:44},
+    {type:'ex',n:3,w:70},{type:'in',w:44},{type:'ex',n:4,w:90}
+  ];
+  let x=40;
+  layout.forEach((s,idx)=>{
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x); r.setAttribute('y',90); r.setAttribute('width',s.w); r.setAttribute('height',34);
+    r.setAttribute('rx',6);
+    r.setAttribute('fill', s.type==='ex'?spColors[s.n]:'#2b2b2b');
+    r.dataset.type=s.type; if(s.n)r.dataset.n=s.n;
+    r.style.transition='all .6s';
+    g.appendChild(r);
+    if(s.type==='ex'){
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x+s.w/2); t.setAttribute('y',112); t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-size','12'); t.setAttribute('fill','#fff'); t.setAttribute('font-weight','bold');
+      t.textContent='엑손'+s.n; t.dataset.n=s.n; g.appendChild(t);
+    }
+    x+=s.w+6;
+  });
+}
+function spSplice(){
+  // fade out introns, slide exons together
+  const g=document.getElementById('spPre');
+  g.querySelectorAll('[data-type="in"]').forEach(r=>{ r.setAttribute('opacity','0'); });
+  // reflow exons
+  const exons=[...g.querySelectorAll('rect[data-type="ex"]')];
+  const texts=[...g.querySelectorAll('text')];
+  let x=180;
+  exons.forEach(r=>{
+    const w=+r.getAttribute('width');
+    r.setAttribute('x',x); r.setAttribute('y',90);
+    const t=texts.find(t=>t.dataset.n===r.dataset.n);
+    if(t){ t.setAttribute('x',x+w/2); t.setAttribute('y',112); }
+    x+=w+2;
+  });
+  document.getElementById('spTitle').textContent='스플라이싱 완료 — 엑손만 남음';
+  document.getElementById('spState').textContent='이제 이어붙이는 방식(패턴)을 골라 보세요.';
+  document.getElementById('spBtn1').disabled=true;
+  document.getElementById('spBtnA').disabled=false;
+  document.getElementById('spBtnB').disabled=false;
+  document.getElementById('spExplain').innerHTML='<b>인트론</b>이 제거되고 <b>엑손</b>끼리 이어졌습니다. 하나의 유전자라도 엑손을 <b>어떻게 조합하느냐</b>에 따라 다른 단백질이 만들어져요(대체 스플라이싱).';
+}
+function spPattern(p){
+  const exSet = p==='A'?[1,2,4]:[1,3,4];
+  const out=document.getElementById('spOut'); out.innerHTML=''; out.setAttribute('opacity','1');
+  let x=180;
+  exSet.forEach(n=>{
+    const w = (n===1||n===4)?90:70;
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x); r.setAttribute('y',160); r.setAttribute('width',w); r.setAttribute('height',34); r.setAttribute('rx',6);
+    r.setAttribute('fill',spColors[n]); out.appendChild(r);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x+w/2); t.setAttribute('y',182); t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-size','12'); t.setAttribute('fill','#fff'); t.setAttribute('font-weight','bold');
+    t.textContent='엑손'+n; out.appendChild(t);
+    x+=w+2;
+  });
+  const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl.setAttribute('x',x+16); lbl.setAttribute('y',182); lbl.setAttribute('font-size','13');
+  lbl.setAttribute('font-weight','bold'); lbl.setAttribute('fill', p==='A'?'#c33':'#245ba8');
+  lbl.textContent='→ '+(p==='A'?'단백질 1':'단백질 2');
+  out.appendChild(lbl);
+  document.getElementById('spState').textContent='패턴 '+p+' 로 이어붙임 → '+(p==='A'?'단백질 1':'단백질 2')+' 완성!';
+  document.getElementById('spExplain').innerHTML='패턴 <b>'+p+'</b>는 엑손 <b>'+exSet.join('·')+'</b>를 이어 붙였습니다. 같은 가공 전 mRNA에서 <span class="hl">서로 다른 단백질('+(p==='A'?'단백질 1':'단백질 2')+')</span>이 만들어졌어요. 이것이 <b>대체 스플라이싱</b>입니다.';
+}
+function spReset(){
+  spBuildPre();
+  document.getElementById('spOut').setAttribute('opacity','0');
+  document.getElementById('spTitle').textContent='가공 전 mRNA (엑손 + 인트론)';
+  document.getElementById('spState').textContent='‘인트론 제거’ 버튼을 눌러 스플라이싱을 시작하세요.';
+  document.getElementById('spBtn1').disabled=false;
+  document.getElementById('spBtnA').disabled=true;
+  document.getElementById('spBtnB').disabled=true;
+  document.getElementById('spExplain').innerHTML='가공 전 mRNA는 단백질 정보를 담은 <b>엑손</b>과 담지 않은 <b>인트론</b>으로 이루어져 있습니다. 먼저 인트론을 제거해 보세요.';
+}
+spBuildPre();
+
+/* ================= MODULE 5 : cap & tail ================= */
+let ctCap=false, ctTail=false;
+function ctAdd(which){
+  if(which==='cap'){ ctCap=true; document.getElementById('ctCap').setAttribute('opacity','1');
+    document.getElementById('ctCapBtn').disabled=true; document.getElementById('ctCapBtn').textContent='✔ 5′ cap 완료';}
+  if(which==='tail'){ ctTail=true; document.getElementById('ctTail').setAttribute('opacity','1');
+    document.getElementById('ctTailBtn').disabled=true; document.getElementById('ctTailBtn').textContent='✔ poly-A 완료';}
+  ctUpdate();
+}
+function ctUpdate(){
+  const ex=document.getElementById('ctExplain');
+  if(ctCap && ctTail){
+    document.getElementById('ctBody').setAttribute('fill','#8fd0aa');
+    document.getElementById('ctRibo').setAttribute('opacity','1');
+    ex.innerHTML='✅ 가공 완료! <b>5′ cap</b>은 리보솜이 mRNA를 인식하는 표지가 되고, <b>3′ poly-A tail</b>은 mRNA가 쉽게 분해되지 않도록 보호합니다. 이제 mRNA가 <b>안정적으로 핵 밖으로 나가 번역</b>될 수 있어요.';
+  } else if(ctCap){
+    ex.innerHTML='<b>5′ cap(변형된 구아닌 G)</b>이 붙었습니다. 리보솜이 이 cap을 인식해 결합할 준비를 합니다. 이제 3′ 끝도 가공해 보세요.';
+  } else if(ctTail){
+    ex.innerHTML='<b>3′ poly-A tail(아데닌 A의 연속)</b>이 붙었습니다. mRNA가 세포질에서 분해효소로부터 보호돼 수명이 길어져요. 5′ 끝도 가공해 보세요.';
+  }
+}
+document.getElementById('ctCap').addEventListener('click',()=>{ if(!ctCap) ctAdd('cap'); });
+document.getElementById('ctTail').addEventListener('click',()=>{ if(!ctTail) ctAdd('tail'); });
+function ctReset(){
+  ctCap=false; ctTail=false;
+  document.getElementById('ctCap').setAttribute('opacity','.35');
+  document.getElementById('ctTail').setAttribute('opacity','.35');
+  document.getElementById('ctRibo').setAttribute('opacity','0');
+  document.getElementById('ctBody').setAttribute('fill','#c9d3ea');
+  const cb=document.getElementById('ctCapBtn'); cb.disabled=false; cb.textContent='🧢 5′ cap 붙이기';
+  const tb=document.getElementById('ctTailBtn'); tb.disabled=false; tb.textContent='🎀 3′ poly-A tail 붙이기';
+  document.getElementById('ctExplain').innerHTML='성숙한 mRNA의 <b>5′ cap</b>과 <b>3′ poly-A tail</b>은 mRNA가 핵 밖으로 나가도록 돕고, 분해효소로부터 보호하며, 리보솜이 인식해 번역을 시작하게 합니다. 양 끝을 붙여 보세요.';
+}
+</script>
+</body>
+</html>
