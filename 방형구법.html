@@ -128,7 +128,7 @@
   .ws .fields span{border-bottom:1px solid #333; min-width:120px; display:inline-block;}
 
   footer{text-align:center; color:var(--muted); font-size:13px; margin-top:24px;}
-  .copyright{margin-top:8px; font-weight:bold; color:#828e9e;}
+  .copyright{text-align:center; color:var(--muted); font-size:12.5px; margin:10px 0 0;}
 
   @media print{
     body{background:#fff;}
@@ -151,6 +151,7 @@
     <p>방형구 속 식물을 직접 세어 밀도·피도·빈도와 상대값을 구하고, 우점종을 찾아봅시다.</p>
   </header>
 
+  <!-- 1. 개념 & 공식 -->
   <section class="card screen-only">
     <h2><span class="num">1</span>먼저 개념부터 알아볼까요?</h2>
     <p class="lead">방형구(方形具)는 일정한 넓이의 정사각형 틀입니다. 이 틀을 여러 개 설치해 그 안의 식물을 조사하면
@@ -170,12 +171,14 @@
     <div class="legend" id="legend"></div>
   </section>
 
+  <!-- 2. 유형 선택 -->
   <section class="card screen-only">
     <h2><span class="num">2</span>조사할 초원 유형을 골라보세요</h2>
     <p class="lead">유형마다 꽃의 분포가 다릅니다. 하나를 선택하면 방형구 5개가 나타나요.</p>
     <div class="type-grid" id="typeGrid"></div>
   </section>
 
+  <!-- 3. 방형구 조사 -->
   <section class="card screen-only" id="survey">
     <h2><span class="num">3</span>방형구 속 꽃을 세어 개수를 입력하세요</h2>
     <p class="lead" id="surveyDesc"></p>
@@ -187,6 +190,7 @@
     </div>
   </section>
 
+  <!-- 4. 결과 -->
   <section class="card screen-only" id="results">
     <h2><span class="num">4</span>조사 결과와 우점종</h2>
     <div class="tbl-scroll">
@@ -197,6 +201,7 @@
       상대값은 면적 단위가 약분되므로 개체수·점유면적·출현 방형구 수의 비율과 같습니다.</p>
   </section>
 
+  <!-- 5. 활동지 -->
   <section class="card screen-only">
     <h2><span class="num">5</span>학생 활동지</h2>
     <p class="lead">아래 활동지는 학생들이 직접 손으로 계산하며 개념을 익히도록 만든 인쇄용입니다.</p>
@@ -205,6 +210,7 @@
     </div>
   </section>
 
+  <!-- 인쇄 대상 활동지 -->
   <section class="card ws" id="worksheet">
     <h2 style="justify-content:center;">방형구법 탐구 활동지</h2>
     <div class="fields">
@@ -263,10 +269,8 @@
     <div class="qline">➌ 실제 자연에서 이 방법으로 조사할 때 오차가 생길 수 있는 까닭을 두 가지 이상 써 보자.</div>
   </section>
 
-  <footer>
-    <div>효양고 생명과학 · 방형구법 탐구 프로그램 &nbsp;|&nbsp; 인터넷 없이도 열리는 단일 파일</div>
-    <div class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</div>
-  </footer>
+  <footer>효양고 생명과학 · 방형구법 탐구 프로그램 &nbsp;|&nbsp; 인터넷 없이도 열리는 단일 파일</footer>
+  <p class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</p>
 </div>
 
 <script>

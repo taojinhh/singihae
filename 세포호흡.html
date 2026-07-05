@@ -284,18 +284,6 @@
     border:1.5px solid #7a4a00;pointer-events:none;
     box-shadow:0 0 8px #ffc24a}
 
-  /* 하단 푸터 (Footer) 스타일 추가 */
-  .site-footer {
-    text-align: center;
-    padding: 24px 0;
-    margin-top: 40px;
-    border-top: 1.5px solid var(--ink);
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
   /* 반응형 */
   @media (max-width:760px){
     .title{font-size:18px}
@@ -319,6 +307,7 @@
     </div>
   </header>
 
+  <!-- 단계 네비게이션 (항상 표시, 어디서든 바로 이동) -->
   <nav class="stepnav" aria-label="학습 단계 이동">
     <button class="step-btn active" data-step="cell" onclick="goStep('cell')">
       <span class="step-num">1</span>
@@ -344,32 +333,39 @@
 
   <div class="stage" id="stage">
 
+    <!-- ============ 0. 세포 전체 뷰 ============ -->
     <section class="scene active" id="scene-cell">
       <h2 class="scene-title">세포의 구조 — 어디서 시작할까?</h2>
       <p class="scene-sub">세포질 기질을 클릭하면 <b>해당 과정</b>이, 미토콘드리아를 클릭하면 <b>피루브산의 산화 · TCA 회로 · 산화적 인산화</b>가 일어나는 장소로 이동합니다.</p>
 
       <div class="cell-wrap">
         <svg class="cell-svg" viewBox="0 0 1000 500" preserveAspectRatio="xMidYMid meet">
+          <!-- 세포질 (클릭 영역) -->
           <ellipse class="hot" id="hot-cyto" cx="500" cy="250" rx="460" ry="220"
                    fill="#d9efe7" stroke="#1f5a40" stroke-width="3"/>
           <text x="120" y="80" font-size="20" font-weight="700" fill="#1f5a40"
                 style="font-family:'Noto Serif KR',serif">세포질</text>
           <text x="120" y="102" font-size="13" fill="#1f5a40">click → 해당 과정</text>
 
+          <!-- 핵 -->
           <ellipse cx="260" cy="280" rx="110" ry="80" fill="#e8d8b0" stroke="#8a6a30" stroke-width="2"/>
           <ellipse cx="260" cy="280" rx="90" ry="60" fill="none" stroke="#8a6a30" stroke-width="1" stroke-dasharray="3 3"/>
           <circle cx="240" cy="270" r="14" fill="#b88a40"/>
           <text x="260" y="396" font-size="14" text-anchor="middle" fill="#5a3a10" font-weight="700">핵</text>
 
+          <!-- 미토콘드리아 (클릭 영역) — 여러 개 -->
           <g class="hot" id="hot-mito">
+            <!-- 큰 미토콘드리아 -->
             <ellipse cx="700" cy="240" rx="180" ry="90" fill="#f5d6b3" stroke="#7a3a1a" stroke-width="3"/>
             <ellipse cx="700" cy="240" rx="160" ry="72" fill="#f1a47a" stroke="#7a3a1a" stroke-width="2"/>
+            <!-- 크리스타 (내막 주름) -->
             <path d="M580 240 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0 q15 -40 30 0 q15 40 30 0"
                   fill="none" stroke="#7a3a1a" stroke-width="2.2"/>
             <text x="700" y="350" text-anchor="middle" font-size="16" font-weight="700" fill="#7a3a1a">미토콘드리아</text>
             <text x="700" y="370" text-anchor="middle" font-size="12" fill="#7a3a1a">click → 피루브산 산화 · TCA · 산화적 인산화</text>
           </g>
 
+          <!-- 작은 미토콘드리아 (세포 안) -->
           <g class="hot" id="hot-mito2">
             <ellipse cx="430" cy="120" rx="70" ry="32" fill="#f5d6b3" stroke="#7a3a1a" stroke-width="2"/>
             <ellipse cx="430" cy="120" rx="60" ry="24" fill="#f1a47a" stroke="#7a3a1a" stroke-width="1.5"/>
@@ -377,6 +373,7 @@
                   fill="none" stroke="#7a3a1a" stroke-width="1.5"/>
           </g>
 
+          <!-- 화살표 안내 -->
           <g opacity=".55">
             <path d="M510 410 q40 -50 90 -90" fill="none" stroke="#1f3a2c" stroke-width="2" stroke-dasharray="4 4"/>
             <text x="445" y="430" font-size="13" fill="#1f3a2c" font-weight="700">세포질 기질을 클릭</text>
@@ -392,6 +389,7 @@
       </div>
     </section>
 
+    <!-- ============ 1. 해당 과정 ============ -->
     <section class="scene" id="scene-glyco">
       <h2 class="scene-title">해당 과정 <span style="color:var(--muted);font-weight:400;font-size:14px">— 세포질에서 일어나는 6탄소→3탄소 분해</span></h2>
       <p class="scene-sub">물질을 <b>클릭</b>하여 반응을 진행하세요. 각 단계에서 ATP와 NADH 변화가 표시됩니다.</p>
@@ -400,6 +398,7 @@
         <div class="label">세포질 (CYTOSOL)</div>
 
         <div class="gly-track">
+          <!-- 1) 포도당 -->
           <div class="gly-cell" id="gly-step1">
             <div class="stage-name">포도당 (C₆H₁₂O₆)</div>
             <div class="mol clickable" id="mol-glucose" title="클릭: 인산화 시작">
@@ -416,6 +415,7 @@
             </div>
           </div>
 
+          <!-- 2) 과당 2인산 -->
           <div class="gly-cell" id="gly-step2" style="opacity:.3;pointer-events:none">
             <div class="stage-name">과당-2-인산</div>
             <div class="mol clickable" id="mol-f16bp" title="클릭: 분해">
@@ -435,6 +435,7 @@
             </div>
           </div>
 
+          <!-- 3) 2 피루브산 -->
           <div class="gly-cell" id="gly-step3" style="opacity:.3;pointer-events:none">
             <div class="stage-name">2 × 피루브산 (C₃)</div>
             <div style="display:flex;flex-direction:column;gap:6px">
@@ -467,12 +468,1222 @@
       </div>
     </section>
 
-    </div>
+    <!-- ============ 2. 미토콘드리아 (피루브산 산화 + TCA + ETC) ============ -->
+    <section class="scene" id="scene-mito">
+      <h2 class="scene-title">미토콘드리아 <span style="color:var(--muted);font-weight:400;font-size:14px">— 피루브산 산화 · TCA 회로 · 전자 전달계</span></h2>
+      <p class="scene-sub">피루브산을 <b>기질로 드래그</b>하면 아세틸 CoA로 산화됩니다. 옥살아세트산을 아세틸 CoA에 갖다 대면 TCA 회로가 시작됩니다.</p>
 
-  <footer class="site-footer">
+      <div class="mito-wrap" id="mito-stage">
+        <svg class="mito-svg" viewBox="0 0 1100 540" preserveAspectRatio="none" id="mito-svg">
+          <!-- 세포질 영역 (왼쪽 좁은 띠) -->
+          <rect x="0" y="0" width="180" height="540" fill="#eaf6f1"/>
+          <text x="90" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#1f5a40">세포질</text>
+
+          <!-- 외막 -->
+          <rect x="180" y="0" width="920" height="540" fill="#fde8c8" stroke="#7a3a1a" stroke-width="2"/>
+          <text x="200" y="26" font-size="12" font-weight="700" fill="#7a3a1a">외막</text>
+
+          <!-- 막 사이 공간 표시 라벨 -->
+          <text x="200" y="46" font-size="11" fill="#7a3a1a">막 사이 공간</text>
+
+          <!-- 내막 (큰 영역) - 위쪽 -->
+          <path d="M210 70 L1080 70 L1080 460 L210 460 Z" fill="#f1a47a" stroke="#7a3a1a" stroke-width="2"/>
+          <text x="230" y="92" font-size="13" font-weight="700" fill="#5a2410">미토콘드리아 기질 (Matrix)</text>
+          <text x="230" y="108" font-size="11" fill="#5a2410">— 피루브산 산화 · TCA 회로 효소들</text>
+
+          <!-- 내막 (전자전달계가 위치하는 위쪽 가장자리) — 시각적 표시 -->
+          <path d="M210 70 L1080 70" stroke="#7a3a1a" stroke-width="4"/>
+
+          <!-- 전자전달계 효소 복합체 4개 + ATP 합성 효소  (드래그 드롭 타깃)-->
+          <g id="etc-group">
+            <!-- Complex I (NADH 진입) -->
+            <g id="cpx1" class="drop-zone">
+              <rect x="260" y="50" width="80" height="40" fill="#9bd2c8" stroke="#1f5a40" stroke-width="2" rx="6"/>
+              <text x="300" y="74" text-anchor="middle" font-size="11" font-weight="700" fill="#1f3a2c">Complex I</text>
+              <text x="300" y="42" text-anchor="middle" font-size="10" fill="#7a3a1a">NADH 결합부</text>
+            </g>
+            <!-- Q (전자 운반체) -->
+            <circle cx="400" cy="70" r="14" fill="#c0e8b8" stroke="#3a6a30" stroke-width="2"/>
+            <text x="400" y="74" text-anchor="middle" font-size="10" font-weight="700">Q</text>
+            <!-- Complex II (FADH₂ 진입; 내막 안쪽, matrix 쪽으로 살짝 들어감) -->
+            <path d="M400 84 L400 105" stroke="#7a3a1a" stroke-width="1.5" stroke-dasharray="3 3"/>
+            <g id="cpx2" class="drop-zone">
+              <rect x="370" y="105" width="60" height="30" fill="#a8d8d0" stroke="#1f5a40" stroke-width="2" rx="6"/>
+              <text x="400" y="124" text-anchor="middle" font-size="10" font-weight="700" fill="#1f3a2c">Complex II</text>
+              <text x="400" y="148" text-anchor="middle" font-size="9" fill="#7a3a1a">FADH₂ 결합부</text>
+            </g>
+            <!-- Complex III -->
+            <g id="cpx3">
+              <rect x="460" y="50" width="80" height="40" fill="#9bd2c8" stroke="#1f5a40" stroke-width="2" rx="6"/>
+              <text x="500" y="74" text-anchor="middle" font-size="11" font-weight="700" fill="#1f3a2c">Complex III</text>
+            </g>
+            <!-- Cyt c -->
+            <circle cx="600" cy="70" r="14" fill="#c0e8b8" stroke="#3a6a30" stroke-width="2"/>
+            <text x="600" y="74" text-anchor="middle" font-size="10" font-weight="700">c</text>
+            <!-- Complex IV -->
+            <g id="cpx4">
+              <rect x="660" y="50" width="80" height="40" fill="#9bd2c8" stroke="#1f5a40" stroke-width="2" rx="6"/>
+              <text x="700" y="74" text-anchor="middle" font-size="11" font-weight="700" fill="#1f3a2c">Complex IV</text>
+              <text x="700" y="42" text-anchor="middle" font-size="10" fill="#7a3a1a">½O₂ → H₂O</text>
+            </g>
+            <!-- ATP 합성 효소 -->
+            <g id="atpsynth">
+              <rect x="860" y="50" width="60" height="40" fill="#f7c7e4" stroke="#8a3a6a" stroke-width="2" rx="6"/>
+              <circle cx="890" cy="42" r="18" fill="#f7c7e4" stroke="#8a3a6a" stroke-width="2"/>
+              <text x="890" y="76" text-anchor="middle" font-size="10" font-weight="700" fill="#5a1a4a">ATP 합성</text>
+              <text x="890" y="46" text-anchor="middle" font-size="10" font-weight="700" fill="#5a1a4a">효소</text>
+            </g>
+          </g>
+
+          <!-- TCA 회로 가이드 원 -->
+          <g opacity=".8">
+            <circle cx="700" cy="290" r="120" fill="none" stroke="#7a3a1a" stroke-width="1.5" stroke-dasharray="5 5"/>
+            <text x="700" y="294" text-anchor="middle" font-size="20" font-weight="700" fill="#7a3a1a" opacity=".55">TCA 회로</text>
+          </g>
+
+          <!-- 피루브산 진입 화살표 안내 (점선) -->
+          <g id="entry-hint">
+            <path d="M90 200 q60 0 130 60" fill="none" stroke="#1f5a40"
+                  stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arr)"/>
+            <text x="60" y="180" font-size="12" font-weight="700" fill="#1f5a40">피루브산을</text>
+            <text x="60" y="194" font-size="12" font-weight="700" fill="#1f5a40">기질로 드래그 →</text>
+          </g>
+          <defs>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+              <path d="M0,0 L10,5 L0,10 z" fill="#1f5a40"/>
+            </marker>
+          </defs>
+
+          <!-- 옥살아세트산 (기질 안에 항상 있음, 드래그 가능) -->
+          <!-- SVG는 좌표만 잡고, 실제 분자 DOM은 dragLayer 위에 절대좌표로 배치 -->
+        </svg>
+
+        <!-- 드래그 레이어 (DOM 분자) -->
+        <div class="dragLayer" id="drag-layer">
+
+          <!-- 세포질에 있는 피루브산 (해당과정 후 생성) -->
+          <div class="draggable small-mol" id="d-pyr1" data-type="pyr"
+               style="left:55px;top:300px;display:none">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">피루브산</span>
+          </div>
+          <div class="draggable small-mol" id="d-pyr2" data-type="pyr"
+               style="left:55px;top:355px;display:none">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">피루브산</span>
+          </div>
+
+          <!-- 옥살아세트산 (자동으로 등장 → 이동 → 시트르산) -->
+          <div class="small-mol" id="d-oaa"
+               style="position:absolute;left:470px;top:290px;display:none">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">옥살아세트산</span>
+          </div>
+
+          <!-- TCA 회로 상의 위치 표시용 정적 분자 (생성 후 표시) -->
+          <!-- 아세틸 CoA (피루브산이 기질로 들어간 후 생성) -->
+          <div class="small-mol" id="d-acoa"
+               style="position:absolute;left:580px;top:215px;display:none">
+            <span class="atom">C</span><span class="atom">C</span>
+            <span class="atom coa">-CoA</span>
+            <span style="font-size:11px">아세틸 CoA</span>
+          </div>
+
+          <!-- 시트르산 -->
+          <div class="small-mol clickable-mol" id="d-citrate"
+               style="position:absolute;left:740px;top:215px;display:none;cursor:pointer">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">시트르산</span>
+          </div>
+
+          <!-- 5탄소 -->
+          <div class="small-mol clickable-mol" id="d-c5"
+               style="position:absolute;left:790px;top:340px;display:none;cursor:pointer">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">5탄소 화합물</span>
+          </div>
+
+          <!-- 4탄소 -->
+          <div class="small-mol clickable-mol" id="d-c4"
+               style="position:absolute;left:610px;top:395px;display:none;cursor:pointer">
+            <span class="atom">C</span><span class="atom">C</span><span class="atom">C</span><span class="atom">C</span>
+            <span style="font-size:11px">4탄소 화합물</span>
+          </div>
+
+          <!-- TCA 단계별 영구 라벨 (각 분자가 클릭된 후 자리에 남음) -->
+          <!-- 시트르산 → 5탄소: +CO₂, +NADH -->
+          <div class="tca-stage-label co2"  id="lbl-cit-co2"  style="left:830px;top:255px">+CO₂ ↑</div>
+          <div class="tca-stage-label nadh" id="lbl-cit-nadh" style="left:830px;top:282px">+NADH</div>
+          <!-- 5탄소 → 4탄소: +CO₂, +NADH, +ATP -->
+          <div class="tca-stage-label co2"  id="lbl-c5-co2"  style="left:870px;top:373px">+CO₂ ↑</div>
+          <div class="tca-stage-label nadh" id="lbl-c5-nadh" style="left:870px;top:400px">+NADH</div>
+          <div class="tca-stage-label atp"  id="lbl-c5-atp"  style="left:870px;top:427px">+ATP</div>
+          <!-- 4탄소 → 옥살아세트산: +NADH, +FADH₂ -->
+          <div class="tca-stage-label nadh" id="lbl-c4-nadh" style="left:530px;top:440px">+NADH</div>
+          <div class="tca-stage-label fadh" id="lbl-c4-fadh" style="left:530px;top:467px">+FADH₂</div>
+
+          <!-- NADH 풀 안내 (라벨) - 실제 NADH 분자는 dragLayer에 직접 absolute로 배치 -->
+          <div id="nadh-pool"
+               style="position:absolute;left:180px;top:418px;display:none;
+                      font-size:11px;color:#3a2a8a;font-weight:700;
+                      background:#fff;padding:4px 8px;border-radius:6px;
+                      border:1.5px solid #3a2a8a;box-shadow:2px 2px 0 #3a2a8a;
+                      pointer-events:none">
+            ▼ <b>NADH 풀</b> &nbsp;→&nbsp; <b>Complex I</b>로 드래그<br>
+            <span style="font-weight:400">시작 2 (해당) + 피루브산당 +4 → 최대 <b>10</b></span>
+          </div>
+
+          <!-- FADH₂ 풀 안내 (라벨) - 실제 FADH₂ 분자는 dragLayer에 직접 absolute로 배치 -->
+          <div id="fadh-pool"
+               style="position:absolute;left:560px;top:418px;display:none;
+                      font-size:11px;color:#5a1a4a;font-weight:700;
+                      background:#fff;padding:4px 8px;border-radius:6px;
+                      border:1.5px solid #7a2a6a;box-shadow:2px 2px 0 #7a2a6a;
+                      pointer-events:none">
+            ▼ <b>FADH₂ 풀</b> &nbsp;→&nbsp; <b>Complex II</b>로 드래그<br>
+            <span style="font-weight:400">피루브산당 +1 → 최대 <b>2</b></span>
+          </div>
+
+          <!-- 안내 토스트 -->
+          <div class="toast" id="toast">메시지</div>
+        </div>
+      </div>
+
+      <!-- 전자전달계 안내 (그림 밖 별도 박스) -->
+      <div class="etc-info" id="etc-info" style="display:none">
+        <b>⚡ 전자전달계 사용법</b><br>
+        ① 아래 <b style="color:#3a2a8a">NADH</b>를 <b>Complex I</b>로 드래그 → 전자 전달 + H⁺ 펌프 3곳 → 약 <b>3 ATP 합성</b><br>
+        ② 아래 <b style="color:#5a1a4a">FADH₂</b>를 <b>Complex II</b>로 드래그 → Complex I을 건너뛰어 Q부터 시작 → H⁺ 펌프 2곳 → 약 <b>2 ATP 합성</b><br>
+        해당과정에서 만든 NADH도 같은 풀에 모여 함께 사용됩니다.
+      </div>
+
+      <div class="btn-row">
+        <button class="btn warn" onclick="resetMito()">미토콘드리아 초기화</button>
+        <button class="btn" id="btn-show-etc" onclick="focusETC()">전자전달계로 이동 ⚡</button>
+      </div>
+
+      <div class="legend">
+        <span><i style="background:var(--carbon)"></i>탄소(C)</span>
+        <span><i style="background:var(--phos)"></i>인산기(P)</span>
+        <span><i style="background:#8a6a4a"></i>CoA</span>
+        <span><i style="background:#5a8dee"></i>H⁺</span>
+        <span><i style="background:#ffc24a"></i>전자(e⁻)</span>
+      </div>
+
+      <div class="guide" id="mito-guide">
+        <b>피루브산의 산화</b> · 세포질의 <b>피루브산을 미토콘드리아 기질로 드래그</b>하세요.
+      </div>
+    </section>
+
+  </div>
+
+  <footer style="margin-top:24px;text-align:center;font-size:12px;color:var(--muted);
+                 letter-spacing:.3px;user-select:none">
     All Rights Reserved (무단 전재 및 재배포 금지)
   </footer>
-
 </div>
+
+<script>
+/* ============================================================
+   세포 호흡 학습 시뮬레이션 (Vanilla JS)
+   - 해당과정: 클릭 시퀀스
+   - 피루브산 산화 / TCA: 드래그 & 드롭, 클릭 변환
+   - 전자전달계: NADH 드롭 → 자동 화학삼투 애니메이션
+   ============================================================ */
+
+// ---- 전역 상태 ----
+const state = {
+  atp:0, nadh:0, fadh:0, co2:0, h2o:0,
+  glyAtpNet:0, glyNadh:0,
+  pyruvatesInMatrix:0,   // 기질에 들어온 피루브산 수
+  acetylCoA:0,           // 현재 결합 대기 중인 아세틸 CoA
+  citrateActive:false,
+  c5Active:false,
+  c4Active:false,
+  nadhInPool:0,
+  etcRunning:false
+};
+
+const $ = id => document.getElementById(id);
+const counters = {
+  atp:$('cnt-atp'), nadh:$('cnt-nadh'), fadh:$('cnt-fadh'),
+  co2:$('cnt-co2'), h2o:$('cnt-h2o')
+};
+
+function updateCounters(){
+  counters.atp.textContent  = state.atp;
+  counters.nadh.textContent = state.nadh;
+  counters.fadh.textContent = state.fadh;
+  counters.co2.textContent  = state.co2;
+  counters.h2o.textContent  = state.h2o;
+  $('gly-atp-net').textContent = state.glyAtpNet;
+  $('gly-nadh').textContent    = state.glyNadh;
+  // 미토콘드리아 화면이고 ETC가 진행 중이 아니면 풀 자동 갱신
+  if(document.getElementById('scene-mito') &&
+     document.getElementById('scene-mito').classList.contains('active') &&
+     !state.etcRunning){
+    if(typeof refreshNADHPool === 'function') refreshNADHPool();
+    if(typeof refreshFADHPool === 'function') refreshFADHPool();
+  }
+}
+
+function showToast(msg, t=1800){
+  const tt = $('toast'); tt.textContent = msg; tt.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>tt.classList.remove('show'), t);
+}
+
+// ---- 화면 전환 ----
+function goScene(name){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+  const map = {cell:'scene-cell', glyco:'scene-glyco', mito:'scene-mito'};
+  $(map[name]).classList.add('active');
+  if(name==='mito'){ prepareMitoEntry(); }
+}
+
+// ---- 단계 네비게이션 (상단 4단계 버튼) ----
+// 1) cell  → scene-cell
+// 2) glyco → scene-glyco
+// 3) tca   → scene-mito (TCA 회로 강조)
+// 4) etc   → scene-mito (전자전달계 강조 + NADH 풀 활성화)
+function setActiveStep(step){
+  document.querySelectorAll('.step-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.step === step);
+  });
+}
+
+function goStep(step){
+  setActiveStep(step);
+  if(step==='cell'){
+    goScene('cell');
+  } else if(step==='glyco'){
+    goScene('glyco');
+  } else if(step==='tca'){
+    goScene('mito');
+    // TCA 회로 영역으로 시각적 강조
+    highlightZone('tca');
+    // 모바일이면 가로 스크롤 위치 조정 (TCA 회로는 중앙)
+    const scn = $('scene-mito');
+    if(scn.scrollWidth > scn.clientWidth){
+      scn.scrollLeft = Math.max(0, (scn.scrollWidth - scn.clientWidth)/2);
+    }
+  } else if(step==='etc'){
+    goScene('mito');
+    // 전자전달계 활성화: NADH/FADH₂ 풀과 안내 표시
+    $('nadh-pool').style.display = 'block';
+    $('fadh-pool').style.display = 'block';
+    $('etc-info').style.display  = 'block';
+    refreshNADHPool();
+    refreshFADHPool();
+    highlightZone('etc');
+    if(state.nadh === 0 && state.fadh === 0){
+      showToast('전자전달계가 작동하려면 NADH/FADH₂가 필요해요. 해당 과정과 TCA 회로를 먼저 진행해 보세요.', 2800);
+    }
+    const scn = $('scene-mito');
+    if(scn.scrollWidth > scn.clientWidth){
+      scn.scrollLeft = 0;
+    }
+  }
+}
+
+// 화면 강조 (잠깐 깜빡)
+function highlightZone(zone){
+  const svg = $('mito-svg');
+  if(!svg) return;
+  // 임시 강조용 SVG 사각형 추가
+  const ns = 'http://www.w3.org/2000/svg';
+  const r = document.createElementNS(ns,'rect');
+  if(zone==='tca'){
+    r.setAttribute('x','560'); r.setAttribute('y','170');
+    r.setAttribute('width','290'); r.setAttribute('height','260');
+  } else if(zone==='etc'){
+    r.setAttribute('x','220'); r.setAttribute('y','30');
+    r.setAttribute('width','720'); r.setAttribute('height','70');
+  }
+  r.setAttribute('fill','none');
+  r.setAttribute('stroke','#ffb300');
+  r.setAttribute('stroke-width','4');
+  r.setAttribute('rx','10');
+  r.setAttribute('opacity','0');
+  r.style.transition = 'opacity .3s';
+  svg.appendChild(r);
+  requestAnimationFrame(()=>{ r.setAttribute('opacity','0.9'); });
+  setTimeout(()=>{ r.setAttribute('opacity','0'); }, 1300);
+  setTimeout(()=>{ r.remove(); }, 1700);
+}
+
+// "전자전달계로 이동" 버튼용
+function focusETC(){
+  goStep('etc');
+}
+
+// 세포 화면 클릭 핫스팟
+$('hot-cyto').addEventListener('click', ()=>{
+  goStep('glyco');
+});
+['hot-mito','hot-mito2'].forEach(id=>{
+  $(id).addEventListener('click', ()=>{
+    if(state.glyAtpNet===0 && state.pyruvatesInMatrix===0){
+      showToast('먼저 해당 과정에서 피루브산을 생성해도 좋아요. (지금도 진입 가능)', 2400);
+    }
+    goStep('tca');
+  });
+});
+
+// ============================================================
+// 1) 해당 과정
+// ============================================================
+function floatLabel(parent, text, cls, dx=0, dy=0){
+  const el = document.createElement('div');
+  el.className = 'floater '+cls;
+  el.textContent = text;
+  el.style.left = (40+dx)+'%';
+  el.style.top  = (50+dy)+'%';
+  el.style.position = 'absolute';
+  el.classList.add('float-up');
+  parent.appendChild(el);
+  setTimeout(()=>el.remove(), 1500);
+}
+
+$('mol-glucose').addEventListener('click', glucoseClicked);
+function glucoseClicked(){
+  if(glucoseClicked._done) return;
+  glucoseClicked._done = true;
+
+  // ATP 2 소비
+  state.atp -= 2;
+  state.glyAtpNet -= 2;
+  updateCounters();
+
+  const stage = $('glyco-stage');
+  floatLabel(stage, '−2 ATP (인산화)', 'minus', -25, -10);
+
+  // 화살표 위 영구 라벨 활성화
+  $('lbl-a1-atp').classList.add('show');
+
+  $('mol-glucose').classList.add('pulse');
+  setTimeout(()=>{
+    $('gly-step1').style.opacity = .35;
+    $('gly-step1').style.pointerEvents = 'none';
+    $('gly-step2').style.opacity = 1;
+    $('gly-step2').style.pointerEvents = 'auto';
+    $('mol-f16bp').classList.add('pop');
+    $('glyco-guide').innerHTML =
+      '<b>해당 과정 2단계</b> · <b>과당-2-인산</b>을 클릭하세요. 2개의 인산기가 ADP로 전달되며 <b>4 ATP가 합성</b>되고, 탈수소 효소 작용으로 <b>2 NADH</b>가 만들어집니다. 결과는 2분자의 <b>피루브산(C₃)</b>입니다.';
+  }, 700);
+}
+
+$('mol-f16bp').addEventListener('click', f16bpClicked);
+function f16bpClicked(){
+  if(f16bpClicked._done) return;
+  f16bpClicked._done = true;
+
+  // 기질 수준 인산화 4 ATP 합성 + 2 NADH
+  state.atp  += 4;  state.glyAtpNet += 4;
+  state.nadh += 2;  state.glyNadh   += 2;
+  updateCounters();
+
+  const stage = $('glyco-stage');
+  floatLabel(stage, '+4 ATP', 'atp', 0, -10);
+  setTimeout(()=>floatLabel(stage, '+2 NADH', 'nadh', 5, 5), 350);
+
+  // 화살표 위 영구 라벨 활성화 (살짝 시차)
+  $('lbl-a2-atp').classList.add('show');
+  setTimeout(()=>$('lbl-a2-nadh').classList.add('show'), 250);
+
+  $('mol-f16bp').classList.add('pulse');
+  setTimeout(()=>{
+    $('gly-step2').style.opacity = .35;
+    $('gly-step2').style.pointerEvents = 'none';
+    $('gly-step3').style.opacity = 1;
+    $('mol-pyr1').classList.add('pop');
+    $('mol-pyr2').classList.add('pop');
+    $('btn-to-mito').disabled = false;
+    $('glyco-guide').innerHTML =
+      '<b>해당 과정 완료!</b> · 포도당 1분자 → 2 피루브산. <b>순 ATP 합성 +2</b>, <b>NADH +2</b>. 이제 피루브산을 미토콘드리아 기질로 보내 산화시켜 봅시다.';
+  }, 700);
+}
+
+function resetGlyco(){
+  glucoseClicked._done = false;
+  f16bpClicked._done = false;
+  // 카운터 보정: 해당과정만 되돌리기 (전체 진행 상황은 유지)
+  state.atp  -= state.glyAtpNet;
+  state.nadh -= state.glyNadh;
+  state.glyAtpNet = 0;
+  state.glyNadh   = 0;
+  updateCounters();
+
+  $('gly-step1').style.opacity = 1;
+  $('gly-step1').style.pointerEvents = 'auto';
+  $('gly-step2').style.opacity = .3;
+  $('gly-step2').style.pointerEvents = 'none';
+  $('gly-step3').style.opacity = .3;
+  $('btn-to-mito').disabled = true;
+
+  // 화살표 위 영구 라벨도 모두 숨김
+  document.querySelectorAll('.arrow-label').forEach(el=>el.classList.remove('show'));
+
+  $('glyco-guide').innerHTML =
+    '<b>해당 과정 1단계</b> · 6탄소 화합물 <b>포도당</b>을 클릭하세요. ATP 2개가 소비되어 과당-2-인산으로 활성화됩니다.';
+}
+
+// ============================================================
+// 2) 미토콘드리아: 피루브산 산화 + TCA + 전자전달계
+// ============================================================
+
+// 진입 시: 피루브산 보이기 + 해당과정 NADH 2개만 보장
+function prepareMitoEntry(){
+  $('d-pyr1').style.display = 'inline-flex';
+  $('d-pyr2').style.display = 'inline-flex';
+
+  // 피루브산이 TCA 회로에 들어가기 전 상태:
+  // 해당과정에서 만들어진 NADH 2개만 풀에 보장 (학습자가 해당과정을 건너뛴 경우 대비)
+  // FADH₂는 TCA에서만 생성되므로 자동 보충하지 않음
+  if(state.nadh < 2) state.nadh = 2;
+  updateCounters();
+
+  // 풀과 ETC 안내 항상 표시
+  $('nadh-pool').style.display = 'block';
+  $('fadh-pool').style.display = 'block';
+  $('etc-info').style.display = 'block';
+  refreshNADHPool();
+  refreshFADHPool();
+
+  $('mito-guide').innerHTML =
+    '<b>피루브산을 미토콘드리아 기질로 드래그</b>하세요. 시작 상태: <b style="color:#3a2a8a">NADH 2개</b>(해당과정). 피루브산 <b>1개를 처리할 때마다 NADH +4, FADH₂ +1</b>이 누적됩니다 (피루브산 산화 1 NADH + 시트르산→5탄소 1 NADH + 5탄소→4탄소 1 NADH·1 ATP + 4탄소→OAA 1 NADH·1 FADH₂). 피루브산 2개를 모두 처리하면 최종 NADH 10, FADH₂ 2가 됩니다.';
+}
+
+// ---- 드래그 시스템 ----
+let drag = null;
+document.addEventListener('mousedown', e=>{
+  const t = e.target.closest('.draggable');
+  if(!t) return;
+  const rect = t.getBoundingClientRect();
+  drag = {
+    el: t,
+    offX: e.clientX - rect.left,
+    offY: e.clientY - rect.top
+  };
+  t.style.zIndex = 100;
+  e.preventDefault();
+});
+document.addEventListener('mousemove', e=>{
+  if(!drag) return;
+  const layer = $('drag-layer').getBoundingClientRect();
+  const x = e.clientX - layer.left - drag.offX;
+  const y = e.clientY - layer.top  - drag.offY;
+  drag.el.style.left = x+'px';
+  drag.el.style.top  = y+'px';
+  // 호버 효과: 매트릭스 영역 안에 들어왔는지
+  checkDragHover(e.clientX, e.clientY);
+});
+document.addEventListener('mouseup', e=>{
+  if(!drag) return;
+  const released = drag;
+  drag.el.style.zIndex = '';
+  drag = null;
+  handleDrop(released, e.clientX, e.clientY);
+  clearDragHover();
+});
+
+// 터치 지원
+document.addEventListener('touchstart', e=>{
+  const t = e.target.closest('.draggable');
+  if(!t) return;
+  const rect = t.getBoundingClientRect();
+  const tp = e.touches[0];
+  drag = { el:t, offX: tp.clientX-rect.left, offY: tp.clientY-rect.top };
+  t.style.zIndex = 100;
+}, {passive:true});
+document.addEventListener('touchmove', e=>{
+  if(!drag) return;
+  const tp = e.touches[0];
+  const layer = $('drag-layer').getBoundingClientRect();
+  drag.el.style.left = (tp.clientX-layer.left-drag.offX)+'px';
+  drag.el.style.top  = (tp.clientY-layer.top -drag.offY)+'px';
+  checkDragHover(tp.clientX, tp.clientY);
+}, {passive:true});
+document.addEventListener('touchend', e=>{
+  if(!drag) return;
+  const tp = e.changedTouches[0];
+  const released = drag;
+  drag.el.style.zIndex = '';
+  drag = null;
+  handleDrop(released, tp.clientX, tp.clientY);
+  clearDragHover();
+});
+
+// 좌표가 SVG 내 어떤 영역에 있는지 판단
+function getMitoMatrixRect(){
+  // 미토콘드리아 기질의 화면 좌표 (SVG의 path 210,70 ~ 1080,460 영역)
+  const svg = $('mito-svg');
+  const rect = svg.getBoundingClientRect();
+  const vbW = 1100, vbH = 540;
+  const scaleX = rect.width / vbW;
+  const scaleY = rect.height / vbH;
+  return {
+    left:   rect.left + 210*scaleX,
+    top:    rect.top  + 70 *scaleY,
+    right:  rect.left + 1080*scaleX,
+    bottom: rect.top  + 460*scaleY
+  };
+}
+function getCpx1Rect(){
+  const svg = $('mito-svg');
+  const rect = svg.getBoundingClientRect();
+  const sx = rect.width/1100, sy = rect.height/540;
+  return {
+    left:   rect.left + 260*sx,
+    top:    rect.top  + 50*sy,
+    right:  rect.left + 340*sx,
+    bottom: rect.top  + 90*sy
+  };
+}
+function getCpx2Rect(){
+  const svg = $('mito-svg');
+  const rect = svg.getBoundingClientRect();
+  const sx = rect.width/1100, sy = rect.height/540;
+  return {
+    left:   rect.left + 370*sx,
+    top:    rect.top  + 105*sy,
+    right:  rect.left + 430*sx,
+    bottom: rect.top  + 135*sy
+  };
+}
+function getAcoaRect(){
+  const el = $('d-acoa');
+  if(el.style.display==='none') return null;
+  const r = el.getBoundingClientRect();
+  // 충돌 감지를 더 관대하게: 30px 패딩
+  const pad = 30;
+  return {
+    left: r.left - pad,
+    top:  r.top  - pad,
+    right: r.right + pad,
+    bottom: r.bottom + pad
+  };
+}
+function inRect(x,y,r){
+  return r && x>=r.left && x<=r.right && y>=r.top && y<=r.bottom;
+}
+
+function checkDragHover(x,y){
+  if(!drag) return;
+  const type = drag.el.dataset.type;
+  document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('hover'));
+
+  if(type==='pyr'){
+    if(inRect(x,y,getMitoMatrixRect())){
+      $('mito-stage').classList.add('hover-on');
+    }
+  }
+  if(type==='nadh'){
+    if(inRect(x,y,getCpx1Rect())){
+      $('cpx1').classList.add('hover');
+    }
+  }
+  if(type==='fadh'){
+    if(inRect(x,y,getCpx2Rect())){
+      $('cpx2').classList.add('hover');
+    }
+  }
+}
+function clearDragHover(){
+  document.querySelectorAll('.drop-zone').forEach(z=>z.classList.remove('hover'));
+  const ac = $('d-acoa'); if(ac) ac.style.filter='';
+}
+
+// ---- 드롭 처리 ----
+function handleDrop(drag, x, y){
+  const type = drag.el.dataset.type;
+
+  if(type==='pyr'){
+    if(inRect(x,y,getMitoMatrixRect())){
+      pyruvateOxidation(drag.el);
+    } else {
+      // 위치 복귀
+      drag.el.style.left = '55px';
+      drag.el.style.top  = (drag.el.id==='d-pyr1' ? '300px' : '355px');
+    }
+  }
+  // OAA는 더 이상 드래그 불가 (자동 시퀀스로 처리)
+  else if(type==='nadh'){
+    if(inRect(x,y,getCpx1Rect()) && !state.etcRunning){
+      startETC(drag.el);
+    } else {
+      restackNADH();
+    }
+  }
+  else if(type==='fadh'){
+    if(inRect(x,y,getCpx2Rect()) && !state.etcRunning){
+      startETCFromFADH(drag.el);
+    } else {
+      restackFADH();
+    }
+  }
+}
+
+// ---- 피루브산 → 아세틸 CoA → (OAA 등장) → 시트르산 자동 시퀀스 ----
+let pyrOxCount = 0;
+function pyruvateOxidation(pyrEl){
+  // TCA 회로가 이미 진행 중이면 두 번째 피루브산은 무시 (안내만)
+  const cycleInProgress =
+    state.acetylCoA > 0 || state.citrateActive ||
+    state.c5Active   || state.c4Active;
+  if(cycleInProgress){
+    // 위치 복귀
+    pyrEl.style.transition = 'all .4s';
+    pyrEl.style.left = '55px';
+    pyrEl.style.top  = (pyrEl.id==='d-pyr1' ? '300px' : '355px');
+    showToast('첫 번째 TCA 회로가 진행 중입니다. 4탄소 화합물까지 변환을 마친 후 다시 시도하세요.', 2800);
+    return;
+  }
+
+  state.pyruvatesInMatrix++;
+  pyrOxCount++;
+
+  // 피루브산이 기질 안으로 흡수되는 시각 효과
+  pyrEl.style.transition = 'all .55s';
+  pyrEl.style.left = '420px';
+  pyrEl.style.top  = '260px';
+  pyrEl.style.opacity = '0.3';
+
+  // CO₂ + NADH 생성
+  state.co2  += 1;
+  state.nadh += 1;
+  updateCounters();
+
+  const stage = $('mito-stage');
+  spawnFloater(stage, pyrEl, 'CO₂ ↑', 'co2', -40, -20);
+  setTimeout(()=> spawnFloater(stage, pyrEl, '+NADH', 'nadh', 30, -10), 250);
+
+  $('mito-guide').innerHTML =
+    '<b>피루브산 산화</b> · 피루브산이 미토콘드리아 기질 안에서 CO₂를 잃고 NADH를 만들며 <b>아세틸 CoA</b>로 변환됩니다...';
+
+  // 1단계: 피루브산 사라지고 아세틸 CoA 등장
+  setTimeout(()=>{
+    pyrEl.style.display = 'none';
+    pyrEl.style.opacity = '';
+    pyrEl.style.transition = '';
+
+    const acoa = $('d-acoa');
+    acoa.style.transition = '';
+    acoa.style.left = '590px';
+    acoa.style.top  = '215px';
+    showMol(acoa);
+    state.acetylCoA = 1;
+
+    $('mito-guide').innerHTML =
+      '<b>아세틸 CoA 형성 완료</b> · 미토콘드리아 기질의 <b>옥살아세트산(C₄)</b>이 등장합니다...';
+  }, 550);
+
+  // 2단계: 옥살아세트산 등장 (회로 왼쪽)
+  setTimeout(()=>{
+    const oaa = $('d-oaa');
+    oaa.style.transition = '';
+    oaa.style.left = '440px';
+    oaa.style.top  = '290px';
+    showMol(oaa);
+
+    $('mito-guide').innerHTML =
+      '<b>옥살아세트산 등장</b> · 옥살아세트산이 아세틸 CoA 쪽으로 이동하여 결합합니다...';
+  }, 1700);
+
+  // 3단계: OAA가 acoa 쪽으로 이동하는 애니메이션
+  setTimeout(()=>{
+    const oaa = $('d-oaa');
+    oaa.style.transition = 'left .9s ease-in-out, top .9s ease-in-out';
+    oaa.style.left = '470px';
+    oaa.style.top  = '215px';
+  }, 2700);
+
+  // 4단계: OAA + 아세틸 CoA → 시트르산 자동 형성
+  setTimeout(()=>{
+    hideMol($('d-acoa'));
+    hideMol($('d-oaa'));
+    state.acetylCoA = 0;
+
+    showMol($('d-citrate'));
+    state.citrateActive = true;
+
+    showToast('아세틸 CoA(C₂) + 옥살아세트산(C₄) → 시트르산(C₆)', 2200);
+    $('mito-guide').innerHTML =
+      '<b>TCA 회로 시작</b> · 회로 오른쪽 위의 <b>시트르산</b>을 클릭하세요. 이후 단계는 <b>각 분자를 클릭</b>할 때마다 진행됩니다 (시트르산 → 5탄소 → 4탄소 → 옥살아세트산).';
+  }, 3700);
+}
+
+function spawnFloater(parent, anchor, text, cls, dx=0, dy=0){
+  const a = anchor.getBoundingClientRect();
+  const p = parent.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'floater '+cls;
+  el.textContent = text;
+  el.style.position = 'absolute';
+  el.style.left = (a.left - p.left + dx)+'px';
+  el.style.top  = (a.top  - p.top  + dy)+'px';
+  el.classList.add('float-up');
+  parent.appendChild(el);
+  setTimeout(()=>el.remove(), 1500);
+}
+
+// (oaaPlusAcoa 함수는 제거됨 - pyruvateOxidation의 자동 시퀀스에 통합)
+
+// ---- 분자 표시/숨김 헬퍼 (단순하고 견고) ----
+function hideMol(el){
+  if(!el) return;
+  el.style.display = 'none';
+  el.style.opacity = '';
+  el.style.transform = '';
+  el.style.transition = '';
+  el.classList.remove('pop','spotlight');
+}
+
+function showMol(el){
+  if(!el) return;
+  // 모든 inline 스타일 초기화 (이전 변환의 흔적 제거)
+  el.style.opacity = '';
+  el.style.transform = '';
+  el.style.transition = '';
+  el.style.display = 'inline-flex';
+  // 강한 등장 효과: pop + 잠깐 spotlight
+  el.classList.remove('pop','spotlight');
+  // 강제 reflow로 애니메이션 재시작
+  void el.offsetWidth;
+  el.classList.add('pop','spotlight');
+  // spotlight는 1.2초 후 제거 (펄스는 계속)
+  setTimeout(()=>el.classList.remove('spotlight'), 1200);
+}
+
+// ---- TCA 회로 클릭 변환: 이벤트 위임으로 견고하게 처리 ----
+// (개별 element에 직접 등록하지 않고 drag-layer에 한 번만 등록)
+
+// ① 시트르산 → 5탄소 화합물
+function doCitrateToC5(){
+  state.citrateActive = false;
+  state.co2  += 1;
+  state.nadh += 1;
+  updateCounters();
+
+  $('lbl-cit-co2').classList.add('show');
+  setTimeout(()=>$('lbl-cit-nadh').classList.add('show'), 180);
+
+  const stage = $('mito-stage');
+  spawnFloater(stage, $('d-citrate'), 'CO₂ ↑', 'co2', -10, -20);
+  setTimeout(()=>spawnFloater(stage, $('d-citrate'), '+NADH', 'nadh', 60, -10), 150);
+
+  hideMol($('d-citrate'));
+  showMol($('d-c5'));
+  state.c5Active = true;
+
+  $('mito-guide').innerHTML =
+    '<b>TCA ③→④</b> · 회로 오른쪽 아래의 <b>5탄소 화합물</b>을 클릭하세요. CO₂ · H⁺ · 전자를 잃고 <b>4탄소 화합물</b>이 되며 <b>1 ATP(기질 수준 인산화)</b>와 <b>1 NADH</b>가 생성됩니다.';
+}
+
+// ② 5탄소 → 4탄소 화합물
+function doC5ToC4(){
+  state.c5Active = false;
+  state.co2  += 1;
+  state.nadh += 1;
+  state.atp  += 1;
+  updateCounters();
+
+  $('lbl-c5-co2').classList.add('show');
+  setTimeout(()=>$('lbl-c5-nadh').classList.add('show'), 180);
+  setTimeout(()=>$('lbl-c5-atp').classList.add('show'), 360);
+
+  const stage = $('mito-stage');
+  spawnFloater(stage, $('d-c5'), 'CO₂ ↑', 'co2', -10, -20);
+  setTimeout(()=>spawnFloater(stage, $('d-c5'), '+NADH', 'nadh', 60, -5), 150);
+  setTimeout(()=>spawnFloater(stage, $('d-c5'), '+ATP', 'atp', 60, 15), 300);
+
+  hideMol($('d-c5'));
+  showMol($('d-c4'));
+  state.c4Active = true;
+
+  $('mito-guide').innerHTML =
+    '<b>TCA ④→⑤</b> · 회로 아래쪽의 <b>4탄소 화합물</b>을 클릭하세요. 여러 단계의 화학 반응을 거쳐 <b>옥살아세트산</b>으로 재생되며 <b>1 FADH₂</b>와 <b>1 NADH</b>가 생성됩니다.';
+}
+
+// ③ 4탄소 → 옥살아세트산 재생
+function doC4ToOAA(){
+  state.c4Active = false;
+  state.nadh += 1;
+  state.fadh += 1;
+  updateCounters();
+
+  $('lbl-c4-nadh').classList.add('show');
+  setTimeout(()=>$('lbl-c4-fadh').classList.add('show'), 180);
+
+  const stage = $('mito-stage');
+  spawnFloater(stage, $('d-c4'), '+NADH', 'nadh', 0, -20);
+  setTimeout(()=>spawnFloater(stage, $('d-c4'), '+FADH₂', 'fadh', 50, -5), 200);
+
+  hideMol($('d-c4'));
+  const oaa = $('d-oaa');
+  oaa.style.left = '470px';
+  oaa.style.top  = '290px';
+  showMol(oaa);
+
+  refreshNADHPool();
+  $('nadh-pool').style.display = 'block';
+  $('etc-info').style.display = 'block';
+
+  $('mito-guide').innerHTML =
+    '<b>TCA 회로 1회전 완료!</b> 옥살아세트산이 회로 왼쪽에 재생되어 다음 아세틸 CoA를 기다립니다. 이제 생성된 <b>NADH를 전자전달계의 Complex I로 드래그</b>해 산화적 인산화를 진행해 보세요.';
+}
+
+// ★ 이벤트 위임: drag-layer에서 click을 캐치하여 분자 ID에 따라 분기
+// 이 방식은 element가 동적으로 보였다 숨었다 해도 항상 작동
+$('drag-layer').addEventListener('click', function(e){
+  const el = e.target.closest('.clickable-mol');
+  if(!el) return;
+  if(el.style.display === 'none') return;
+  // 중복 클릭 방지 (전환 직후 다시 클릭되어도 200ms 잠금)
+  if(el._processing) return;
+  el._processing = true;
+  setTimeout(()=>{ el._processing = false; }, 200);
+
+  if(el.id === 'd-citrate') doCitrateToC5();
+  else if(el.id === 'd-c5') doC5ToC4();
+  else if(el.id === 'd-c4') doC4ToOAA();
+});
+
+// ---- NADH 풀 (5열 × 2행 = 10개 배치) ----
+function refreshNADHPool(){
+  document.querySelectorAll('#drag-layer .nadh-mol').forEach(el=>el.remove());
+  if(state.etcRunning) return;
+  const layer = $('drag-layer');
+  const baseX = 180, baseY = 462;
+  for(let i=0;i<state.nadh;i++){
+    const n = document.createElement('div');
+    n.className = 'draggable small-mol nadh-mol';
+    n.dataset.type = 'nadh';
+    n.style.position = 'absolute';
+    // 5열 × 2행
+    const col = i%5, row = Math.floor(i/5);
+    n.style.left = (baseX + col*72) + 'px';
+    n.style.top  = (baseY + row*36) + 'px';
+    n.style.background = '#e6e1f7';
+    n.style.borderColor = '#3a2a8a';
+    n.innerHTML = '<span style="font-size:12px;color:#3a2a8a;font-weight:800">NADH</span>';
+    layer.appendChild(n);
+  }
+}
+
+// ---- FADH₂ 풀 (1열 × 2행 = 2개 세로 배치) ----
+function refreshFADHPool(){
+  document.querySelectorAll('#drag-layer .fadh-mol').forEach(el=>el.remove());
+  if(state.etcRunning) return;
+  const layer = $('drag-layer');
+  const baseX = 560, baseY = 462;
+  for(let i=0;i<state.fadh;i++){
+    const n = document.createElement('div');
+    n.className = 'draggable small-mol fadh-mol';
+    n.dataset.type = 'fadh';
+    n.style.position = 'absolute';
+    // 1열 × N행 (세로 배치)
+    n.style.left = baseX + 'px';
+    n.style.top  = (baseY + i*36) + 'px';
+    n.style.background = '#f7e1ef';
+    n.style.borderColor = '#7a2a6a';
+    n.innerHTML = '<span style="font-size:12px;color:#5a1a4a;font-weight:800">FADH₂</span>';
+    layer.appendChild(n);
+  }
+}
+
+function restackNADH(){ refreshNADHPool(); }
+function restackFADH(){ refreshFADHPool(); }
+
+// ============================================================
+// 3) 전자전달계 + 화학삼투 자동 애니메이션
+// ============================================================
+function startETC(nadhEl){
+  state.etcRunning = true;
+  nadhEl.remove();
+  state.nadh -= 1; // NADH 1 소비
+  updateCounters();
+  refreshNADHPool();
+
+  $('mito-guide').innerHTML =
+    '<b>NADH 산화적 인산화 진행 중</b> · NADH가 Complex I에 전자를 전달합니다. Complex I·III·IV의 H⁺ 펌프 3곳이 작동하여 막 사이 공간에 H⁺이 축적되고, ATP 합성 효소를 통해 흐르며 <b>약 3개의 ATP가 합성</b>됩니다.';
+
+  runETCAnimation();
+}
+
+function startETCFromFADH(fadhEl){
+  state.etcRunning = true;
+  fadhEl.remove();
+  state.fadh -= 1; // FADH₂ 1 소비
+  updateCounters();
+  refreshFADHPool();
+
+  $('mito-guide').innerHTML =
+    '<b>FADH₂ 산화적 인산화 진행 중</b> · FADH₂가 Complex II를 거쳐 전자를 Q로 전달합니다. Complex I을 건너뛰므로 H⁺ 펌프는 III·IV 두 곳만 작동하여 <b>약 2개의 ATP가 합성</b>됩니다.';
+
+  runETCAnimationFADH();
+}
+
+function runETCAnimation(){
+  const layer = $('drag-layer');
+  // 좌표 (drag-layer 기준 = mito-wrap 기준)
+  // SVG viewBox 1100x540 ↔ layer 비율 변환
+  const wrap = $('mito-stage');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const sx = x=> x * W/1100;
+  const sy = y=> y * H/540;
+
+  // 1) NADH가 Complex I에 전자(2e-) 전달 -> 작은 빛
+  const cpx1Cx = sx(300), cpx1Cy = sy(70);
+  const cpx3Cx = sx(500), cpx3Cy = sy(70);
+  const cpx4Cx = sx(700), cpx4Cy = sy(70);
+  const atpCx  = sx(890), atpCy  = sy(70);
+
+  // 전자 2개 생성
+  for(let i=0;i<2;i++){
+    setTimeout(()=>{
+      animateElectron(layer, cpx1Cx-30, sy(120), cpx1Cx, cpx1Cy, 600, ()=>{
+        // I→III
+        animateElectron(layer, cpx1Cx, cpx1Cy, cpx3Cx, cpx3Cy, 700, ()=>{
+          // III→IV
+          animateElectron(layer, cpx3Cx, cpx3Cy, cpx4Cx, cpx4Cy, 700, ()=>{
+            // IV → O2 → H2O
+            animateElectron(layer, cpx4Cx, cpx4Cy, cpx4Cx, sy(120), 500, ()=>{
+              if(i===1){
+                // 마지막 전자가 도착할 때 물 생성 표시
+                state.h2o += 1;
+                updateCounters();
+                showWaterFormation(layer, cpx4Cx, sy(140));
+              }
+            });
+          });
+        });
+      });
+    }, i*200);
+  }
+
+  // 2) 화학삼투: H+ 능동 수송 (Complex I, III, IV에서 기질→막 사이 공간)
+  const pumpAt = [cpx1Cx, cpx3Cx, cpx4Cx];
+  pumpAt.forEach((cx, idx)=>{
+    for(let k=0;k<3;k++){
+      setTimeout(()=>{
+        pumpProton(layer, cx, sy(120), cx, sy(30));
+      }, 800 + idx*400 + k*200);
+    }
+  });
+
+  // 3) 막 사이 공간의 H+이 ATP 합성효소를 통해 기질로 → ATP 합성
+  setTimeout(()=>{
+    for(let k=0;k<3;k++){
+      setTimeout(()=>{
+        flowProtonThroughATPase(layer, atpCx, sy(30), atpCx, sy(120), ()=>{
+          // ATP 합성
+          state.atp += 1;
+          updateCounters();
+          spawnATPLabel(layer, atpCx, sy(140));
+        });
+      }, k*400);
+    }
+  }, 2500);
+
+  // 종료
+  setTimeout(()=>{
+    state.etcRunning = false;
+    refreshNADHPool();
+    refreshFADHPool();
+    $('mito-guide').innerHTML =
+      '<b>NADH 1회 산화 완료!</b> 산소가 최종 전자 수용체로서 물(H₂O)을 만들고, 막 사이 공간에 쌓인 H⁺이 ATP 합성 효소를 통해 흐르며 ATP가 합성되었습니다. 남은 NADH/FADH₂가 있다면 계속 진행해 보세요. (NADH당 약 2.5 ATP, FADH₂당 약 1.5 ATP)';
+  }, 5200);
+}
+
+// ---- FADH₂ ETC 애니메이션 (Complex II 진입 → Q부터 시작 → III · IV에서만 H⁺ 펌핑) ----
+function runETCAnimationFADH(){
+  const layer = $('drag-layer');
+  const wrap = $('mito-stage');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  const sx = x => x * W/1100;
+  const sy = y => y * H/540;
+
+  const cpx2Cx = sx(400), cpx2Cy = sy(120);
+  const qCx    = sx(400), qCy    = sy(70);
+  const cpx3Cx = sx(500), cpx3Cy = sy(70);
+  const cpx4Cx = sx(700), cpx4Cy = sy(70);
+  const atpCx  = sx(890);
+
+  // 전자 2개: FADH₂풀 → Complex II → Q → III → c → IV → O₂
+  for(let i=0;i<2;i++){
+    setTimeout(()=>{
+      animateElectron(layer, cpx2Cx+10, sy(155), cpx2Cx, cpx2Cy, 400, ()=>{
+        animateElectron(layer, cpx2Cx, cpx2Cy, qCx, qCy, 500, ()=>{
+          animateElectron(layer, qCx, qCy, cpx3Cx, cpx3Cy, 600, ()=>{
+            animateElectron(layer, cpx3Cx, cpx3Cy, cpx4Cx, cpx4Cy, 700, ()=>{
+              animateElectron(layer, cpx4Cx, cpx4Cy, cpx4Cx, sy(120), 500, ()=>{
+                if(i===1){
+                  state.h2o += 1;
+                  updateCounters();
+                  showWaterFormation(layer, cpx4Cx, sy(140));
+                }
+              });
+            });
+          });
+        });
+      });
+    }, i*200);
+  }
+
+  // H⁺ 펌핑: Complex III, IV에서만 (Complex I은 건너뜀)
+  const pumpAt = [cpx3Cx, cpx4Cx];
+  pumpAt.forEach((cx, idx)=>{
+    for(let k=0;k<3;k++){
+      setTimeout(()=>{
+        pumpProton(layer, cx, sy(120), cx, sy(30));
+      }, 1500 + idx*400 + k*200);
+    }
+  });
+
+  // ATP 합성: 약 2개
+  setTimeout(()=>{
+    for(let k=0;k<2;k++){
+      setTimeout(()=>{
+        flowProtonThroughATPase(layer, atpCx, sy(30), atpCx, sy(120), ()=>{
+          state.atp += 1;
+          updateCounters();
+          spawnATPLabel(layer, atpCx, sy(140));
+        });
+      }, k*400);
+    }
+  }, 3000);
+
+  // 종료
+  setTimeout(()=>{
+    state.etcRunning = false;
+    refreshNADHPool();
+    refreshFADHPool();
+    $('mito-guide').innerHTML =
+      '<b>FADH₂ 1회 산화 완료!</b> FADH₂는 Complex I을 거치지 않고 Complex II → Q부터 시작하므로 NADH보다 적은 H⁺이 펌핑되고, 따라서 더 적은 ATP가 합성됩니다. 남은 NADH/FADH₂가 있다면 계속 진행해 보세요.';
+  }, 5500);
+}
+
+function animateElectron(layer, x1, y1, x2, y2, dur, onEnd){
+  const el = document.createElement('div');
+  el.className = 'electron';
+  el.style.left = (x1-7)+'px';
+  el.style.top  = (y1-7)+'px';
+  el.style.transition = `left ${dur}ms ease-in-out, top ${dur}ms ease-in-out`;
+  layer.appendChild(el);
+  requestAnimationFrame(()=>{
+    el.style.left = (x2-7)+'px';
+    el.style.top  = (y2-7)+'px';
+  });
+  setTimeout(()=>{ el.remove(); onEnd && onEnd(); }, dur+50);
+}
+
+function pumpProton(layer, x1, y1, x2, y2){
+  const p = document.createElement('div');
+  p.className = 'hion';
+  p.textContent = 'H⁺';
+  p.style.left = (x1-11)+'px';
+  p.style.top  = (y1-11)+'px';
+  p.style.transition = 'left .9s ease-in-out, top .9s ease-in-out, opacity .9s';
+  layer.appendChild(p);
+  requestAnimationFrame(()=>{
+    p.style.left = (x2-11)+'px';
+    p.style.top  = (y2-11)+'px';
+  });
+  setTimeout(()=>p.remove(), 1100);
+}
+
+function flowProtonThroughATPase(layer, x1, y1, x2, y2, cb){
+  const p = document.createElement('div');
+  p.className = 'hion';
+  p.textContent = 'H⁺';
+  p.style.left = (x1-11)+'px';
+  p.style.top  = (y1-11)+'px';
+  p.style.background = '#3aa1d4';
+  p.style.transition = 'left .9s ease-in-out, top .9s ease-in-out';
+  layer.appendChild(p);
+  requestAnimationFrame(()=>{
+    p.style.left = (x2-11)+'px';
+    p.style.top  = (y2-11)+'px';
+  });
+  setTimeout(()=>{ p.remove(); cb && cb(); }, 950);
+}
+
+function spawnATPLabel(layer, x, y){
+  const el = document.createElement('div');
+  el.className = 'floater atp';
+  el.textContent = '+ATP';
+  el.style.left = (x-20)+'px';
+  el.style.top  = (y-10)+'px';
+  el.classList.add('float-up');
+  layer.appendChild(el);
+  setTimeout(()=>el.remove(), 1500);
+}
+
+function showWaterFormation(layer, x, y){
+  const el = document.createElement('div');
+  el.className = 'floater';
+  el.textContent = '½O₂ + 2H⁺ + 2e⁻ → H₂O';
+  el.style.background = '#dbeefb';
+  el.style.color = '#1b4a6a';
+  el.style.left = (x-90)+'px';
+  el.style.top  = (y-10)+'px';
+  el.classList.add('float-up');
+  layer.appendChild(el);
+  setTimeout(()=>el.remove(), 1600);
+}
+
+// ---- 미토콘드리아 초기화 ----
+function resetMito(){
+  state.pyruvatesInMatrix = 0;
+  pyrOxCount = 0;
+  state.acetylCoA = 0;
+  state.citrateActive = false;
+  state.c5Active = false;
+  state.c4Active = false;
+  state.etcRunning = false;
+
+  // DOM 분자 모두 숨김/초기화
+  const p1 = $('d-pyr1'); p1.style.display='inline-flex'; p1.style.opacity='1';
+  p1.style.left='55px'; p1.style.top='300px';
+  const p2 = $('d-pyr2'); p2.style.display='inline-flex'; p2.style.opacity='1';
+  p2.style.left='55px'; p2.style.top='355px';
+
+  $('d-oaa').style.display='none';
+  $('d-acoa').style.display='none';
+  $('d-citrate').style.display='none';
+  $('d-c5').style.display='none';
+  $('d-c4').style.display='none';
+  $('nadh-pool').style.display='none';
+  $('etc-info').style.display='none';
+
+  // 동적으로 생성된 NADH/FADH₂ 드래그 분자 제거
+  document.querySelectorAll('#drag-layer .nadh-mol, #drag-layer .fadh-mol').forEach(el=>el.remove());
+
+  // TCA 단계별 영구 라벨 모두 숨김
+  document.querySelectorAll('.tca-stage-label').forEach(el=>el.classList.remove('show'));
+
+  // 분자 transition 흔적 정리
+  ['d-citrate','d-c5','d-c4','d-oaa','d-acoa'].forEach(id=>{
+    const el = $(id);
+    if(el){ el.style.opacity=''; el.style.transform=''; el.style.transition=''; }
+  });
+
+  // 풀은 다시 표시 (해당과정 NADH가 남아 있다면 거기서 사용 가능)
+  $('nadh-pool').style.display = 'block';
+  $('fadh-pool').style.display = 'block';
+  $('etc-info').style.display = 'block';
+  refreshNADHPool();
+  refreshFADHPool();
+
+  $('mito-guide').innerHTML =
+    '<b>피루브산을 미토콘드리아 기질로 드래그</b>하세요. 기질에서 아세틸 CoA → 시트르산이 자동으로 형성되며, 이후 단계는 분자를 클릭하여 진행합니다.';
+}
+
+// 초기 동기화
+updateCounters();
+</script>
 </body>
 </html>

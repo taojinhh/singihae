@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -142,7 +142,8 @@
   <p>클릭하며 단계별로 이해하는 <b>유전자 재조합 · PCR · 항체 · 줄기세포 · 조직 배양</b></p>
   <div class="tabs">
     <button class="tab-btn active" data-tab="t1">① 유전자 재조합<small>제한효소·플라스미드</small></button>
-    <button class="tab-btn" data-tab="t2">② 대장균 선별<small>항생제 저항성</small></button> <button class="tab-btn" data-tab="t3">③ PCR<small>중합효소 연쇄 반응</small></button>
+    <button class="tab-btn" data-tab="t2">② 대장균 선별<small>항생제 저항성</small></button>
+    <button class="tab-btn" data-tab="t3">③ PCR<small>중합효소 연쇄 반응</small></button>
     <button class="tab-btn" data-tab="t4">④ 단일 클론 항체<small>임신키트·암치료</small></button>
     <button class="tab-btn" data-tab="t5">⑤ 핵치환·배아줄기<small>돌리·분화</small></button>
     <button class="tab-btn" data-tab="t6">⑥ 유도만능줄기세포<small>iPSC 치료</small></button>
@@ -158,6 +159,7 @@
     <span class="status">단계 버튼(▶ 다음)을 눌러가며 과정을 관찰하고, 퀴즈로 확인하세요.</span>
   </div>
 
+  <!-- ================= TAB 1 : 유전자 재조합 ================= -->
   <section class="panel active" id="t1">
     <div class="card">
       <h2>① 유전자 재조합 기술 — 재조합 플라스미드 만들기</h2>
@@ -188,6 +190,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 2 : 대장균 선별 ================= -->
   <section class="panel" id="t2">
     <div class="card">
       <h2>② 재조합 플라스미드를 갖는 대장균 선별</h2>
@@ -224,6 +227,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 3 : PCR ================= -->
   <section class="panel" id="t3">
     <div class="card">
       <h2>③ 중합 효소 연쇄 반응 (PCR)</h2>
@@ -264,6 +268,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 4 : 단일 클론 항체 ================= -->
   <section class="panel" id="t4">
     <div class="card">
       <h2>④ 세포 융합과 단일 클론 항체</h2>
@@ -326,6 +331,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 5 : 핵치환 & 배아줄기세포 ================= -->
   <section class="panel" id="t5">
     <div class="card">
       <h2>⑤ 핵치환과 배아 줄기세포</h2>
@@ -371,6 +377,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 6 : 유도만능 줄기세포 ================= -->
   <section class="panel" id="t6">
     <div class="card">
       <h2>⑥ 유도 만능 줄기세포(iPSC)를 이용한 치료</h2>
@@ -405,6 +412,7 @@
     </div>
   </section>
 
+  <!-- ================= TAB 7 : 조직 배양 ================= -->
   <section class="panel" id="t7">
     <div class="card">
       <h2>⑦ 조직 배양 — 식물 복제</h2>
@@ -435,10 +443,7 @@
   </section>
 </main>
 
-<footer>
-  <div style="font-weight: bold; margin-bottom: 4px;">생명 공학 기술 학습 프로그램</div>
-  <div style="font-size: 11px; color: var(--muted);">All Rights Reserved (무단 전재 및 재배포 금지)</div>
-</footer>
+<footer>생명 공학 기술 학습 프로그램</footer>
 
 <script>
 /* ===== 공통: 탭 전환 ===== */
@@ -490,6 +495,7 @@ document.querySelectorAll('.quiz').forEach(q=>{
 
 /* ===== 공통: 단계 플레이어 엔진 ===== */
 function makePlayer(cfg){
+  // cfg: {stage, dots, info, prevBtn, nextBtn, resetBtn, steps:[{t,d,svg}]}
   const stage=document.getElementById(cfg.stage);
   const info=document.getElementById(cfg.info);
   const dots=cfg.dots?document.getElementById(cfg.dots):null;
@@ -522,7 +528,509 @@ function makePlayer(cfg){
 function svg(w,h,inner){return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'">'+inner+'</svg>';}
 function txt(x,y,s,opt){opt=opt||{};return '<text x="'+x+'" y="'+y+'" font-size="'+(opt.fs||13)+'" fill="'+(opt.c||'#1f2430')+'" text-anchor="'+(opt.a||'middle')+'" font-weight="'+(opt.w||'400')+'">'+s+'</text>';}
 
-/* 위 스크립트 이하 생명공학 기술 관련 로직(유전자 재조합, 대장균 선별, PCR 등 애니메이션 정의 코드)이 그대로 이어짐 */
+/* ===================== TAB 1 : 유전자 재조합 ===================== */
+(function(){
+  const DX=22;               // 염기 1칸 간격
+  const BLUE='#2563eb', GREEN='#16a34a', RED='#dc2626', PUR='#5b3fa8';
+  // 이중 가닥 DNA 그리기: top/bot 문자열(공백=단일가닥 돌출부), 인덱스로 정렬
+  // opt: {cx, y, tc, bc, cutTop, cutBot(자를 위치 인덱스+0.5), nickTop, nickBot(틈), labels}
+  function dna(top, bot, opt){
+    opt=opt||{};
+    const y=opt.y||90, tc=opt.tc||BLUE, bc=opt.bc||GREEN;
+    const n=Math.max(top.length, bot.length);
+    const x0=(opt.cx||350)-(n-1)*DX/2;
+    let s='';
+    // 골격 선(연한 배경)
+    s+='<line x1="'+(x0-4)+'" y1="'+(y-7)+'" x2="'+(x0+(top.length-1)*DX+4)+'" y2="'+(y-7)+'" stroke="'+tc+'" stroke-width="2" opacity=".35"/>';
+    s+='<line x1="'+(x0-4)+'" y1="'+(y+27)+'" x2="'+(x0+(bot.length-1)*DX+4)+'" y2="'+(y+27)+'" stroke="'+bc+'" stroke-width="2" opacity=".35"/>';
+    // 염기쌍 결합선
+    for(let i=0;i<n;i++){
+      const tb=top[i]||' ', bb=bot[i]||' ';
+      if(tb!==' ' && bb!==' '){
+        const x=x0+i*DX;
+        s+='<line x1="'+x+'" y1="'+(y+3)+'" x2="'+x+'" y2="'+(y+17)+'" stroke="#c9bff0" stroke-width="2"/>';
+      }
+    }
+    for(let i=0;i<top.length;i++){ if(top[i]!==' ') s+=txt(x0+i*DX,y,top[i],{fs:15,w:'800',c:tc}); }
+    for(let i=0;i<bot.length;i++){ if(bot[i]!==' ') s+=txt(x0+i*DX,y+34,bot[i],{fs:15,w:'800',c:bc}); }
+    // 자르는 위치(빨간 가위선)
+    if(opt.cutTop!=null){const x=x0+opt.cutTop*DX; s+='<line x1="'+x+'" y1="'+(y-16)+'" x2="'+x+'" y2="'+(y+6)+'" stroke="'+RED+'" stroke-width="2.5"/>';}
+    if(opt.cutBot!=null){const x=x0+opt.cutBot*DX; s+='<line x1="'+x+'" y1="'+(y+22)+'" x2="'+x+'" y2="'+(y+44)+'" stroke="'+RED+'" stroke-width="2.5"/>';}
+    // 골격의 틈(nick) — 아직 연결 안 됨
+    if(opt.nickTop!=null){const x=x0+opt.nickTop*DX; s+='<circle cx="'+x+'" cy="'+(y-7)+'" r="4" fill="#fff" stroke="'+RED+'" stroke-width="2"/>';}
+    if(opt.nickBot!=null){const x=x0+opt.nickBot*DX; s+='<circle cx="'+x+'" cy="'+(y+27)+'" r="4" fill="#fff" stroke="'+RED+'" stroke-width="2"/>';}
+    // 5'/3' 라벨
+    if(opt.labels!==false){
+      s+=txt(x0-DX*0.9,y,"5'",{fs:10,c:'#9ca3af'});
+      s+=txt(x0-DX*0.9,y+34,"3'",{fs:10,c:'#9ca3af'});
+      s+=txt(x0+(Math.max(top.length,bot.length))*DX-DX*0.15,y,"3'",{fs:10,c:'#9ca3af'});
+      s+=txt(x0+(Math.max(top.length,bot.length))*DX-DX*0.15,y+34,"5'",{fs:10,c:'#9ca3af'});
+    }
+    return s;
+  }
+  // 원형 플라스미드
+  function circle(cx,cy,r,opt){
+    opt=opt||{};
+    let s='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+PUR+'" stroke-width="9"/>';
+    if(opt.gene){ // 삽입 유전자 호(파란 원호, 위쪽)
+      const a1=-2.35, a2=-0.79;
+      const x1=cx+r*Math.cos(a1), y1=cy+r*Math.sin(a1), x2=cx+r*Math.cos(a2), y2=cy+r*Math.sin(a2);
+      s+='<path d="M '+x1.toFixed(1)+' '+y1.toFixed(1)+' A '+r+' '+r+' 0 0 1 '+x2.toFixed(1)+' '+y2.toFixed(1)+'" fill="none" stroke="'+BLUE+'" stroke-width="9"/>';
+      s+=txt(cx,cy-r-8,'삽입된 유전자',{fs:10,w:'700',c:BLUE});
+    }
+    if(opt.site) s+='<circle cx="'+cx+'" cy="'+(cy-r)+'" r="5.5" fill="'+RED+'"/>';
+    if(opt.label){opt.label.split('\n').forEach((t,i)=>{s+=txt(cx,cy+2+i*15,t,{fs:12,w:'700',c:'#3f2a78'});});}
+    return s;
+  }
+  // 열린(선형) 플라스미드 골격 — 양끝 AATT 점착말단
+  function openPlasmid(cx,y){
+    // top: AATTC ··· G   /  bot:     G ··· CTTAA
+    return dna('AATTC···G', '    G···CTTAA', {cx:cx,y:y,tc:PUR,bc:PUR});
+  }
+
+  const steps=[
+    {t:'준비물 — 유전자와 플라스미드',
+     d:'대량 생산할 <b>인슐린 유전자</b>(선형)와 운반체인 <b>플라스미드</b>(원형 DNA)를 준비합니다. 두 DNA <b>모두 EcoRI 인식 부위 GAATTC를 갖고 있는 것</b>이 핵심입니다.',
+     svg:svg(720,210,
+        txt(210,34,'인슐린 유전자 (선형 이중 가닥)',{w:'700',c:'#3f2a78'})+
+        dna('···GAATTC···','···CTTAAG···',{cx:210,y:100})+
+        txt(210,170,'양끝에 EcoRI 부위(GAATTC)',{fs:11,c:RED})+
+        circle(590,105,50,{site:true,label:'플라스미드'})+
+        txt(590,178,'● EcoRI 부위 1곳',{fs:11,c:RED}))},
+
+    {t:'EcoRI가 인식 부위를 찾아 어긋나게 자름',
+     d:'제한 효소 EcoRI는 <b>GAATTC</b>(위·아래로 읽어도 같은 회문 서열)를 인식하고, 위 가닥은 <b>G와 A 사이</b>, 아래 가닥은 반대쪽 <b>A와 G 사이</b>를 <b>어긋나게(계단 모양)</b> 자릅니다.',
+     svg:svg(720,210,
+        txt(360,36,'EcoRI 절단 위치 (계단형 절단)',{w:'700',c:RED})+
+        dna('GAATTC','CTTAAG',{cx:360,y:95,cutTop:0.5,cutBot:4.5})+
+        txt(360,168,'↑ 위 가닥 G|A 사이 · 아래 가닥 A|G 사이를 자름',{fs:12,c:RED,w:'700'}))},
+
+    {t:'절단 결과 — 점착 말단(AATT)이 생김',
+     d:'잘린 자리에는 <b>한 가닥이 삐져나온 단일 가닥 AATT</b>(점착 말단)가 남습니다. 인슐린 유전자 조각은 <b>양끝에 AATT 점착 말단</b>을 갖게 됩니다.',
+     svg:svg(720,210,
+        txt(360,34,'인슐린 유전자 조각 (양끝 점착 말단)',{w:'700',c:'#3f2a78'})+
+        dna('AATTC···G','    G···CTTAA',{cx:360,y:95})+
+        txt(150,150,'◀ 왼쪽 끝: 위 가닥 AATT 돌출',{fs:11,c:RED,a:'start'})+
+        txt(570,150,'오른쪽 끝: 아래 가닥 AATT 돌출 ▶',{fs:11,c:RED,a:'end'}))},
+
+    {t:'플라스미드도 같은 EcoRI로 자름 → 고리가 열림',
+     d:'플라스미드를 <b>같은 EcoRI</b>로 자르면 원형 고리가 열리고, <b>똑같은 AATT 점착 말단</b>이 생깁니다. 같은 효소로 잘랐으므로 유전자 조각의 말단과 <b>서로 상보적</b>입니다.',
+     svg:svg(720,220,
+        circle(150,110,42,{site:true,label:'플라스미드'})+
+        txt(360,60,'같은 EcoRI 절단 →',{fs:13,w:'700',c:RED})+
+        txt(560,34,'열린 플라스미드 (양끝 AATT)',{w:'700',c:'#3f2a78'})+
+        openPlasmid(560,100)+
+        txt(560,168,'유전자 조각과 똑같은 점착 말단',{fs:11,c:RED}))},
+
+    {t:'유전자 삽입 — 상보적인 AATT끼리 맞물림',
+     d:'유전자 조각의 점착 말단과 플라스미드의 점착 말단이 <b>A–T로 상보 결합</b>해 맞물립니다. 인식 부위 GAATTC가 다시 이어지지만, 아직 <b>당–인산 골격에는 틈(nick, ○)</b>이 남아 있습니다.',
+     svg:svg(720,220,
+        txt(360,34,'점착 말단 상보 결합 (A–T · T–A)',{w:'700',c:'#3f2a78'})+
+        dna('···GAATTC···','···CTTAAG···',{cx:360,y:100,tc:BLUE,bc:GREEN,nickTop:3.5,nickBot:7.5})+
+        txt(150,80,'유전자',{fs:11,c:BLUE,a:'start'})+
+        txt(560,80,'플라스미드',{fs:11,c:GREEN,a:'end'})+
+        txt(360,175,'○ = 아직 연결 안 된 골격의 틈',{fs:12,c:RED,w:'700'}))},
+
+    {t:'DNA 연결 효소가 틈을 이어 붙임 → 재조합 완성',
+     d:'<b>DNA 연결 효소(리가아제)</b>가 골격의 틈(○)을 이어 붙여 <b>완전히 하나의 DNA</b>로 만듭니다. 유전자가 삽입된 <b>재조합 플라스미드</b> 완성! 대장균에 넣으면 인슐린을 대량 생산합니다.',
+     svg:svg(720,230,
+        txt(360,34,'DNA 연결 효소로 골격 연결 (틈 사라짐) 🔗',{w:'700',c:GREEN})+
+        dna('···GAATTC···','···CTTAAG···',{cx:360,y:92,tc:BLUE,bc:GREEN})+
+        txt(360,150,'⬇  고리로 완성',{fs:12,c:'#3f2a78',w:'700'})+
+        circle(360,195,30,{gene:true,site:true}))}
+  ];
+  makePlayer({stage:'t1-stage',info:'t1-info',dots:'t1-dots',prevBtn:'t1-prev',nextBtn:'t1-next',resetBtn:'t1-reset',steps:steps});
+})();
+
+/* ===================== TAB 2 : 대장균 선별 ===================== */
+(function(){
+  // 3 대장균 × 3 배지. grow[type][media] = 콜로니 형성 여부
+  // media: 0=무항생제, 1=X, 2=Y
+  const grow={
+    'I':[false,false,false],   // 플라스미드 없음: 저항성 없어 항생제 배지에서 못 자람(무항생제 배지에서만 자람)
+    'II':[true,true,true],     // 재조합 안됨: X,Y 모두 저항 → 모두 콜로니
+    'III':[true,true,false]    // 재조합: X만 저항, Y 망가짐
+  };
+  // 무항생제 배지에서는 모두 자람(저항성 불필요)
+  grow['I'][0]=true;
+  const types=[
+    {id:'I',name:'대장균 Ⅰ',desc:'플라스미드 없음'},
+    {id:'II',name:'대장균 Ⅱ',desc:'재조합 안 된 플라스미드'},
+    {id:'III',name:'대장균 Ⅲ',desc:'재조합 플라스미드(정답 대상)'}
+  ];
+  const medias=['항생제 없는 배지','항생제 X 배지','항생제 Y 배지'];
+  const lab=document.getElementById('t2-lab');
+  function build(){
+    lab.innerHTML='';
+    types.forEach(t=>{
+      const dish=document.createElement('div');
+      dish.className='dish';
+      dish.innerHTML='<h4>'+t.name+'<br><span class="muted" style="font-size:11px;font-weight:400">'+t.desc+'</span></h4>';
+      medias.forEach((m,mi)=>{
+        const wrap=document.createElement('div');
+        wrap.style.margin='10px 0';
+        wrap.innerHTML='<div style="font-size:12px;font-weight:700;text-align:center;color:#3f2a78">'+m+'</div>';
+        const petri=document.createElement('div'); petri.className='petri';
+        petri.dataset.type=t.id; petri.dataset.media=mi;
+        wrap.appendChild(petri);
+        const pred=document.createElement('div'); pred.className='predict';
+        pred.innerHTML='<button data-v="1">생김</button><button data-v="0">못 생김</button>';
+        pred.dataset.type=t.id; pred.dataset.media=mi;
+        pred.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+          pred.querySelectorAll('button').forEach(x=>x.classList.remove('sel'));
+          b.classList.add('sel');
+        }));
+        wrap.appendChild(pred);
+        const v=document.createElement('div'); v.className='verdict';
+        wrap.appendChild(v);
+        dish.appendChild(wrap);
+      });
+      lab.appendChild(dish);
+    });
+  }
+  function drawColonies(petri){
+    petri.innerHTML='';
+    const n=6+Math.floor(Math.random()*5);
+    for(let i=0;i<n;i++){
+      const c=document.createElement('div'); c.className='colony';
+      c.style.left=(15+Math.random()*115)+'px';
+      c.style.top=(15+Math.random()*115)+'px';
+      petri.appendChild(c);
+    }
+  }
+  document.getElementById('t2-check').addEventListener('click',()=>{
+    document.querySelectorAll('#t2-lab .predict').forEach(pred=>{
+      const t=pred.dataset.type, mi=+pred.dataset.media;
+      const willGrow=grow[t][mi];
+      const petri=document.querySelector('#t2-lab .petri[data-type="'+t+'"][data-media="'+mi+'"]');
+      const verdict=pred.parentElement.querySelector('.verdict');
+      if(willGrow) drawColonies(petri); else petri.innerHTML='<div style="text-align:center;padding-top:60px;color:#9ca3af;font-size:12px">콜로니 없음</div>';
+      const sel=pred.querySelector('button.sel');
+      const chosen=sel?sel.dataset.v==='1':null;
+      pred.querySelectorAll('button').forEach(b=>b.classList.remove('ok','no'));
+      if(sel){
+        const right=(chosen===willGrow);
+        sel.classList.add(right?'ok':'no');
+        verdict.textContent=right?'✔ 예측 정답':'✘ 오답 (정답: '+(willGrow?'생김':'못 생김')+')';
+        verdict.style.color=right?'var(--ok)':'var(--red)';
+      }else{
+        verdict.textContent='실제: '+(willGrow?'생김':'못 생김');
+        verdict.style.color='var(--muted)';
+      }
+    });
+  });
+  document.getElementById('t2-reset').addEventListener('click',build);
+  build();
+})();
+
+/* ===================== TAB 3 : PCR ===================== */
+(function(){
+  const stage=document.getElementById('t3-stage');
+  const infoEl=document.getElementById('t3-info');
+  let cycle=0, phase=0, count=1; // phase 0..2
+  const phases=[
+    {name:'① DNA 변성 (95℃)', thermo:'🌡️ 95℃ 가열', color:'#dc2626',
+     desc:'DNA를 <b>가열</b>하여 이중 가닥의 수소 결합을 끊고 <b>단일 가닥</b>으로 분리합니다.',
+     draw:()=>svg(700,150,
+        txt(350,26,'가열 → 두 가닥 분리',{w:'700',c:'#dc2626'})+
+        '<line x1="150" y1="60" x2="550" y2="60" stroke="#2563eb" stroke-width="7"/>'+
+        '<line x1="150" y1="100" x2="550" y2="100" stroke="#16a34a" stroke-width="7"/>'+
+        txt(350,130,'🔥 단일 가닥 2개',{fs:12,c:'#dc2626'}))},
+    {name:'② 프라이머 결합 (냉각)', thermo:'🌡️ 약 55℃ 냉각', color:'#2563eb',
+     desc:'온도를 낮추면 <b>프라이머</b>가 증폭할 부위 양끝의 상보적 서열에 결합해 합성 시작점을 만듭니다.',
+     draw:()=>svg(700,150,
+        txt(350,26,'프라이머 결합',{w:'700',c:'#2563eb'})+
+        '<line x1="150" y1="60" x2="550" y2="60" stroke="#2563eb" stroke-width="7"/>'+
+        '<line x1="150" y1="100" x2="550" y2="100" stroke="#16a34a" stroke-width="7"/>'+
+        '<rect x="150" y="94" width="60" height="12" fill="#d97706"/>'+
+        '<rect x="490" y="54" width="60" height="12" fill="#d97706"/>'+
+        txt(350,135,'▮ 프라이머(주황)가 양끝에 결합',{fs:12,c:'#d97706',w:'700'}))},
+    {name:'③ DNA 합성 (72℃)', thermo:'🌡️ 72℃ 합성', color:'#16a34a',
+     desc:'<b>Taq 중합 효소</b>가 dNTP를 이어 붙여 프라이머부터 <b>새로운 상보 가닥</b>을 합성 → DNA 수가 <b>2배</b>가 됩니다.',
+     draw:()=>svg(700,150,
+        txt(350,26,'새 가닥 합성 → 2배 증폭',{w:'700',c:'#16a34a'})+
+        '<line x1="150" y1="55" x2="550" y2="55" stroke="#2563eb" stroke-width="7"/>'+
+        '<line x1="150" y1="70" x2="550" y2="70" stroke="#16a34a" stroke-width="7" stroke-dasharray="6 3"/>'+
+        '<line x1="150" y1="100" x2="550" y2="100" stroke="#2563eb" stroke-width="7" stroke-dasharray="6 3"/>'+
+        '<line x1="150" y1="115" x2="550" y2="115" stroke="#16a34a" stroke-width="7"/>'+
+        txt(350,140,'완성된 이중 가닥 2개',{fs:12,c:'#16a34a',w:'700'}))}
+  ];
+  function idle(){
+    return svg(700,150, txt(350,60,'🧬 주형 DNA 1분자 + 프라이머 + Taq + dNTP',{fs:15,w:'700',c:'#3f2a78'})+
+      txt(350,95,'[한 단계 진행] 또는 [한 주기 실행]을 눌러 시작',{fs:12,c:'#6b7280'}));
+  }
+  function render(started){
+    document.getElementById('t3-count').textContent=count.toLocaleString();
+    document.getElementById('t3-cyclelbl').textContent=(cycle===0?'주기 0 · 대기':'주기 '+cycle+' · '+(phase+1)+'단계/3');
+    const pct=Math.min(100, (Math.log2(count)/30)*100);
+    document.getElementById('t3-bar').style.width=pct+'%';
+    if(!started){
+      stage.innerHTML=idle();
+      document.getElementById('t3-thermo').textContent='🌡️ 준비';
+      document.getElementById('t3-phase').textContent='시작을 누르세요';
+      infoEl.innerHTML='<h4>PCR 준비</h4><p>세 단계를 반복할 때마다 DNA 수가 2배로 늘어납니다. 첫 단계를 실행해 보세요.</p>';
+      return;
+    }
+    const p=phases[phase];
+    stage.innerHTML=p.draw();
+    document.getElementById('t3-thermo').textContent=p.thermo;
+    document.getElementById('t3-phase').textContent=p.name;
+    infoEl.innerHTML='<h4>'+p.name+' · 주기 '+cycle+'</h4><p>'+p.desc+'</p>'+
+      (phase===2?'<p style="margin-top:6px;color:var(--p);font-weight:700">현재 DNA 분자 수: 2<sup>'+cycle+'</sup> = '+count.toLocaleString()+'개</p>':'');
+  }
+  function stepOnce(){
+    if(cycle===0 && phase===0){ cycle=1; phase=0; }
+    else{
+      phase++;
+      if(phase>2){ phase=0; cycle++; }
+    }
+    if(phase===2){ count=Math.pow(2,cycle); }
+    render(true);
+  }
+  document.getElementById('t3-step').addEventListener('click',stepOnce);
+  document.getElementById('t3-cycle').addEventListener('click',()=>{
+    // 한 주기 = 다음 합성 완료까지
+    let guard=0;
+    do{ stepOnce(); guard++; }while(phase!==2 && guard<5);
+  });
+  document.getElementById('t3-reset').addEventListener('click',()=>{cycle=0;phase=0;count=1;render(false);});
+  render(false);
+})();
+
+/* ===================== TAB 4a : 단일 클론 항체 제작 ===================== */
+(function(){
+  function cell(cx,cy,r,fill,stroke,label,lc){
+    let s='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2.5"/>';
+    if(label) s+=txt(cx,cy+r+16,label,{fs:12,w:'700',c:lc||'#3f2a78'});
+    return s;
+  }
+  const steps=[
+    {t:'항원 주입 → B 림프구 얻기', d:'동물에 <b>항원</b>을 주입하면 그 항원에 반응하는 <b>B 림프구</b>가 만들어집니다. 하지만 B 림프구는 체외 배양이 어렵습니다.',
+      svg:svg(700,200, txt(350,30,'항원 주입',{w:'700',c:'#db2777'})+
+        cell(200,110,34,'#fdeaf4','#db2777','B 림프구 (항체 생산 O, 분열 어려움)','#db2777')+
+        txt(430,110,'💉 항원',{fs:16}))},
+    {t:'종양 세포 준비', d:'<b>종양 세포</b>는 항체를 못 만들지만 <b>계속 분열</b>하는 성질이 있습니다.',
+      svg:svg(700,200,
+        cell(200,110,34,'#fdeaf4','#db2777','B 림프구','#db2777')+
+        cell(500,110,38,'#efeaff','#5b3fa8','종양 세포 (분열 O, 항체 X)','#5b3fa8')+
+        txt(350,110,'＋',{fs:28,w:'700'}))},
+    {t:'세포 융합 → 잡종 세포', d:'두 세포를 <b>융합</b>하면 <b>항체 생산 능력(B 림프구)</b>과 <b>계속 분열하는 성질(종양 세포)</b>을 모두 가진 <b>잡종 세포</b>가 됩니다.',
+      svg:svg(700,200, txt(350,30,'세포 융합',{w:'700',c:'#0f766e'})+
+        cell(350,115,46,'#e2f4f2','#0f766e','잡종 세포 (분열 O + 항체 O)','#0f766e'))},
+    {t:'분리 배양 → 단일 클론 항체', d:'잡종 세포를 <b>분리 배양</b>하면, 하나의 항원에만 반응하는 <b>한 종류의 항체(단일 클론 항체)</b>를 대량으로 얻습니다.',
+      svg:svg(700,210, txt(350,28,'분리 배양 → 대량 생산',{w:'700',c:'#0f766e'})+
+        cell(200,110,30,'#e2f4f2','#0f766e','','')+cell(350,110,30,'#e2f4f2','#0f766e','','')+cell(500,110,30,'#e2f4f2','#0f766e','','')+
+        txt(350,175,'Y  Y  Y  Y  → 단일 클론 항체 (모두 같은 종류)',{fs:15,w:'700',c:'#db2777'}))}
+  ];
+  makePlayer({stage:'t4a-stage',info:'t4a-info',dots:'t4a-dots',prevBtn:'t4a-prev',nextBtn:'t4a-next',resetBtn:'t4a-reset',steps:steps});
+})();
+
+/* ===================== TAB 4b : 임신 진단 키트 ===================== */
+(function(){
+  let hasHCG=null; // null 미선택, true/false
+  function kit(showControl, showTest){
+    // 키트: 시료패드 - 검사선(T) - 표준선(C)
+    let s='<rect x="120" y="70" width="460" height="60" rx="10" fill="#fff" stroke="#5b3fa8" stroke-width="2.5"/>';
+    s+=txt(160,60,'오줌 투입',{fs:11,c:'#6b7280'});
+    s+='<rect x="130" y="80" width="60" height="40" rx="5" fill="#e6efff"/>';
+    // 검사선 T
+    s+='<line x1="360" y1="80" x2="360" y2="120" stroke="'+(showTest?'#db2777':'#e5e5e5')+'" stroke-width="9"/>';
+    s+=txt(360,145,'T (검사선)',{fs:11,c:showTest?'#db2777':'#9ca3af',w:'700'});
+    // 표준선 C
+    s+='<line x1="470" y1="80" x2="470" y2="120" stroke="'+(showControl?'#5b3fa8':'#e5e5e5')+'" stroke-width="9"/>';
+    s+=txt(470,145,'C (표준선)',{fs:11,c:showControl?'#5b3fa8':'#9ca3af',w:'700'});
+    return s;
+  }
+  const steps=[
+    {t:'오줌 투입 & hCG', d:'임신하면 태반에서 <b>hCG</b> 호르몬이 나와 오줌으로 배출됩니다. 오줌을 시료 패드에 떨어뜨립니다.',
+      svg:svg(700,170, txt(350,28,'오줌 시료 투입',{w:'700',c:'#3f2a78'})+kit(false,false))},
+    {t:'hCG–항체 복합체 형성', d:'오줌 속 <b>hCG</b>가 색소가 붙은 <b>hCG 단일 클론 항체</b>와 결합해 <b>hCG–항체 복합체</b>를 만들며 이동합니다.',
+      svg:svg(700,190, txt(350,26,'hCG + 표지 항체 → 복합체 이동 →',{w:'700',c:'#db2777'})+
+        '<circle cx="220" cy="100" r="10" fill="#db2777"/>'+txt(220,125,'hCG',{fs:11,c:'#db2777'})+
+        txt(300,105,'＋ Y(표지 항체)',{fs:13,c:'#5b3fa8',w:'700'})+kit(false,false))},
+    {t:'검사선(T)에서 발색', d:'검사선에는 hCG의 다른 부분에 결합하는 <b>고정된 항체</b>가 있어, hCG–항체 복합체를 붙잡아 <b>색(줄)이 나타납니다</b>.',
+      svg:svg(700,180, txt(350,26,'검사선 T 발색 (hCG 있을 때만)',{w:'700',c:'#db2777'})+kit(false,true))},
+    {t:'표준선(C)으로 정상 작동 확인', d:'남은 표지 항체는 계속 이동해 표준선의 <b>또 다른 항체</b>와 결합해 <b>색</b>을 냅니다. 이 줄은 키트가 정상 작동함을 보여줍니다.',
+      svg:svg(700,180, txt(350,26,'표준선 C = 정상 작동 표시',{w:'700',c:'#5b3fa8'})+kit(true,true))}
+  ];
+  const player=makePlayer({stage:'t4b-stage',info:'t4b-info',dots:'t4b-dots',prevBtn:'t4b-prev',nextBtn:'t4b-next',resetBtn:'t4b-reset',steps:steps});
+  function showResult(preg){
+    hasHCG=preg;
+    const stage=document.getElementById('t4b-stage');
+    const info=document.getElementById('t4b-info');
+    // 최종 결과: 임신이면 T,C 두 줄 / 비임신이면 C 한 줄
+    let s='<rect x="120" y="70" width="460" height="60" rx="10" fill="#fff" stroke="#5b3fa8" stroke-width="2.5"/>';
+    s+='<rect x="130" y="80" width="60" height="40" rx="5" fill="#e6efff"/>';
+    s+='<line x1="360" y1="80" x2="360" y2="120" stroke="'+(preg?'#db2777':'#e5e5e5')+'" stroke-width="9"/>';
+    s+=txt(360,145,'T',{fs:12,c:preg?'#db2777':'#9ca3af',w:'700'});
+    s+='<line x1="470" y1="80" x2="470" y2="120" stroke="#5b3fa8" stroke-width="9"/>';
+    s+=txt(470,145,'C',{fs:12,c:'#5b3fa8',w:'700'});
+    s=txt(350,30,preg?'🤰 임신부 오줌 (hCG 있음)':'🚫 비임신 오줌 (hCG 없음)',{w:'700',c:preg?'#db2777':'#6b7280'})+s;
+    stage.innerHTML=svg(700,180,s);
+    info.innerHTML='<h4>판정 결과</h4><p>'+(preg
+      ? '검사선(T)에 hCG–항체 복합체가 붙어 <b>두 줄(T·C)</b>이 나타납니다 → <b class="good">임신 양성</b>.'
+      : 'hCG가 없어 검사선(T)에는 색이 없고 <b>표준선(C) 한 줄만</b> 나타납니다 → <b>비임신(음성)</b>.')+'</p>';
+  }
+  document.getElementById('t4b-preg').addEventListener('click',()=>showResult(true));
+  document.getElementById('t4b-nonpreg').addEventListener('click',()=>showResult(false));
+})();
+
+/* ===================== TAB 4c : 단일 클론 항체 암치료 ===================== */
+(function(){
+  function cancerCell(cx,cy,dead){
+    let s='<circle cx="'+cx+'" cy="'+cy+'" r="40" fill="'+(dead?'#eee':'#fdecec')+'" stroke="'+(dead?'#9ca3af':'#dc2626')+'" stroke-width="2.5"'+(dead?' stroke-dasharray="5 4"':'')+'/>';
+    // 표면 항원
+    for(let a=0;a<6;a++){const ang=a*Math.PI/3;const x=cx+Math.cos(ang)*40;const y=cy+Math.sin(ang)*40;
+      s+='<rect x="'+(x-4)+'" y="'+(y-4)+'" width="8" height="8" fill="'+(dead?'#9ca3af':'#dc2626')+'"/>';}
+    s+=txt(cx,cy+(dead?4:4),dead?'죽음 ☠':'암세포',{fs:12,w:'700',c:dead?'#6b7280':'#dc2626'});
+    return s;
+  }
+  const steps=[
+    {t:'항체–약물 복합체 제작', d:'특정 <b>암세포 표면 항원</b>에만 결합하는 <b>단일 클론 항체</b>에 <b>항암제(약물)</b>를 결합해 <b>항체–약물 복합체</b>를 만듭니다.',
+      svg:svg(700,190, txt(350,28,'항체 + 항암제 → 복합체',{w:'700',c:'#5b3fa8'})+
+        '<path d="M300 120 L330 90 M300 120 L330 150" stroke="#5b3fa8" stroke-width="5"/>'+
+        '<circle cx="300" cy="120" r="12" fill="#d97706"/>'+txt(300,155,'💊 약물',{fs:11,c:'#d97706'})+
+        txt(430,120,'Y = 단일 클론 항체',{fs:13,c:'#5b3fa8',w:'700',a:'start'}))},
+    {t:'환자에 주입 → 암세포 인식', d:'복합체를 환자에게 주입하면 항체가 <b>암세포 표면 항원</b>을 정확히 찾아 <b>결합(항원–항체 반응)</b>합니다. 정상 세포는 건드리지 않습니다.',
+      svg:svg(700,200, txt(350,28,'항원–항체 반응 (표적 결합)',{w:'700',c:'#dc2626'})+cancerCell(350,120,false)+
+        '<path d="M350 60 L340 78 M350 60 L360 78" stroke="#5b3fa8" stroke-width="4"/>'+
+        '<circle cx="350" cy="55" r="8" fill="#d97706"/>')},
+    {t:'암세포 제거', d:'항체에 실려 온 <b>항암제</b>가 결합한 암세포를 <b>죽입니다</b>. 표적 치료라 정상 세포 손상이 적습니다.',
+      svg:svg(700,200, txt(350,28,'약물 작용 → 암세포 사멸',{w:'700',c:'#6b7280'})+cancerCell(350,120,true))}
+  ];
+  makePlayer({stage:'t4c-stage',info:'t4c-info',dots:'t4c-dots',prevBtn:'t4c-prev',nextBtn:'t4c-next',resetBtn:'t4c-reset',steps:steps});
+})();
+
+/* ===================== TAB 5a : 복제 양 돌리 ===================== */
+(function(){
+  function egg(cx,cy,nucleus){
+    let s='<circle cx="'+cx+'" cy="'+cy+'" r="40" fill="#fff7e6" stroke="#d97706" stroke-width="2.5"/>';
+    if(nucleus) s+='<circle cx="'+cx+'" cy="'+cy+'" r="13" fill="#d97706"/>';
+    return s;
+  }
+  function somatic(cx,cy){
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="#efeaff" stroke="#5b3fa8" stroke-width="2.5"/>'+
+      '<circle cx="'+cx+'" cy="'+cy+'" r="11" fill="#5b3fa8"/>';
+  }
+  const steps=[
+    {t:'두 마리 양 준비', d:'<b>젖샘 세포(체세포)</b>를 제공할 양과, <b>난자</b>를 제공할 양을 준비합니다.',
+      svg:svg(700,200, somatic(180,110)+txt(180,155,'젖샘 세포 제공 양',{fs:12,w:'700',c:'#5b3fa8'})+
+        egg(500,110,true)+txt(500,165,'난자 제공 양',{fs:12,w:'700',c:'#d97706'}))},
+    {t:'난자의 핵 제거', d:'난자에서 <b>핵을 제거</b>해 <b>무핵 난자</b>를 만듭니다.',
+      svg:svg(700,200, egg(350,110,false)+txt(350,165,'무핵 난자 (핵 없음)',{fs:12,w:'700',c:'#d97706'})+
+        txt(350,40,'난자의 핵 제거 ✂',{w:'700',c:'#dc2626'}))},
+    {t:'체세포 핵 이식 + 전기 자극', d:'무핵 난자에 <b>젖샘 세포의 핵</b>을 넣고 <b>전기 자극</b>으로 융합시킵니다.',
+      svg:svg(700,200, txt(350,36,'젖샘 세포 핵 + 무핵 난자 → ⚡전기 융합',{w:'700',c:'#0f766e'})+
+        egg(350,120,true)+txt(350,175,'핵이식된 난자',{fs:12,w:'700',c:'#0f766e'}))},
+    {t:'배양 → 대리모 착상', d:'융합된 세포를 <b>배양</b>해 배아로 만든 뒤 <b>대리모의 자궁에 착상</b>시킵니다.',
+      svg:svg(700,200, txt(350,36,'배양 → 대리모 자궁 착상',{w:'700',c:'#3f2a78'})+
+        '<circle cx="350" cy="115" r="26" fill="#e2f4f2" stroke="#0f766e" stroke-width="2"/>'+
+        '<circle cx="338" cy="108" r="9" fill="#0f766e"/><circle cx="362" cy="108" r="9" fill="#0f766e"/>'+
+        '<circle cx="338" cy="126" r="9" fill="#0f766e"/><circle cx="362" cy="126" r="9" fill="#0f766e"/>'+
+        txt(350,165,'분열하는 배아',{fs:12,w:'700',c:'#0f766e'}))},
+    {t:'복제 양 돌리 탄생', d:'핵을 제공한 양과 <b>유전적으로 (거의) 같은</b> 복제 양 <b>돌리</b>가 태어납니다. 멸종 위기·우수 형질 동물 보존에 활용됩니다.',
+      svg:svg(700,200, txt(350,50,'🐑 복제 양 돌리 탄생!',{fs:18,w:'700',c:'#16a34a'})+
+        txt(350,90,'핵 제공 양과 핵 유전체 동일',{fs:13,c:'#3f2a78'})+
+        somatic(350,150)+txt(350,195,'돌리',{fs:13,w:'700',c:'#5b3fa8'}))}
+  ];
+  makePlayer({stage:'t5a-stage',info:'t5a-info',dots:'t5a-dots',prevBtn:'t5a-prev',nextBtn:'t5a-next',resetBtn:'t5a-reset',steps:steps});
+})();
+
+/* ===================== TAB 5b : 배아 줄기세포 형성·분화 ===================== */
+(function(){
+  function blob(cx,cy,n,r,fill,stroke){
+    let s='';
+    for(let i=0;i<n;i++){const ang=i*2*Math.PI/n;const x=cx+Math.cos(ang)*(n>1?r*0.5:0);const y=cy+Math.sin(ang)*(n>1?r*0.5:0);
+      s+='<circle cx="'+x+'" cy="'+y+'" r="'+(n>4?9:14)+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';}
+    return s;
+  }
+  const steps=[
+    {t:'수정란', d:'정자와 난자가 만나 <b>수정란</b>이 됩니다. (또는 핵치환으로 만든 복제 배아를 이용)',
+      svg:svg(700,200, txt(350,40,'정자 + 난자 → 수정란',{w:'700',c:'#d97706'})+blob(350,120,1,0,'#fff7e6','#d97706'))},
+    {t:'난할(2세포기 → 4세포기)', d:'수정란이 반복해서 분열(<b>난할</b>)하여 세포 수가 늘어납니다.',
+      svg:svg(700,200, txt(350,40,'난할: 2세포기 → 4세포기',{w:'700',c:'#3f2a78'})+
+        blob(230,120,2,26,'#e2f4f2','#0f766e')+blob(470,120,4,30,'#e2f4f2','#0f766e'))},
+    {t:'배반포 형성', d:'속이 빈 공 모양의 <b>배반포</b>가 됩니다. 안쪽 세포 덩어리에서 배아 줄기세포를 얻습니다.',
+      svg:svg(700,200, txt(350,40,'배반포',{w:'700',c:'#3f2a78'})+
+        '<circle cx="350" cy="120" r="45" fill="#f4f1fc" stroke="#5b3fa8" stroke-width="2.5"/>'+
+        blob(335,130,4,26,'#efeaff','#5b3fa8')+txt(350,185,'안쪽 세포 덩어리',{fs:11,c:'#5b3fa8'}))},
+    {t:'배아 줄기세포 추출', d:'배반포에서 <b>배아 줄기세포</b>를 얻습니다. 미분화 상태로 계속 분열하며 <b>어떤 세포로도 분화</b> 가능합니다.',
+      svg:svg(700,200, txt(350,40,'배아 줄기세포 (미분화)',{w:'700',c:'#5b3fa8'})+
+        blob(350,120,3,26,'#efeaff','#5b3fa8')+txt(350,175,'모든 세포로 분화 가능',{fs:12,w:'700',c:'#5b3fa8'}))},
+    {t:'분화 유도 → 여러 세포', d:'적절한 환경에서 <b>분화를 유도</b>하면 <b>신경 세포·근육 섬유·혈구</b> 등 다양한 세포로 분화합니다. 난치병 치료 연구에 이용됩니다.',
+      svg:svg(700,210, txt(350,30,'분화 유도 →',{w:'700',c:'#0f766e'})+
+        '<circle cx="160" cy="130" r="26" fill="#e6efff" stroke="#2563eb" stroke-width="2"/>'+txt(160,175,'신경 세포',{fs:12,w:'700',c:'#2563eb'})+
+        '<rect x="315" y="105" width="70" height="50" rx="8" fill="#fdecec" stroke="#dc2626" stroke-width="2"/>'+txt(350,175,'근육 섬유',{fs:12,w:'700',c:'#dc2626'})+
+        '<circle cx="540" cy="130" r="26" fill="#fdeaf4" stroke="#db2777" stroke-width="2"/>'+txt(540,175,'혈구',{fs:12,w:'700',c:'#db2777'}))}
+  ];
+  makePlayer({stage:'t5b-stage',info:'t5b-info',dots:'t5b-dots',prevBtn:'t5b-prev',nextBtn:'t5b-next',resetBtn:'t5b-reset',steps:steps});
+})();
+
+/* ===================== TAB 6 : 유도 만능 줄기세포 ===================== */
+(function(){
+  const steps=[
+    {t:'① 환자 피부 세포 수집', d:'환자에게서 <b>피부 세포(체세포)</b>를 채취합니다. 이미 분화가 끝난 세포입니다.',
+      svg:svg(700,200, txt(350,40,'환자 피부 세포 채취',{w:'700',c:'#3f2a78'})+
+        '<circle cx="350" cy="120" r="34" fill="#fef3e2" stroke="#d97706" stroke-width="2.5"/>'+
+        '<circle cx="350" cy="120" r="12" fill="#d97706"/>'+txt(350,175,'분화된 피부 세포',{fs:12,w:'700',c:'#d97706'}))},
+    {t:'② 역분화 → 유도 만능 줄기세포', d:'특정 인자를 넣어 피부 세포를 <b>역분화</b>시키면, 배아 줄기세포처럼 여러 세포로 분화할 수 있는 <b>유도 만능 줄기세포(iPSC)</b>가 됩니다.',
+      svg:svg(700,200, txt(350,40,'역분화 (reprogramming)',{w:'700',c:'#5b3fa8'})+
+        '<circle cx="350" cy="120" r="34" fill="#efeaff" stroke="#5b3fa8" stroke-width="2.5"/>'+
+        '<circle cx="340" cy="115" r="8" fill="#5b3fa8"/><circle cx="362" cy="115" r="8" fill="#5b3fa8"/><circle cx="350" cy="132" r="8" fill="#5b3fa8"/>'+
+        txt(350,175,'유도 만능 줄기세포 (iPSC)',{fs:12,w:'700',c:'#5b3fa8'}))},
+    {t:'③ 원하는 세포로 분화', d:'iPSC를 <b>신경 세포</b> 등 필요한 <b>특정 세포로 분화</b>시킵니다. (예: 알츠하이머병 치료용 신경 세포)',
+      svg:svg(700,200, txt(350,40,'특정 세포로 분화 유도',{w:'700',c:'#0f766e'})+
+        '<circle cx="350" cy="120" r="30" fill="#e6efff" stroke="#2563eb" stroke-width="2.5"/>'+
+        '<line x1="350" y1="90" x2="350" y2="60" stroke="#2563eb" stroke-width="3"/>'+
+        '<line x1="380" y1="120" x2="410" y2="120" stroke="#2563eb" stroke-width="3"/>'+
+        txt(350,175,'신경 세포로 분화',{fs:12,w:'700',c:'#2563eb'}))},
+    {t:'④ 환자에게 이식 → 치료', d:'분화시킨 세포를 <b>환자에게 이식</b>해 질병을 치료합니다. <b>자기 세포</b>라 <b>면역 거부 반응이 없고</b>, 배아를 쓰지 않아 윤리 문제도 적습니다.',
+      svg:svg(700,200, txt(350,60,'환자 이식 → 난치병 치료 🩺',{fs:16,w:'700',c:'#16a34a'})+
+        txt(350,100,'자기 세포 → 면역 거부 없음',{fs:13,c:'#0f766e',w:'700'})+
+        txt(350,130,'배아 불필요 → 윤리 문제 적음',{fs:13,c:'#0f766e',w:'700'}))}
+  ];
+  makePlayer({stage:'t6-stage',info:'t6-info',dots:'t6-dots',prevBtn:'t6-prev',nextBtn:'t6-next',resetBtn:'t6-reset',steps:steps});
+})();
+
+/* ===================== TAB 7 : 조직 배양 ===================== */
+(function(){
+  const steps=[
+    {t:'① 생장점 채취', d:'감자(또는 딸기)의 <b>생장점</b> 등 조직 일부를 떼어 냅니다. 생장점은 바이러스가 거의 없습니다.',
+      svg:svg(700,200, txt(350,40,'감자 생장점 채취',{w:'700',c:'#0f766e'})+
+        '<ellipse cx="350" cy="120" rx="55" ry="42" fill="#e9d8b8" stroke="#a97e3f" stroke-width="2.5"/>'+
+        '<circle cx="350" cy="88" r="10" fill="#16a34a"/>'+txt(350,175,'생장점(초록)',{fs:12,w:'700',c:'#16a34a'}))},
+    {t:'② 인공 배지에서 배양 → 캘러스', d:'조각을 <b>인공 배지</b>에서 배양하면 <b>미분화된 세포 덩어리(캘러스)</b>가 만들어집니다.',
+      svg:svg(700,200, txt(350,40,'인공 배지 배양 → 세포 덩어리',{w:'700',c:'#0f766e'})+
+        '<circle cx="350" cy="120" r="40" fill="#dff3e6" stroke="#16a34a" stroke-width="2.5"/>'+
+        '<circle cx="335" cy="112" r="10" fill="#7bd39a"/><circle cx="362" cy="110" r="10" fill="#7bd39a"/><circle cx="348" cy="132" r="10" fill="#7bd39a"/>'+
+        txt(350,178,'미분화 세포 덩어리(캘러스)',{fs:12,w:'700',c:'#16a34a'}))},
+    {t:'③ 새싹 형성', d:'배양을 계속하면 세포 덩어리에서 <b>새싹</b>이 돋아납니다.',
+      svg:svg(700,200, txt(350,40,'새싹 형성',{w:'700',c:'#16a34a'})+
+        '<circle cx="350" cy="140" r="30" fill="#dff3e6" stroke="#16a34a" stroke-width="2"/>'+
+        '<path d="M350 115 Q340 80 350 60 Q360 80 350 115" fill="#16a34a"/>'+
+        '<path d="M350 95 Q330 85 320 70" stroke="#16a34a" stroke-width="4" fill="none"/>'+
+        txt(350,185,'새싹 돋아남',{fs:12,w:'700',c:'#16a34a'}))},
+    {t:'④ 완전한 어린 식물', d:'새싹이 자라 뿌리·잎을 갖춘 <b>완전한 어린 식물</b>이 됩니다.',
+      svg:svg(700,200, txt(350,30,'완전한 어린 식물',{w:'700',c:'#16a34a'})+
+        '<path d="M350 60 L350 140" stroke="#166534" stroke-width="4"/>'+
+        '<path d="M350 90 Q320 80 305 95" stroke="#16a34a" stroke-width="5" fill="none"/>'+
+        '<path d="M350 100 Q380 90 395 105" stroke="#16a34a" stroke-width="5" fill="none"/>'+
+        '<path d="M350 140 L335 165 M350 140 L365 165 M350 140 L350 168" stroke="#a97e3f" stroke-width="3"/>'+
+        txt(350,190,'뿌리·잎 완성',{fs:12,w:'700',c:'#166534'}))},
+    {t:'⑤ 토양에 옮겨 심기 → 복제 식물', d:'토양에 옮겨 심으면 <b>유전적으로 같은 복제 식물</b>이 됩니다. <b>바이러스 없는</b> 건강한 감자·딸기를 대량 생산할 수 있습니다.',
+      svg:svg(700,210, txt(350,40,'🥔 유전적으로 같은 복제 식물 완성!',{fs:15,w:'700',c:'#16a34a'})+
+        txt(350,80,'바이러스 없는 건강한 식물 대량 생산',{fs:13,c:'#0f766e',w:'700'})+
+        '<rect x="230" y="150" width="240" height="30" fill="#c8a97a"/>'+
+        '<path d="M300 150 L300 110 M400 150 L400 110" stroke="#166534" stroke-width="4"/>'+
+        '<circle cx="300" cy="105" r="14" fill="#16a34a"/><circle cx="400" cy="105" r="14" fill="#16a34a"/>')}
+  ];
+  makePlayer({stage:'t7-stage',info:'t7-info',dots:'t7-dots',prevBtn:'t7-prev',nextBtn:'t7-next',resetBtn:'t7-reset',steps:steps});
+})();
+
+refreshScore();
 </script>
+<footer style="text-align:center;padding:20px 10px;margin-top:30px;font-size:13px;color:#64748b;border-top:1px solid #e2e8f0;">
+  © 2026 All Rights Reserved. 무단 전재 및 재배포 금지
+</footer>
 </body>
 </html>

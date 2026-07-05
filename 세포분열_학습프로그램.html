@@ -101,14 +101,19 @@
   }
   .legend span{display:inline-flex;align-items:center;gap:6px;}
   .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;}
-  /* 저작권 표시 */
-  .copyright{
-    text-align:center;margin-top:30px;font-size:12px;color:#64748b;letter-spacing:0.5px;
-  }
   /* SVG 요소 트랜지션 */
   .chrom{transition:transform .85s cubic-bezier(.5,.05,.3,1),opacity .45s;transform-origin:0 0;}
   .membrane,.nucleus{transition:all .7s cubic-bezier(.5,.05,.3,1),opacity .5s;}
   .celllabel{transition:opacity .5s;font-weight:800;}
+  
+  /* 푸터 스타일 지정 */
+  footer{
+    text-align:center;
+    margin-top:32px;
+    font-size:12px;
+    color:#64748b;
+    letter-spacing:0.5px;
+  }
 </style>
 </head>
 <body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
@@ -158,9 +163,9 @@
     <span>ㅣ막대 = 염색 분체 1개</span>
   </div>
 
-  <div class="copyright">
-    All Rights Reserved (무단 전재 및 재배포 금지)
-  </div>
+  <footer>
+    <p>© 2026. All Rights Reserved (무단 전재 및 재배포 금지)</p>
+  </footer>
 </div>
 
 <script>
@@ -273,7 +278,7 @@ const meiosis=[
   { phase:"감수 2분열 — 중기", dna:"2", chr:"2 (n)", cell:"2",
     poles:[[210,168],[452,168],[210,352],[452,352]],
     cells:[[CX,168,175,92],[CX,352,175,92]],
-    chroms:{LP:P(CX,140("X",90),SP:P(CX,196,"X",90),LP2:P(CX,140,"X",90,1),SP2:P(CX,196,"X",90,1),
+    chroms:{LP:P(CX,140,"X",90),SP:P(CX,196,"X",90),LP2:P(CX,140,"X",90,1),SP2:P(CX,196,"X",90,1),
             LM:P(CX,324,"X",90),SM:P(CX,380,"X",90),LM2:P(CX,324,"X",90,1),SM2:P(CX,380,"X",90,1)},
     desc:`<b>감수 2분열</b>이 시작됩니다. ⚡ <b>DNA 복제 없이</b> 곧바로 진행돼요. 각 세포에서 ✕자 염색체가 <b>적도판에 배열</b>됩니다.` },
   { phase:"감수 2분열 — 후기", dna:"1", chr:"2 (n)", cell:"2",
