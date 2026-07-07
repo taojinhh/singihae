@@ -829,13 +829,15 @@ function spawnATP(x,y){
   setTimeout(()=>{ g.animate([{opacity:1},{opacity:0}],{duration:700}); setTimeout(()=>g.remove(),700); },1300);
 }
 function pulseC(id,d){ setTimeout(()=>pulse(id),d); }
-function sendElectron(pts,dur,cb){
+function sendElectron(pts,dur,waterN,cb){
   const g=etcG(pts[0][0],pts[0][1]);
   g.appendChild(mkEl('circle',{r:9,fill:'#ffd34a',stroke:'#e89000','stroke-width':1.5}));
   const t=mkEl('text',{y:3,'text-anchor':'middle','font-size':8.5,'font-weight':800,fill:'#7a4a00'}); t.textContent='e⁻';
   g.appendChild(t); g.style.filter='drop-shadow(0 0 6px #ffc24a)';
   $('etc-fx').appendChild(g);
-  tPath(g,pts,dur,()=>{ spawnWater(pts[pts.length-1][0],182); add('h2o',1); g.remove(); cb&&cb(); });
+  tPath(g,pts,dur,()=>{ spawnWater(pts[pts.length-1][0],182); g.remove(); cb&&cb(); });
+  // 물 개수는 rAF와 무관하게 반영 (탭이 백그라운드여도 정확)
+  setTimeout(()=>add('h2o', waterN||1), dur);
 }
 function etcGuard(ms){ etcBusy=true; $('etc-next').disabled=true; setTimeout(()=>{ etcBusy=false; $('etc-next').disabled=false; },ms); }
 function etcInit(){
@@ -856,9 +858,9 @@ function etcStep(){
     // NADH가 전자를 넘겨주고 NAD⁺가 되며 모두 소모됨
     setTimeout(()=>setCount('nadh',0), 2200);
     pulseC('cx1',900); pulseC('cx3',2400); pulseC('cx4',3400);
-    sendElectron([[42,192],[91,150],[91,102],[150,90],[281,102],[345,88],[409,102],[409,158]], 4200);
+    sendElectron([[42,192],[91,150],[91,102],[150,90],[281,102],[345,88],[409,102],[409,158]], 4200, 10);
     pumpAt(91,1000); pumpAt(281,2500); pumpAt(409,3500);
-    $('etc-say-t').innerHTML='<b class="hl-nadh">NADH</b>가 전자(e⁻)를 <b>복합체 I → Q → III → IV</b>로 전달해요! 전자가 지날 때 <b>3곳(I·III·IV)</b>에서 H⁺를 기질 → 막 사이 공간으로 퍼올려요. 마지막에 산소(O₂)가 전자를 받아 <b>물(H₂O)</b>이 됩니다.';
+    $('etc-say-t').innerHTML='<b class="hl-nadh">NADH 10개</b>가 전자(e⁻)를 <b>복합체 I → Q → III → IV</b>로 전달해요! 전자가 지날 때 <b>3곳(I·III·IV)</b>에서 H⁺를 퍼올리고, 마지막에 산소(O₂)가 전자를 받아 <b>물(H₂O) 10개</b>가 됩니다.';
     $('etc-next').textContent='② FADH₂ 전자 전달 ▶';
   } else if(etcStepN===2){
     etcGuard(6500);
@@ -866,9 +868,9 @@ function etcStep(){
     // FADH₂가 전자를 넘겨주고 FAD가 되며 모두 소모됨
     setTimeout(()=>setCount('fadh',0), 2200);
     pulseC('cx2',900); pulseC('cx3',2400); pulseC('cx4',3400);
-    sendElectron([[150,200],[204,152],[204,116],[150,92],[281,102],[345,88],[409,102],[409,158]], 4200);
+    sendElectron([[150,200],[204,152],[204,116],[150,92],[281,102],[345,88],[409,102],[409,158]], 4200, 2);
     pumpAt(281,2500); pumpAt(409,3500);
-    $('etc-say-t').innerHTML='<b class="hl-fadh">FADH₂</b>는 <b>복합체 II</b>로 전자를 넣어 Q부터 시작해요(복합체 I을 건너뜀). 그래서 H⁺는 <b>2곳(III·IV)</b>에서만 퍼올려집니다. 여기서도 산소가 전자를 받아 <b>물</b>이 돼요.';
+    $('etc-say-t').innerHTML='<b class="hl-fadh">FADH₂ 2개</b>는 <b>복합체 II</b>로 전자를 넣어 Q부터 시작해요(복합체 I을 건너뜀). 그래서 H⁺는 <b>2곳(III·IV)</b>에서만 퍼올려집니다. 여기서도 산소가 전자를 받아 <b>물(H₂O) 2개</b>가 돼요. (물 합계 12개)';
     $('etc-next').textContent='③ ATP 합성 ⚡';
   } else if(etcStepN===3){
     etcSynth();
