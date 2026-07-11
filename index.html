@@ -42,7 +42,7 @@
   header.nav{position:sticky;top:14px;z-index:50}
   .navbar{
     margin:14px auto 0;max-width:1180px;
-    display:flex;align-items:center;gap:20px;
+    display:flex;align-items:center;gap:12px; /* 버튼 추가로 간격을 20px -> 12px로 살짝 조절 */
     background:rgba(255,255,255,.85);backdrop-filter:blur(12px);
     border:1px solid var(--line);border-radius:22px;
     padding:12px 20px;box-shadow:var(--shadow);
@@ -64,9 +64,33 @@
   .nav-cta{
     background:var(--navy);color:#fff;border:none;border-radius:12px;
     padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;
+    white-space:nowrap;
   }
   .nav-cta:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(18,36,27,.28)}
+
+  /* [추가] 과학이 신기해 이동 버튼 스타일 */
+  .nav-science{
+    text-decoration:none;
+    background:linear-gradient(145deg, #2563eb, #1d4ed8); /* 지적인 느낌의 과학 블루 그라데이션 */
+    color:#fff;border-radius:12px;
+    padding:10px 18px;font-weight:700;font-size:14px;
+    display:inline-flex;align-items:center;gap:6px;
+    box-shadow:0 6px 14px rgba(37,99,235,.25);
+    transition:.2s;
+    white-space:nowrap;
+  }
+  .nav-science:hover{
+    transform:translateY(-1px);
+    background:linear-gradient(145deg, #3b82f6, #1e40af);
+    box-shadow:0 8px 18px rgba(29,78,216,.35);
+  }
+  
+  /* 반응형 미디어쿼리 조절 */
   @media(max-width:860px){nav.links{display:none}}
+  @media(max-width:520px){
+    .nav-science span {display:none} /* 화면이 아주 작아지면 텍스트를 숨기고 아이콘만 노출 */
+    .nav-science {padding:10px 14px}
+  }
 
   /* ---------- Hero ---------- */
   .hero{text-align:center;padding:60px 0 30px}
@@ -94,7 +118,7 @@
   /* ---------- Filter tabs ---------- */
   .filters{
     position:sticky;top:92px;z-index:40;
-    display:flex;gap:9px;flex-wrap:wrap;justify-content:center;
+    display:flex;gap:99px;flex-wrap:wrap;justify-content:center;
     padding:14px 0;margin:24px 0 8px;
   }
   .chip{
@@ -183,6 +207,10 @@
       <a href="#about">소개</a>
     </nav>
     <button class="nav-cta" onclick="document.getElementById('programs').scrollIntoView()">둘러보기</button>
+    <!-- [변경] 과학이 신기해 바로가기 새창링크 버튼 추가 -->
+    <a href="https://taojinhh.github.io/Middle-School-Science/" class="nav-science" target="_blank" rel="noopener noreferrer">
+      🧪 <span>과학이 신기해</span>
+    </a>
   </div>
 </header>
 
@@ -214,7 +242,6 @@
     <p style="margin-top:6px">모든 프로그램은 실제 수업 경험에서 설계되었습니다. 설치 없이 브라우저에서 바로 실행됩니다.</p>
     <p style="margin-top:10px">💌 피드백·문의 : <a href="mailto:taojin@naver.com" style="color:inherit;text-decoration:underline">taojin@naver.com</a></p>
     <p style="margin-top:10px;font-size:12.5px">© Singihae Bio Lab. 수업용으로 자유롭게 활용하세요.</p>
-    <p style="margin-top:6px;font-size:12px;opacity:0.8;">All Rights Reserved (무단 전재 및 재배포 금지)</p>
   </div>
 </footer>
 
@@ -232,7 +259,7 @@ const ORDER = ["cell","meta","homeo","gene","eco"];
 /* ---------------- 프로그램 목록 ---------------- */
 const PROGRAMS = [
   {cat:"cell", icon:"<svg width='82' height='82' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><circle cx='50' cy='50' r='42' fill='#cdece6' stroke='#2f9e8f' stroke-width='3.5'/><circle cx='44' cy='45' r='16' fill='#2f9e8f'/><circle cx='40' cy='42' r='5' fill='#1c6b60'/><ellipse cx='68' cy='62' rx='11' ry='6' fill='#5cbcae' transform='rotate(28 68 62)'/><ellipse cx='68' cy='62' rx='11' ry='6' fill='none' stroke='#2f9e8f' stroke-width='1.5' transform='rotate(28 68 62)'/><circle cx='66' cy='34' r='6' fill='#fff' stroke='#2f9e8f' stroke-width='2'/><circle cx='34' cy='68' r='3' fill='#2f9e8f'/><circle cx='54' cy='72' r='2.5' fill='#2f9e8f'/></svg>", title:"세포의 구조", desc:"세포의 구조를 하나씩 클릭하며 살펴봅시다.", file:"세포구조_탐험.html"},
-  {cat:"cell",  icon:"🧫", title:"세포분열 학습 프로그램",       desc:"체세포분열และ 감수분열의 각 단계를 단계별로 살펴봅니다.", file:"세포분열_학습프로그램.html"},
+  {cat:"cell",  icon:"🧫", title:"세포분열 학습 프로그램",       desc:"체세포분열과 감수분열의 각 단계를 단계별로 살펴봅니다.", file:"세포분열_학습프로그램.html"},
 
   {cat:"meta",  icon:"🔆", title:"광합성 시뮬레이션",            desc:"빛의 세기·CO₂ 농도를 조절하며 광합성량 변화를 관찰.",    file:"광합성_시뮬레이션.html"},
   {cat:"meta",  icon:"<svg width='84' height='84' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><ellipse cx='50' cy='50' rx='40' ry='24' fill='#f8e2c4' stroke='#e08a2b' stroke-width='3.5'/><path d='M14 50 C24 30 30 30 34 50 C38 70 44 70 50 50 C56 30 62 30 66 50 C70 70 76 70 86 50' fill='none' stroke='#e08a2b' stroke-width='3' stroke-linecap='round'/></svg>", title:"세포호흡",                     desc:"해당과정·TCA회로·전자전달계로 이어지는 ATP 생성.",       file:"세포호흡.html"},
@@ -243,9 +270,9 @@ const PROGRAMS = [
 
   {cat:"gene",  icon:"🧬", title:"DNA 복제 과정 시뮬레이션",     desc:"반보존적 복제, 선도·지연 가닥이 만들어지는 과정.",       file:"DNA복제과정_시뮬레이션.html"},
   {cat:"gene",  icon:"<svg width='84' height='84' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><line x1='12' y1='72' x2='88' y2='72' stroke='#5a6fd6' stroke-width='4' stroke-linecap='round'/><g stroke='#5a6fd6' stroke-width='3'><line x1='20' y1='72' x2='20' y2='54'/><line x1='40' y1='72' x2='40' y2='54'/><line x1='60' y1='72' x2='60' y2='54'/><line x1='80' y1='72' x2='80' y2='54'/></g><g font-family='Segoe UI,sans-serif' font-size='14' font-weight='800' text-anchor='middle' fill='#fff'><rect x='11' y='34' width='18' height='18' rx='4' fill='#5a6fd6'/><text x='20' y='47'>A</text><rect x='31' y='34' width='18' height='18' rx='4' fill='#8b9be8'/><text x='40' y='47'>U</text><rect x='51' y='34' width='18' height='18' rx='4' fill='#3f52b5'/><text x='60' y='47'>G</text><rect x='71' y='34' width='18' height='18' rx='4' fill='#a7b3ee'/><text x='80' y='47'>C</text></g></svg>", title:"전사 시뮬레이션",              desc:"DNA로부터 RNA가 합성되는 전사 과정을 단계별로.",         file:"전사_시뮬레이션.html"},
-  {cat:"gene",  icon:"<svg width='84' height='84' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><g stroke='#5a6fd6' stroke-width='2.4'><line x1='16' y1='58' x2='16' y2='42'/><line x1='34' y1='44' x2='34' y2='28'/><line x1='52' y1='58' x2='52' y2='42'/><line x1='70' y1='44' x2='70' y2='28'/><line x1='86' y1='58' x2='86' y2='42'/></g><polyline points='16,58 34,44 52,58 70,44 86,58' fill='none' stroke='#3f52b5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/><g fill='#5a6fd6'><circle cx='16' cy='58' r='8'/><circle cx='52' cy='58' r='8'/><circle cx='86' cy='58' r='8'/></g><g fill='#8b9be8'><circle cx='34' cy='44' r='8'/><circle cx='70' cy='44' r='8'/></g></svg>", title:"번역 시뮬레이션",              desc:"리보솜에서 코돈을 읽어 단백질이 만들어지는 과정.",       file:"번역과정_시뮬레이션.html"},
+  {cat:"gene",  icon:"<svg width='84' height='84' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><polyline points='16,58 34,44 52,58 70,44 86,58' fill='none' stroke='#3f52b5' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/><g fill='#5a6fd6'><circle cx='16' cy='58' r='8'/><circle cx='52' cy='58' r='8'/><circle cx='86' cy='58' r='8'/></g><g fill='#8b9be8'><circle cx='34' cy='44' r='8'/><circle cx='70' cy='44' r='8'/></g></svg>", title:"번역 시뮬레이션",              desc:"리보솜에서 코돈을 읽어 단백질이 만들어지는 과정.",       file:"번역과정_시뮬레이션.html"},
   {cat:"gene",  icon:"🔀", title:"젖당 오페론 시뮬레이션",       desc:"원핵생물의 유전자 발현 조절, 젖당 오페론의 작동.",       file:"젖당오페론_시뮬레이션.html"},
-  {cat:"gene",  icon:"🎛️", title:"진핵생물 유전자 발현 조절",    desc:"전사 인자와 조절 부위로 이해하는 발현 조절 시뮬레이션.", file:"진핵생물유전자발현조절_시뮬레이션.html"},
+  {cat:"gene",  icon:"🧬", title:"진핵생물 유전자 발현 조절",    desc:"전사 인자와 조절 부위로 이해하는 발현 조절 시뮬레이션.", file:"진핵생물유전자발현조절_시뮬레이션.html"},
   {cat:"gene",  icon:"🧪", title:"생명공학기술 학습 프로그램",   desc:"유전자 재조합·PCR 등 생명공학 핵심 기술 익히기.",        file:"생명공학기술_학습프로그램.html"},
 
   {cat:"eco",   icon:"<svg width='84' height='84' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'><rect x='18' y='18' width='64' height='64' rx='4' fill='#e3f1e0' stroke='#4b9d3f' stroke-width='4'/><g stroke='#4b9d3f' stroke-width='1.6' opacity='.55'><line x1='34' y1='18' x2='34' y2='82'/><line x1='50' y1='18' x2='50' y2='82'/><line x1='66' y1='18' x2='66' y2='82'/><line x1='18' y1='34' x2='82' y2='34'/><line x1='18' y1='50' x2='82' y2='50'/><line x1='18' y1='66' x2='82' y2='66'/></g><g fill='#4b9d3f'><circle cx='26' cy='58' r='3.2'/><circle cx='58' cy='28' r='3.2'/><circle cx='72' cy='70' r='3.2'/><circle cx='42' cy='44' r='3.2'/></g></svg>", title:"방형구법",                     desc:"방형구를 이용해 식물 군집의 밀도·빈도·피도를 조사.",     file:"방형구법.html"},
