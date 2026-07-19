@@ -112,8 +112,7 @@
     display:none; text-align:center; margin-top:14px; padding:14px; border-radius:12px;
     background:#e8f7ec; border:1px solid #b6e4c2; color:#227a3d; font-weight:800; font-size:16px;
   }
-  footer{text-align:center; color:var(--muted); font-size:12.5px; padding:22px 20px; line-height:1.7;}
-  .copyright{display:block; font-size:11.5px; margin-top:4px; font-weight:600; color:#a39cb6;}
+  footer{text-align:center; color:var(--muted); font-size:12.5px; padding:22px;}
   @media(max-width:560px){
     header h1{font-size:21px;}
     .tab{min-width:calc(50% - 4px); font-size:13.5px;}
@@ -121,7 +120,7 @@
   }
 </style>
 </head>
-<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+<body>
 <header>
   <h1>🧬 DNA 복제 과정 시뮬레이션</h1>
   <p>버튼과 그림을 <b>클릭</b>하며 DNA가 복제되는 과정을 단계별로 관찰해 보세요</p>
@@ -134,6 +133,7 @@
     <div class="tab" data-tab="2"><span class="num">3</span>염기 짝짓기 실습</div>
   </div>
 
+  <!-- ================= 모듈 1 : 반보존적 복제 ================= -->
   <div class="panel active" id="panel0">
     <div class="card">
       <div class="stage"><svg id="svg1" viewBox="0 0 900 440"></svg></div>
@@ -155,6 +155,7 @@
     </div>
   </div>
 
+  <!-- ================= 모듈 2 : 복제 분기점 ================= -->
   <div class="panel" id="panel1">
     <div class="card">
       <div class="stage"><svg id="svg2" viewBox="0 0 900 480"></svg></div>
@@ -178,6 +179,7 @@
     </div>
   </div>
 
+  <!-- ================= 모듈 3 : 염기 짝짓기 실습 ================= -->
   <div class="panel" id="panel2">
     <div class="card">
       <p class="hint" style="text-align:center;margin-top:0">
@@ -205,10 +207,7 @@
     </div>
   </div>
 
-  <footer>
-    고등학교 생명과학 · DNA 복제(반보존적 복제) 학습용 시뮬레이션
-    <span class="copyright">All Rights Reserved (무단 전재 및 재배포 금지)</span>
-  </footer>
+  <footer>고등학교 생명과학 · DNA 복제(반보존적 복제) 학습용 시뮬레이션</footer>
 </div>
 
 <script>
@@ -248,6 +247,7 @@ document.querySelectorAll('.tab').forEach(t=>{
   const N=seq.length, rung=90, x0=90, topY=150, botY=250, sepY=70;
 
   function baseCap(x,y,dir,base,fill){
+    // 화살표 모양 염기 캡 (dir: 1 오른쪽/아래로 향함)
     const g=el("g",{},svg);
     el("rect",{x:x-16,y:y-13,width:32,height:26,rx:5,fill:fill},g);
     el("text",{x:x,y:y+6,"text-anchor":"middle","font-size":16,"font-weight":"bold",fill:"#fff"},g).textContent=base;
@@ -256,6 +256,7 @@ document.querySelectorAll('.tab').forEach(t=>{
 
   function draw(){
     clear(svg);
+    // 제목
     el("text",{x:450,y:34,"text-anchor":"middle","font-size":18,"font-weight":"bold",fill:"#2b7fc4"},svg)
       .textContent="반보존적 복제 — 원래 가닥을 틀로 삼아 똑같은 DNA 두 개가 만들어진다";
 
@@ -265,8 +266,10 @@ document.querySelectorAll('.tab').forEach(t=>{
     else { drawTwo(); }
   }
 
+  // 붙어있는 이중가닥
   function drawDuplex(bx,cy,s,pink){
     const upperY=cy-24, lowerY=cy+24;
+    // 백본
     el("rect",{x:bx-40,y:upperY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
     el("rect",{x:bx-40,y:lowerY-8,width:rung*(N-1)+80,height:16,rx:8,fill:pink?"var(--new)":"var(--old)"},svg);
     for(let i=0;i<N;i++){
@@ -281,14 +284,18 @@ document.querySelectorAll('.tab').forEach(t=>{
     el("text",{x:x,y:y+5,"text-anchor":"end","font-size":13,"font-weight":"bold",fill:color||"#555"},svg).textContent=txt;
   }
 
+  // 갈라지는 중
   function drawSeparating(){
     const cy=200;
+    // 위 가닥
     el("rect",{x:x0-40,y:cy-sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    // 아래 가닥
     el("rect",{x:x0-40,y:cy+sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
     for(let i=0;i<N;i++){
       const x=x0+i*rung;
       baseCap(x,cy-sepY+13,1,seq[i],"var(--old)");
       baseCap(x,cy+sepY-13,1,comp[seq[i]],"var(--old)");
+      // 끊어진 수소결합 표시
       el("line",{x1:x,y1:cy-sepY+22,x2:x,y2:cy-18,stroke:"#f2a4b4","stroke-width":2,"stroke-dasharray":"3 4"},svg);
       el("line",{x1:x,y1:cy+18,x2:x,y2:cy+sepY-22,stroke:"#f2a4b4","stroke-width":2,"stroke-dasharray":"3 4"},svg);
     }
@@ -298,16 +305,19 @@ document.querySelectorAll('.tab').forEach(t=>{
     label(x0-58,cy+sepY,"주형 가닥","#1E88C4");
   }
 
+  // 새 가닥 합성 중
   function drawSynth(){
     const cy=200;
     el("rect",{x:x0-40,y:cy-sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
     el("rect",{x:x0-40,y:cy+sepY-8,width:rung*(N-1)+80,height:16,rx:8,fill:"var(--old)"},svg);
+    // 새 가닥 백본(분홍)
     el("rect",{x:x0-40,y:cy-sepY+26,width:rung*(N-1)+80,height:11,rx:6,fill:"var(--new)",opacity:.9},svg);
     el("rect",{x:x0-40,y:cy+sepY-37,width:rung*(N-1)+80,height:11,rx:6,fill:"var(--new)",opacity:.9},svg);
     for(let i=0;i<N;i++){
       const x=x0+i*rung;
       baseCap(x,cy-sepY+13,1,seq[i],"var(--old)");
       baseCap(x,cy+sepY-13,1,comp[seq[i]],"var(--old)");
+      // 새로 붙는 상보 염기
       baseCap(x,cy-sepY+30,1,comp[seq[i]],"var(--new)");
       baseCap(x,cy+sepY-30,1,seq[i],"var(--new)");
       el("line",{x1:x,y1:cy-sepY+20,x2:x,y2:cy-sepY+22,stroke:"#aaa"},svg);
@@ -316,6 +326,7 @@ document.querySelectorAll('.tab').forEach(t=>{
       .textContent="주형과 상보적인 뉴클레오타이드가 결합하여 새 가닥(분홍) 합성";
   }
 
+  // 두 개의 DNA 완성
   function drawTwo(){
     drawDuplexAt(120, seq, "top");
     drawDuplexAt(280, seq, "bot");
@@ -324,7 +335,7 @@ document.querySelectorAll('.tab').forEach(t=>{
   }
   function drawDuplexAt(cy, s, which){
     const upperY=cy-20, lowerY=cy+20;
-    const topPink = (which==="bot");
+    const topPink = (which==="bot"); // 아래 DNA는 위 백본이 새 가닥
     el("rect",{x:x0-40,y:upperY-7,width:rung*(N-1)+80,height:14,rx:7,fill:topPink?"var(--new)":"var(--old)"},svg);
     el("rect",{x:x0-40,y:lowerY-7,width:rung*(N-1)+80,height:14,rx:7,fill:topPink?"var(--old)":"var(--new)"},svg);
     for(let i=0;i<N;i++){
@@ -353,13 +364,15 @@ document.querySelectorAll('.tab').forEach(t=>{
 /* ===================== 모듈 2 : 복제 분기점 ===================== */
 (function(){
   const svg=document.getElementById('svg2');
-  let step=0; const MAX=5;
+  let step=0; const MAX=6;
+  let rafId=null, animStart=null; const DUR=2600;
   const texts=[
-    {t:"① 이중 나선이 풀린다", d:"헬리케이스가 염기 사이의 수소 결합을 끊어 이중 가닥을 단일 가닥으로 풀어냅니다. 풀린 지점을 '복제 분기점'이라 하며 Y자 모양이 됩니다."},
-    {t:"② RNA 프라이머가 붙는다", d:"DNA 중합효소는 스스로 합성을 시작하지 못합니다. 그래서 합성이 시작되는 자리에 짧은 RNA 프라이머(초록)가 먼저 만들어져 시작점을 제공합니다."},
-    {t:"③ 선도 가닥: 연속적으로 합성", d:"분기점이 열리는 방향과 같은 쪽 가닥에서는 DNA 중합효소(주황)가 5'→3' 방향으로 끊김 없이 연속적으로 새 가닥을 합성합니다. 이를 선도 가닥이라 합니다."},
-    {t:"④ 지연 가닥: 짧은 조각으로 합성", d:"반대쪽 가닥은 분기점과 반대 방향으로만 5'→3' 합성이 가능해, 프라이머를 여러 번 만들며 짧은 조각(오카자키 절편)으로 끊어서 합성합니다. 이를 지연 가닥이라 합니다."},
-    {t:"⑤ DNA 연결효소가 조각을 잇는다", d:"지연 가닥의 짧은 조각들은 DNA 연결효소(초록 덩어리)가 이어 붙여 하나의 연속된 가닥으로 완성합니다. 이렇게 양쪽 새 가닥이 모두 완성됩니다."}
+    {t:"① 이중 나선이 풀린다", d:"헬리케이스가 염기 사이의 수소 결합을 끊어 이중 가닥을 두 개의 단일 가닥으로 풀어냅니다. 풀린 지점을 '복제 분기점'이라 하며 Y자 모양이 됩니다."},
+    {t:"② RNA 프라이머가 붙는다", d:"DNA 중합효소는 스스로 합성을 시작하지 못합니다. 그래서 두 주형 가닥의 시작 자리에 짧은 RNA 프라이머(초록)가 먼저 만들어져 합성의 출발점을 제공합니다."},
+    {t:"③ 1차 합성 — 두 중합효소가 동시에 붙어 함께 이동", d:"두 주형 가닥에 DNA 중합효소(주황)가 동시에 붙어 함께 이동합니다. 위 가닥은 오른쪽 → 왼쪽으로 끊김 없이 연속 합성(선도 가닥)합니다. 아래 가닥(지연)은 먼저 오른쪽 부분에서 왼쪽 → 오른쪽 방향으로 첫 번째 조각을 만듭니다. 둘 다 5'→3' 방향으로 합성합니다."},
+    {t:"④ 나선이 한 번 더 풀리고, 2차 합성", d:"복제 분기점이 더 풀립니다. 위 가닥(선도)의 중합효소는 계속 연속적으로 합성을 이어갑니다. 아래 가닥(지연)은 새로 풀린 왼쪽 부분에 RNA 프라이머와 중합효소가 다시 붙어 두 번째 조각을 만듭니다. 그래서 먼저 만든 오른쪽 조각과 나중에 만든 왼쪽 조각이 서로 떨어진 채로 놓입니다."},
+    {t:"⑤ DNA 연결효소가 떨어진 조각을 잇는다", d:"떨어져 있던 두 조각(오카자키 절편) 사이의 이음매에 DNA 연결효소(초록 덩어리)가 붙어 두 조각을 하나로 이어 붙입니다. 이렇게 지연 가닥까지 연속된 하나의 가닥으로 완성됩니다."},
+    {t:"⑥ 효소가 떨어지고 복제 완성", d:"연결이 끝나면 DNA 연결효소가 떨어져 나가고, 지연 가닥도 끊김 없이 하나로 완전히 이어집니다. 새로 만들어진 두 가닥은 각각 주형 가닥과 역평행(antiparallel)을 이룹니다. 위 가닥은 왼쪽 3'·오른쪽 5', 아래 가닥은 왼쪽 5'·오른쪽 3' 방향입니다."}
   ];
 
   function enzyme(x,y,label,fill,dark){
@@ -370,6 +383,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     return g;
   }
   function strand(pts,color,w){
+    if(pts.length<2) return;
     let d="M"+pts[0][0]+","+pts[0][1];
     for(let i=1;i<pts.length;i++) d+=" L"+pts[i][0]+","+pts[i][1];
     el("path",{d:d,fill:"none",stroke:color,"stroke-width":w||9,"stroke-linecap":"round","stroke-linejoin":"round"},svg);
@@ -387,17 +401,86 @@ document.querySelectorAll('.tab').forEach(t=>{
     el("path",{d:`M${x+dir*22},${y} l${-dir*7},-4 l0,8 z`,fill:color},g);
   }
 
-  function draw(){
+  /* ---- 경로(주형/새가닥) 및 위치 계산 ---- */
+  const forkX=330, midY=250;
+  // 주형 가닥(파랑) — index 0 이 분기점 쪽
+  const topTmpl=[[forkX,midY-32],[forkX+90,midY-78],[forkX+330,midY-95]];
+  const botTmpl=[[forkX,midY+32],[forkX+90,midY+78],[forkX+330,midY+95]];
+  // 새 가닥 안내선 — 위: 오른쪽(프라이머)에서 시작, 아래: 분기점(왼쪽)에서 시작
+  const topNew=[[forkX+330,midY-83],[forkX+90,midY-66],[forkX,midY-20]];
+  const botNew=[[forkX,midY+20],[forkX+90,midY+66],[forkX+330,midY+83]];
+
+  function polyLen(pts){ let L=0; for(let i=1;i<pts.length;i++) L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); return L; }
+  function along(pts,f){
+    let target=polyLen(pts)*f;
+    for(let i=1;i<pts.length;i++){
+      const sl=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+      if(target<=sl||i===pts.length-1){ const r=sl?target/sl:0; return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*r, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*r]; }
+      target-=sl;
+    }
+    return pts[pts.length-1].slice();
+  }
+  function partial(pts,f){
+    let target=polyLen(pts)*f; const out=[pts[0].slice()];
+    for(let i=1;i<pts.length;i++){
+      const sl=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+      if(target<=sl){ const r=sl?target/sl:0; out.push([pts[i-1][0]+(pts[i][0]-pts[i-1][0])*r, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*r]); return out; }
+      out.push(pts[i].slice()); target-=sl;
+    }
+    return out;
+  }
+  // f0~f1 구간의 부분 경로
+  function subpath(pts,f0,f1){
+    const L=polyLen(pts), d0=L*f0, d1=L*f1; const out=[along(pts,f0)]; let acc=0;
+    for(let i=1;i<pts.length;i++){
+      acc+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+      if(acc>d0 && acc<d1) out.push(pts[i].slice());
+    }
+    out.push(along(pts,f1));
+    return out;
+  }
+  // 새 가닥 위에 RNA 프라이머(초록) 표시
+  function drawPrimer(pts,f0,f1,dy){
+    const a=along(pts,f0), b=along(pts,f1);
+    seg(a[0],a[1],b[0],b[1],"var(--primer)",8);
+    tag((a[0]+b[0])/2,a[1]+dy,"RNA 프라이머","var(--primer-dark)");
+  }
+  // 새로 생긴 가닥의 방향(3'·5') 표시 — 위: 왼쪽 3'/오른쪽 5', 아래: 왼쪽 5'/오른쪽 3'
+  function endLabel(x,y,txt){ el("text",{x:x,y:y,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"var(--new-dark)"},svg).textContent=txt; }
+  function newStrandEnds(){
+    const tl=along(topNew,1), tr=along(topNew,0);
+    endLabel(tl[0]+8, tl[1]-8, "3'");    // 위-왼쪽
+    endLabel(tr[0]+18, tr[1]+14, "5'");  // 위-오른쪽
+    const bl=along(botNew,BLp0), br=along(botNew,BRb);
+    endLabel(bl[0]+2, bl[1]+18, "5'");   // 아래-왼쪽
+    endLabel(br[0]+18, br[1]-10, "3'");  // 아래-오른쪽
+  }
+
+  function drawBase(){
     clear(svg);
     el("text",{x:450,y:30,"text-anchor":"middle","font-size":18,"font-weight":"bold",fill:"#2b7fc4"},svg)
-      .textContent="복제 분기점 — 선도 가닥과 지연 가닥";
-
-    const forkX=330, midY=250;
+      .textContent="복제 분기점 — DNA 중합효소가 양쪽에서 함께 합성";
+    // 좌측 아직 안 풀린 이중나선
     el("rect",{x:40,y:midY-38,width:forkX-40,height:12,rx:6,fill:"var(--old)"},svg);
     el("rect",{x:40,y:midY+26,width:forkX-40,height:12,rx:6,fill:"var(--old)"},svg);
     for(let i=0;i<7;i++){ const x=70+i*36; tick(x,midY-30,midY+30); }
     tag(60,midY-48,"5'","#1E88C4"); tag(60,midY+70,"3'","#1E88C4");
     el("text",{x:150,y:midY+95,"text-anchor":"middle","font-size":12,fill:"#666"},svg).textContent="원래의 이중나선 DNA";
+  }
+
+  /* 새 가닥 구간 비율 (botNew: f=0 이 분기점/왼쪽, f=1 이 오른쪽)
+     위(선도): 오른쪽 프라이머[0~.13] 뒤로 왼쪽까지 연속 (1차 .13→.55, 2차 .55→1)
+     아래(지연): 오른쪽 조각이 먼저(1차), 왼쪽 조각이 나중(2차)에 만들어짐. 각 조각은 왼→오른(5'→3')
+       오른쪽 조각: 프라이머[.55~.65]+새가닥[.65→.92]
+       (틈 .42~.55) 왼쪽 조각: 프라이머[.08~.18]+새가닥[.18→.42] */
+  const P_TOP=0.13, T1a=0.13, T1b=0.55, T2b=1.0;
+  const BRp0=0.55,BRp1=0.65, BRa=0.65,BRb=0.92;   // 오른쪽 조각(먼저)
+  const GAP0=0.42, GAP1=0.55;
+  const BLp0=0.08,BLp1=0.18, BLa=0.18,BLb=0.42;   // 왼쪽 조각(나중)
+
+  // t: 합성 진행도(0~1) — step 2·3 에서 애니메이션으로 증가
+  function drawScene(t){
+    drawBase();
 
     if(step===0){
       strand([[forkX,midY-32],[forkX+90,midY-70],[forkX+320,midY-95]],"var(--old)");
@@ -408,42 +491,89 @@ document.querySelectorAll('.tab').forEach(t=>{
       return;
     }
 
-    strand([[forkX,midY-32],[forkX+90,midY-78],[forkX+330,midY-95]],"var(--old)");
-    strand([[forkX,midY+32],[forkX+90,midY+78],[forkX+330,midY+95]],"var(--old)");
+    // 갈라진 두 주형 가닥 + 가닥 라벨
+    strand(topTmpl,"var(--old)");
+    strand(botTmpl,"var(--old)");
     tag(forkX+345,midY-95,"3'","#1E88C4"); tag(forkX+345,midY+100,"5'","#1E88C4");
+    tag(forkX+378,midY-70,"선도 가닥","#333");
+    tag(forkX+378,midY+82,"지연 가닥","#333");
 
-    if(step>=1){
-      seg(forkX+120,midY-88,forkX+175,midY-92,"var(--primer)",8);
-      tag(forkX+148,midY-100,"RNA 프라이머","var(--primer-dark)");
-      seg(forkX+120,midY+88,forkX+175,midY+92,"var(--primer)",8);
-      tag(forkX+250,midY+112,"RNA 프라이머","var(--primer-dark)");
-    }
-    if(step>=2){
-      seg(forkX+175,midY-92,forkX+330,midY-98,"var(--new)",8);
-      enzyme(forkX+345,midY-95,"DNA 중합효소","var(--poly)","var(--poly-dark)");
-      arrow(forkX+300,midY-108,1,"#d64b6c");
-      tag(forkX+250,midY-118,"연속 합성 (5'→3')","var(--new-dark)");
-      tag(forkX+430,midY-70,"선도 가닥","#333");
-    }
-    if(step>=3){
-      seg(forkX+175,midY+92,forkX+250,midY+94,"var(--new)",8);
-      enzyme(forkX+150,midY+90,"DNA 중합효소","var(--poly)","var(--poly-dark)");
-      arrow(forkX+180,midY+108,-1,"#d64b6c");
-      seg(forkX+270,midY+96,forkX+300,midY+97,"var(--primer)",8);
-      seg(forkX+300,midY+97,forkX+400,midY+99,"var(--new)",8);
-      tag(forkX+240,midY+120,"합성 중인 짧은 조각","var(--new-dark)");
-      tag(forkX+430,midY+80,"지연 가닥","#333");
-    }
+    // ===== ⑤·⑥ 연결효소가 두 조각을 이어 완성 =====
     if(step>=4){
-      enzyme(forkX+250,midY+97,"","var(--ligase)","#2e7d32");
-      enzyme(forkX+275,midY+97,"","var(--ligase)","#2e7d32");
-      tag(forkX+265,midY+140,"DNA 연결효소가 조각을 이어줌","#2e7d32");
-      seg(forkX+175,midY+92,forkX+400,midY+99,"var(--new)",8);
+      strand(subpath(topNew,0,1),"var(--new)",8);          // 위: 연속 완성
+      strand(subpath(botNew,BLp0,BRb),"var(--new)",8);     // 아래: 두 조각이 하나로 이어짐
+      const j=along(botNew,0.485);                          // 이음매 위치(왼·오른 조각 사이)
+      if(step===4){
+        enzyme(j[0]-11,j[1]+3,"","var(--ligase)","#2e7d32");
+        enzyme(j[0]+11,j[1]+4,"","var(--ligase)","#2e7d32");
+        tag(j[0],j[1]+40,"DNA 연결효소가 떨어진 두 조각을 이어 완성","#2e7d32");
+      }else{
+        // ⑥ 효소가 떨어지고 완전히 이어진 모습
+        tag(450,46,"✔ 지연 가닥까지 끊김 없이 연결 — 복제 완성","#227a3d");
+      }
+      newStrandEnds();  // 새 가닥의 3'·5' 방향 표시
+      return;
+    }
+
+    // ===== 프라이머 =====
+    drawPrimer(topNew,0,P_TOP,-16);          // 위: 오른쪽 프라이머
+    drawPrimer(botNew,BRp0,BRp1,24);         // 아래: 오른쪽 조각 프라이머(먼저 만들어짐)
+    if(step>=3) drawPrimer(botNew,BLp0,BLp1,24); // 아래: 왼쪽 조각 프라이머(새로 풀린 곳, 나중)
+
+    if(step===1) return;                     // 프라이머만 붙은 상태
+
+    // 진행도: t1=1차(오른쪽 조각), t2=2차(왼쪽 조각)
+    const t1 = (step===2) ? t : 1;
+    const t2 = (step===3) ? t : 0;
+
+    // 위(선도): 오른쪽 → 왼쪽으로 연속
+    const topGrow = (step===2) ? (T1a + t1*(T1b-T1a)) : (T1b + t2*(T2b-T1b));
+    strand(subpath(topNew,T1a,topGrow),"var(--new)",8);
+    const tp=along(topNew,topGrow);
+    enzyme(tp[0],tp[1],"DNA 중합효소","var(--poly)","var(--poly-dark)");
+    arrow(tp[0]-2,tp[1]-32,-1,"#d64b6c");    // 왼쪽 방향
+
+    // 아래(지연) 오른쪽 조각(먼저): 왼쪽 → 오른쪽
+    const fR = BRa + t1*(BRb-BRa);
+    strand(subpath(botNew,BRa,fR),"var(--new)",8);
+
+    if(step===2){
+      const bp=along(botNew,fR);
+      enzyme(bp[0],bp[1],"DNA 중합효소","var(--poly)","var(--poly-dark)");
+      arrow(bp[0]+2,bp[1]+32,1,"#d64b6c");   // 오른쪽 방향
+      tag(450,46,"두 중합효소가 동시에 함께 이동 — 윗가닥 연속 · 아랫가닥은 오른쪽 조각 먼저","var(--new-dark)");
+    }
+
+    // 아래(지연) 왼쪽 조각(나중): 나선이 더 풀린 뒤 왼쪽 → 오른쪽
+    if(step===3){
+      const fL = BLa + t2*(BLb-BLa);
+      strand(subpath(botNew,BLa,fL),"var(--new)",8);
+      const bp=along(botNew,fL);
+      enzyme(bp[0],bp[1],"DNA 중합효소","var(--poly)","var(--poly-dark)");
+      arrow(bp[0]+2,bp[1]+32,1,"#d64b6c");
+      // 나중에 만든 왼쪽 조각과 먼저 만든 오른쪽 조각 사이가 떨어져 있음을 표시
+      const g0=along(botNew,GAP0), g1=along(botNew,GAP1);
+      seg(g0[0]+3,g0[1]+18,g1[0]-3,g1[1]+18,"#d64b6c",2,"3 3");
+      tag((g0[0]+g1[0])/2,g0[1]+34,"조각 사이가 떨어져 있음","#d64b6c");
+      tag(450,46,"↻ 나선이 한 번 더 풀림 — 왼쪽 조각을 이어서 합성 (윗가닥은 계속 연속)","var(--new-dark)");
     }
   }
 
+  function stopAnim(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } animStart=null; }
+
   function render(){
-    draw();
+    stopAnim();
+    if(step===2 || step===3){
+      const tick=(ts)=>{
+        if(animStart===null) animStart=ts;
+        const t=Math.min((ts-animStart)/DUR,1);
+        drawScene(t);
+        rafId = (t<1) ? requestAnimationFrame(tick) : null;
+      };
+      rafId=requestAnimationFrame(tick);
+    } else {
+      drawScene(step<2 ? 0 : 1);
+    }
     document.getElementById('badge2').textContent=`단계 ${step+1} / ${MAX}`;
     document.getElementById('etitle2').textContent=texts[step].t;
     document.getElementById('etext2').textContent=texts[step].d;
@@ -459,18 +589,23 @@ document.querySelectorAll('.tab').forEach(t=>{
 /* ===================== 모듈 3 : 염기 짝짓기 실습 ===================== */
 (function(){
   const svg=document.getElementById('svg3');
-  const template=["G","T","A","C","G","A"];
-  let idx=0;
+  const template=["G","T","A","C","G","A"]; // 주형 가닥(위→아래, 3'→5')
+  let idx=0; // 현재 합성해야 할 위치
   const rowY=(i)=>70+i*62;
   const tmplX=470, newX=250;
 
   function nucShape(x,y,base,side,filled){
+    // side: 'new'(왼쪽,분홍) or 'tmpl'(오른쪽,파랑)
     const g=el("g",{},svg);
     const col=side==="new"?"var(--new)":"var(--old)";
+    // 인산(원)
     el("circle",{cx:side==="new"?x-46:x+46,cy:y-14,r:8,fill:"var(--phos)",stroke:"#e0b32e"},g);
+    // 당(오각형)
     const sx=side==="new"?x-30:x+30;
     el("polygon",{points:penta(sx,y),fill:"var(--sugar)",stroke:"#33b3a0","stroke-width":1.5},g);
+    // 백본 연결선
     el("line",{x1:side==="new"?x-46:x+46,y1:y-14,x2:sx,y2:y-6,stroke:"#999","stroke-width":2},g);
+    // 염기 캡 (화살표형)
     const dir=side==="new"?1:-1;
     const bx=side==="new"?x-6:x+6;
     el("rect",{x:bx-14,y:y-12,width:28,height:24,rx:5,fill:col},g);
@@ -485,23 +620,30 @@ document.querySelectorAll('.tab').forEach(t=>{
 
   function draw(){
     clear(svg);
+    // 백본 (세로 막대)
     el("rect",{x:tmplX+52,y:40,width:14,height:template.length*62,rx:7,fill:"var(--old)"},svg);
     el("rect",{x:newX-66,y:40,width:14,height:template.length*62,rx:7,fill:"var(--new)",opacity:idx>0?1:.25},svg);
+    // 라벨
     el("text",{x:newX-6,y:26,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"var(--new-dark)"},svg).textContent="〈합성 중인 새 가닥〉";
     el("text",{x:tmplX+6,y:26,"text-anchor":"middle","font-size":14,"font-weight":"bold",fill:"#1E88C4"},svg).textContent="〈주형 가닥〉";
     el("text",{x:newX-66,y:40+template.length*62+18,"text-anchor":"middle","font-size":12,fill:"#777"},svg).textContent="5' → 3' 방향으로 합성";
 
     for(let i=0;i<template.length;i++){
       const y=rowY(i);
+      // 주형 염기 (항상 표시)
       const tg=nucShape(tmplX,y,template[i],"tmpl",true);
+      // 현재 자리 강조
       if(i===idx){
         el("rect",{x:tmplX-18,y:y-20,width:44,height:40,rx:8,fill:"none",stroke:"#e05b5b","stroke-width":3},svg);
       }
+      // 이미 합성된 새 가닥 염기
       if(i<idx){
         nucShape(newX,y,comp[template[i]],"new",true);
+        // 수소결합
         el("line",{x1:newX+8,y1:y,x2:tmplX-8,y2:y,stroke:"#bbb","stroke-width":2,"stroke-dasharray":"3 3"},svg);
       }
     }
+    // 안내 화살표
     if(idx<template.length){
       const y=rowY(idx);
       el("text",{x:newX+40,y:y+5,"text-anchor":"middle","font-size":13,fill:"#e05b5b","font-weight":"bold"},svg)
