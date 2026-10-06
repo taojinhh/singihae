@@ -326,7 +326,7 @@ details.sum .tw{overflow-x:auto;padding:0 18px 16px}
   <div>
     <div class="eyebrow">생명과학 · 세포호흡 단원</div>
     <h1>세포호흡 <span>탐구실</span></h1>
-    <p>영상 세 편(해당과정 · TCA 회로 · 전자 전달계)의 장면을 시뮬레이션으로 직접 움직여 보고, 확인 문제와 종합 평가로 학습을 마무리합니다.</p>
+    <p>해당과정 · TCA 회로 · 전자 전달계의 장면을 시뮬레이션으로 직접 움직여 보고, 확인 문제와 종합 평가로 학습을 마무리합니다.</p>
   </div>
   <div class="prog" aria-label="전체 학습 진행률">
     <div class="lbl"><span>학습 진행률</span><span class="mono" id="progTxt">0%</span></div>
@@ -1047,12 +1047,12 @@ let tcaMult=1;
   const svg=$('#ovSvg'); arrowDef(svg,'arrO','mk2');
   S('rect',{x:10,y:10,width:940,height:380,rx:40,cls:'ov-cell'},svg);
   txt(svg,40,48,'세포질','sv-region');
-  const box=(x,y,w,h,go,n,t,sub)=>{const g=S('g',{cls:'ov-node',tabindex:'0',role:'button','data-go':go,'aria-label':t+' 시뮬레이션으로 이동'},svg); S('rect',{x,y,width:w,height:h,rx:12,cls:'box'},g); txt(g,x+14,y+26,n,'sv-m').style.fontFamily='var(--f-mono)'; txt(g,x+14,y+50,t,'sv-phase'); if(sub) txt(g,x+14,y+72,sub,'sv-m'); g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); show(go);}}); return g;};
+  const box=(x,y,w,h,go,n,t,sub)=>{const g=S('g',{cls:'ov-node',tabindex:'0',role:'button','data-go':go,'aria-label':t+' 시뮬레이션으로 이동'},svg); S('rect',{x,y,width:w*.8,height:h,rx:12,cls:'box'},g); txt(g,x+14,y+26,n,'sv-m').style.fontFamily='var(--f-mono)'; txt(g,x+14,y+50,t,'sv-phase'); if(sub) txt(g,x+14,y+72,sub,'sv-m'); g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault(); show(go);}}); return g;};
   const tag=(x,y,t,cls)=>txt(svg,x,y,t,cls||'sv-b','middle');
   tag(78,186,'포도당'); tag(78,206,'C₆','sv-m');
   S('path',{d:'M110,196 L148,196',cls:'ov-arrow','marker-end':'url(#arrO)'},svg);
   box(152,148,170,96,'gly','1','해당과정','ATP 2 · NADH 2');
-  S('path',{d:'M324,196 L372,196',cls:'ov-arrow','marker-end':'url(#arrO)'},svg);
+  S('path',{d:'M290,196 L372,196',cls:'ov-arrow','marker-end':'url(#arrO)'},svg);
   tag(400,186,'피루브산'); tag(400,206,'C₃ ×2','sv-m');
   S('ellipse',{cx:690,cy:206,rx:248,ry:166,cls:'mito-outer'},svg);
   S('ellipse',{cx:690,cy:206,rx:222,ry:140,cls:'mito-inner'},svg);
